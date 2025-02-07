@@ -33,21 +33,8 @@
     </div>
     <script>
         document.getElementById("user-form").addEventListener("submit", function(event) {
-            event.preventDefault();
-            let genre = document.getElementById("music-genre").value;
-            let style = document.getElementById("art-style").value;
-
-            fetch('/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ music_genre: genre, art_style: style })
-            })
-            .then(response => {
-                if (response.redirected) {
-                    window.location.href = response.url;
-                }
-            })
-            .catch(error => console.error("Error:", error));
+            event.preventDefault(); // Prevent default form submission
+            window.location.href = "/results"; // Redirect to results page
         });
     </script>
 </body>
