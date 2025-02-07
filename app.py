@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import os
 import requests
-from urllib.parse import urlencode
 from dotenv import load_dotenv
 
 # Load environment variables
