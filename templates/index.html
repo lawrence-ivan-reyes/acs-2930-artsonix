@@ -17,14 +17,38 @@
     </header>
     <div class="flex items-center justify-center h-screen">
         <div class="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-2xl">
-            <h1 class="text-2xl font-bold text-gray-800">Lorem Ipsum</h1>
-            <p class="mt-2 text-gray-600">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique.</p>
-            <input type="text" placeholder="Enter your name" class="mt-4 w-full p-2 border rounded-lg">
-            <textarea placeholder="Enter your message" class="mt-2 w-full p-2 border rounded-lg"></textarea>
-            <button class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                Submit
-            </button>
+            <h1 class="text-2xl font-bold text-gray-800">Discover Music Through Art</h1>
+            <form id="user-form" class="mt-4">
+                <label class="block text-gray-600">Favorite Music Genre:</label>
+                <input type="text" id="music-genre" name="music_genre" placeholder="e.g. Hip-Hop, Jazz" class="w-full p-2 border rounded-lg">
+
+                <label class="block text-gray-600 mt-2">Favorite Art Style:</label>
+                <input type="text" id="art-style" name="art_style" placeholder="e.g. Impressionism, Abstract" class="w-full p-2 border rounded-lg">
+
+                <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                    Get Recommendations
+                </button>
+            </form>
         </div>
     </div>
+    <script>
+        document.getElementById("user-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let genre = document.getElementById("music-genre").value;
+            let style = document.getElementById("art-style").value;
+
+            fetch('/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ music_genre: genre, art_style: style })
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    </script>
 </body>
 {% endblock %}
