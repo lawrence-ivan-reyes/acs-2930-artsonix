@@ -4,7 +4,11 @@ module.exports = {
       "./static/js/**/*.js" // Include JS files if needed
     ],
     theme: {
-      extend: {},
+      extend: {
+        fontFamily: {
+          sans: ['Helvetica', 'Arial', 'sans-serif'],
+        },
+      },
     },
     plugins: [],
   };

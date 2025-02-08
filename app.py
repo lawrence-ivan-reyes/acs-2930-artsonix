@@ -15,6 +15,14 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/credits')
+def credits():
+    return render_template('credits.html')
+
 @app.route('/results')
 def results():
     return render_template('results.html')
