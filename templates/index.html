@@ -14,12 +14,12 @@
     <header class="text-center py-10">
         <h2 class="text-3xl font-bold text-gray-800">Welcome to ArtSonix!</h2>
     </header>
-    <div class="flex items-center justify-center h-screen">
+    <div class="flex items-center justify-center min-h-screen">
         <div class="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-2xl">
             <h1 class="text-2xl font-bold text-gray-800">Discover Music Through Art</h1>
             <form id="user-form" class="mt-4">
-                <label class="block text-gray-600">Favorite Music Genre:</label>
-                <input type="text" id="music-genre" name="music_genre" placeholder="e.g. Hip-Hop, Jazz" class="w-full p-2 border rounded-lg">
+                <label for="mood" class="block text-gray-600">What is your current mood?</label>
+                <input type="text" id="mood" name="mood" placeholder="e.g. Happy, Relaxed, Energetic" class="w-full p-2 border rounded-lg" required>
 
                 <label class="block text-gray-600 mt-2">Favorite Art Style:</label>
                 <input type="text" id="art-style" name="art_style" placeholder="e.g. Impressionism, Abstract" class="w-full p-2 border rounded-lg" required>
@@ -30,15 +30,11 @@
             </form>
         </div>
     </div>
+
     <script>
         document.getElementById("user-form").addEventListener("submit", function(event) {
-            event.preventDefault(); 
-            
-            const artStyle = document.getElementById("art-style").value;
-            
-            if (artStyle.trim()) {
-                window.location.href = `/results?art_style=${encodeURIComponent(artStyle)}`;
-            }
+            event.preventDefault(); // Prevent default form submission
+            window.location.href = "/results"; // Redirect to results page
         });
     </script>
 {% endblock %}
