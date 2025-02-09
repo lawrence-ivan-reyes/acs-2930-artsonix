@@ -132,21 +132,28 @@ def display_artwork_info(artwork):
         print("Failed to retrieve artwork information")
 
 def main():
-    # testing - just example form data
-    form_data = {
-        'mood': 'peaceful',
-        'time_period': 'modern',
-        'culture': 'Japanese'
-    }
+    print("Welcome to the ArtSonix!")
+
+    while True:
+
+        form_data = get_user_input()
+        
+        # processing form responses into preferences
+        user_preferences = process_form_responses(form_data)
+        
+        # getting matching artwork
+        print("\nSearching for matching artwork...")
+        artwork = get_matching_artwork(user_preferences)
+        
+        # displauying result
+        display_artwork_info(artwork)
+        
+        # ask if user wants to try again
+        again = input("\nWould you like to try again? (yes/no): ")
+        if again.lower() != 'yes':
+            break
     
-    # processing form responses into preferences
-    user_preferences = process_form_responses(form_data)
-    
-    # getting matching artwork
-    artwork = get_matching_artwork(user_preferences)
-    
-    # displaying the result
-    display_artwork_info(artwork)
+    print("\nThank you for using ArtSonix!")
 
 if __name__ == "__main__":
     main()
