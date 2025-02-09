@@ -90,7 +90,7 @@ def get_user_input():
     print("1. Peaceful")
     print("2. Energetic")
     print("3. Contemplative")
-    mood_choice = input("Enter the number of your choice: ")
+    mood_choice = input("\nEnter the number of your choice: ")
     mood_map = {'1': 'peaceful', '2': 'energetic', '3': 'contemplative'}
     mood = mood_map.get(mood_choice, 'peaceful')
     
@@ -98,7 +98,7 @@ def get_user_input():
     print("\nWhat time period interests you?")
     print("1. Modern")
     print("2. Ancient")
-    time_choice = input("Enter the number of your choice: ")
+    time_choice = input("\nEnter the number of your choice: ")
     time_map = {'1': 'modern', '2': 'ancient'}
     time_period = time_map.get(time_choice, 'modern')
     
@@ -108,7 +108,7 @@ def get_user_input():
     print("2. European")
     print("3. Egyptian")
     print("4. Chinese")
-    culture_choice = input("Enter the number of your choice: ")
+    culture_choice = input("\nEnter the number of your choice: ")
     culture_map = {'1': 'Japanese', '2': 'European', '3': 'Egyptian', '4': 'Chinese'}
     culture = culture_map.get(culture_choice, 'Japanese')
     
@@ -129,7 +129,7 @@ def display_artwork_info(artwork):
         if artwork.get('primaryImage'):
             print(f"Image URL: {artwork['primaryImage']}")
     else:
-        print("Failed to retrieve artwork information")
+        print("\nFailed to retrieve artwork information")
 
 def main():
     print("Welcome to the ArtSonix!")
