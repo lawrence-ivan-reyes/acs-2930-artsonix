@@ -152,6 +152,18 @@ def main():
     while True:
 
         form_data = get_user_input()
+
+        # showing summary of choices
+        print("\n--- Your Selected Preferences ---")
+        print(f"Mood: {form_data['mood'].title()}")
+        print(f"Time Period: {form_data['time_period'].title()}")
+        print(f"Culture: {form_data['culture']}")
+
+        # asking for confirmation
+        confirm = input("\nAre you happy with these choices? (yes/no): ")
+        if confirm.lower() == 'no':
+            print("\nLet's try again!")
+            continue
         
         # processing form responses into preferences
         user_preferences = process_form_responses(form_data)
