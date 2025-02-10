@@ -22,6 +22,7 @@ def get_random_artwork():
     
     return None
 
+# searches API for artworks matching user preferences
 def get_matching_artwork(user_preferences):
     search_url = "https://collectionapi.metmuseum.org/public/collection/v1/search"
     
@@ -53,6 +54,7 @@ def get_matching_artwork(user_preferences):
     # fallback 
     return get_random_artwork()
 
+# checks if an artwork's date matches the user's preferred time period
 def matches_time_period(artwork, preferred_period):
     date = artwork.get('objectDate', '').lower()
     if preferred_period == 'modern' and any(x in date for x in ['20th', '21st', '1900', '2000']):
@@ -61,6 +63,7 @@ def matches_time_period(artwork, preferred_period):
         return True
     return False
 
+# converts user form responses into search terms for the Met API
 def process_form_responses(form_data):
     preferences = {}
     
@@ -81,7 +84,7 @@ def process_form_responses(form_data):
     
     return preferences
 
-# adding to test hypothetical form responses
+# adding to test hypothetical form responses - handles interactive questionnaire that collects user preferences
 def get_user_input():
     print("\n--- Art Preference Questionnaire ---")
     
@@ -133,6 +136,7 @@ def get_user_input():
         'culture': culture
     }
 
+# displays artwork info in a readable format
 def display_artwork_info(artwork):
     if artwork:
         print("\nArtwork Information:")
