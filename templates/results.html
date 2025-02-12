@@ -7,7 +7,7 @@
             <h1 class="text-white text-2xl font-bold">ArtSonix</h1>
             <ul class="flex space-x-4">
                 <li><a href="/" class="text-white hover:underline">Home</a></li>
-                <li><a href="#" class="text-white hover:underline">About</a></li>
+                <li><a href="/about" class="text-white hover:underline">About</a></li>
                 <li><a href="#" class="text-white hover:underline">Contact</a></li>
             </ul>
         </div>
@@ -19,19 +19,32 @@
         <div class="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-2xl">
             <h1 class="text-2xl font-bold text-gray-800">Here are your results:</h1>
             <div id="results" class="mt-4">
-                <h3 class="text-xl font-semibold text-blue-600">Music Recommendations:</h3>
-                <ul class="list-disc list-inside text-gray-700">
-                    <li>{{ music_placeholder_1 }}</li>
-                    <li>{{ music_placeholder_2 }}</li>
-                    <li>{{ music_placeholder_3 }}</li>
-                </ul>
-                
-                <h3 class="text-xl font-semibold text-blue-600 mt-4">Art Recommendations:</h3>
-                <ul class="list-disc list-inside text-gray-700">
-                    <li>{{ art_placeholder_1 }}</li>
-                    <li>{{ art_placeholder_2 }}</li>
-                    <li>{{ art_placeholder_3 }}</li>
-                </ul>
+                {% if has_results %}
+                    <h3 class="text-xl font-semibold text-blue-600">Music Recommendations:</h3>
+                    <ul class="list-disc list-inside text-gray-700">
+                        <li>{{ music_placeholder_1 }}</li>
+                        <li>{{ music_placeholder_2 }}</li>
+                        <li>{{ music_placeholder_3 }}</li>
+                    </ul>
+                    
+                    <h3 class="text-xl font-semibold text-blue-600 mt-4">Art Recommendations:</h3>
+                    <ul class="list-disc list-inside text-gray-700">
+                        {% for artwork in artworks %}
+                            <li>
+                                <img src="{{ artwork.primaryImageSmall }}" alt="{{ artwork.title }}" class="w-full mb-4">
+                                <p><strong>Title:</strong> {{ artwork.title }}</p>
+                                {% if artwork.artistDisplayName %}
+                                    <p><strong>Artist:</strong> {{ artwork.artistDisplayName }}</p>
+                                {% else %}
+                                    <p><strong>Artist:</strong> Unknown</p>
+                                {% endif %}
+                                <p><strong>Object Date:</strong> {{ artwork.objectDate }}</p>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-center text-gray-600">No results found for the selected art style. Please try a different art style.</p>
+                {% endif %}
             </div>
         </div>
     </div>

@@ -23,7 +23,7 @@
                 <input type="text" id="music-genre" name="music_genre" placeholder="e.g. Hip-Hop, Jazz" class="w-full p-2 border rounded-lg">
 
                 <label class="block text-gray-600 mt-2">Favorite Art Style:</label>
-                <input type="text" id="art-style" name="art_style" placeholder="e.g. Impressionism, Abstract" class="w-full p-2 border rounded-lg">
+                <input type="text" id="art-style" name="art_style" placeholder="e.g. Impressionism, Abstract" class="w-full p-2 border rounded-lg" required>
 
                 <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
                     Get Recommendations
@@ -33,9 +33,15 @@
     </div>
     <script>
         document.getElementById("user-form").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent default form submission
-            window.location.href = "/results"; // Redirect to results page
+            event.preventDefault(); 
+            
+            const artStyle = document.getElementById("art-style").value;
+            
+            if (artStyle.trim()) {
+                window.location.href = `/results?art_style=${encodeURIComponent(artStyle)}`;
+            }
         });
     </script>
 </body>
 {% endblock %}
+
