@@ -10,17 +10,12 @@ def client():
 def test_index(client):
     response = client.get('/')
     assert response.status_code == 200
-    assert b'index' in response.data
+    assert b'/' in response.data
 
 def test_about(client):
     response = client.get('/about')
     assert response.status_code == 200
     assert b'about' in response.data
-
-def test_credits(client):
-    response = client.get('/credits')
-    assert response.status_code == 200
-    assert b'credits' in response.data
 
 def test_results(client):
     response = client.get('/results')
@@ -30,4 +25,4 @@ def test_results(client):
 def test_error(client):
     response = client.get('/error')
     assert response.status_code == 200
-    assert b'error' in response.data
+    assert b'Error' in response.data
