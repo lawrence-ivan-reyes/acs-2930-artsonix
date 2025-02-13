@@ -1,0 +1,46 @@
+name: Auto Revert Breaking PRs
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  check-build:
+    name: Validate Main Branch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Tests
+        run: |
+          npm ci
+          npm test
+
+      - name: Revert on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const lastCommit = context.payload.head_commit.id;
+            const commitMessage = context.payload.head_commit.message;
+
+            github.rest.repos.createCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              message: `🚨 Reverting commit: ${commitMessage}`,
+              parents: [context.payload.before],
+              tree: context.payload.head_commit.tree_id
+            });
+
+            github.rest.git.updateRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "heads/main",
+              sha: context.payload.before,
+              force: true
+            });
+
+            console.log("🚨 Main branch is broken. Reverted last commit.");
