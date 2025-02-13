@@ -1,62 +1,64 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, jsonify
 import os
 import requests
 from dotenv import load_dotenv
-import math
 
 load_dotenv()
 
-SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
-SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
 app = Flask(__name__)
 BASE_URL = "https://collectionapi.metmuseum.org/public/collection/v1"
-OPENAIBASE_URL = "https://api.openai.com/v1/moderations"
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route("/objects", methods=["GET"])
-def get_objects():
-    """Fetch all available object IDs from the Met Museum API."""
-    response = requests.get(f"{BASE_URL}/objects")
-    return jsonify(response.json())
+def search_artwork(title, artist=None):
+    query_params = {"q": title}
+    if artist:
+        query_params["artistOrCulture"] = artist
 
-@app.route("/object/<int:object_id>", methods=["GET"])
-def get_object(object_id):
-    """Fetch details of a specific artwork using its object ID."""
+    response = requests.get(f"{BASE_URL}/search", params=query_params)
+    search_results = response.json()
+    print(search_results) 
+    return search_results.get("objectIDs", [])
+
+def get_artwork_details(object_id):
     response = requests.get(f"{BASE_URL}/objects/{object_id}")
     data = response.json()
-    if "primaryImage" in data and data["primaryImage"]:
-        return render_template("artwork.html", artwork=data)
-    return jsonify(data)
+    print(data)  
+    return data
 
 @app.route('/results')
 def results():
-    art_style = request.args.get("art_style")
-
-    if not art_style:
+    art_styles = request.args.getlist("art_style")
+    if not art_styles:
         return render_template('error.html', message="Art style is required")
 
-    # Fetch artworks from The Met API based on art style
-    response = requests.get(f"{BASE_URL}/search", params={"q": art_style})
-    search_results = response.json()
-
-    object_ids = search_results.get("objectIDs", [])
-
     artworks = []
-    if object_ids:
-        for obj_id in object_ids[:10]:  # Fetch details for the first 10 artworks
-            obj_response = requests.get(f"{BASE_URL}/objects/{obj_id}").json()
-            if obj_response.get("isPublicDomain"): # Check if artwork is public domain
-                if "primaryImageSmall" in obj_response and obj_response["primaryImageSmall"]:
-                    artworks.append(obj_response)
+    seen_object_ids = set()
+
+    for style in art_styles:
+        response = requests.get(f"{BASE_URL}/search", params={"q": style})
+        search_results = response.json()
+        print(f"Search results for style '{style}': {search_results}")  # Detailed log
+
+        object_ids = search_results.get("objectIDs", [])
+
+        count = 0
+        if object_ids:
+            for obj_id in object_ids:
+                if count >= 3:
+                    break
+                print(f"Processing object ID: {obj_id}")  # Detailed log
+                if obj_id not in seen_object_ids:
+                    obj_response = get_artwork_details(obj_id)
+                    if obj_response.get("isPublicDomain"):
+                        if "primaryImageSmall" in obj_response and obj_response["primaryImageSmall"]:
+                            artworks.append(obj_response)
+                            seen_object_ids.add(obj_id)
+                            count += 1
 
     return render_template('results.html', artworks=artworks, has_results=bool(artworks))
-
 
 @app.route("/search", methods=["GET"])
 def search_objects():
@@ -65,15 +67,16 @@ def search_objects():
     artist = request.args.get("artist")
     year = request.args.get("year")
     medium = request.args.get("medium")
-    sort_by = request.args.get("sort", "title")  
+    sort_by = request.args.get("sort", "title")
     page = int(request.args.get("page", 1))
-    per_page = 10  # Results per page
+    per_page = 9  # Results per page
 
     if not query:
         return jsonify({"error": "Please provide a search query using ?q=keyword"}), 400
 
     response = requests.get(f"{BASE_URL}/search", params={"q": query})
     search_results = response.json()
+    print(f"Search results: {search_results}")  # Detailed log
     object_ids = search_results.get("objectIDs", [])
 
     total_results = len(object_ids)
@@ -84,7 +87,7 @@ def search_objects():
     artworks = []
 
     for obj_id in paginated_ids:
-        obj_response = requests.get(f"{BASE_URL}/objects/{obj_id}").json()
+        obj_response = get_artwork_details(obj_id)
         # Apply additional filters (artist, year, medium)
         if artist and artist.lower() not in obj_response.get("artistDisplayName", "").lower():
             continue
