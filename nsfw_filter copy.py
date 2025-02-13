@@ -56,12 +56,12 @@ LIKELIHOOD_MAPPING = {
 
 # ✅ Whitelisted Phrases (Allowed Content)
 WHITELIST_TERMS = [
-    "best", "anime", "edit", "dark", "phonk", "bass drop", r"Best Songs", 
-    "weekly updates", "top anime song", "OST", "opening", 
-    "ending", "BGM", "OP", "ED", "JJk", "One Piece", "MHA", 
-    "Demon Slayer", "SNK", "Naruto", "Chainsaw Man", "Yoasobi", 
-    "DBZ", "HXH", "Jojo", "Tokyo Ghoul", "Attack on Titan", 
-    "My Hero Academia", "main character", "boss battle", "Walter White", "chill", "sleep", "study",
+    "best", "anime", "edit", "dark", "phonk", "bass drop", "remix", r"(\b?:best songs\b)", "remixes", "shoujo"
+    "weekly updates", "top anime song", "OST", "opening", "gym", "workout", "study", "chill", "relax", "lofi", "vibes", "vibe",
+    "ending", "BGM", "OP", "ED", "JJk", "One Piece", "MHA", "soundtrack", "soundtracks", "music", "songs", "song", "playlist", "playlists",
+    "Demon Slayer", "SNK", "Naruto", "Chainsaw Man", "Yoasobi", "gym", "gym anime", "gym rage", "gym workout", "gym music", "gym playlist", "phonk", "phonk playlist",
+    "DBZ", "HXH", "Jojo", "Tokyo Ghoul", "Attack on Titan", "rage", "rage music", "rage playlist", "anime rage", "anime rage music", "anime rage playlist",
+    "My Hero Academia", "main character", "boss battle", "Walter White", "chill", "sleep", "study", "hoe (tool)", "rap (music genre)", r"(\b?:play|playing\b)", 
 ]
 
 WHITELIST_ARTISTS = {
