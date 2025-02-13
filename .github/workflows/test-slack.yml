@@ -11,4 +11,4 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_CHANNEL: "#acs-2930-group-2"
-          SLACK_MESSAGE: "🚀 Hello bellow in my cello from GitHub Actions! Tell me if this works lol!"
+          SLACK_MESSAGE: "🚀 I see it! It works, yay!"
