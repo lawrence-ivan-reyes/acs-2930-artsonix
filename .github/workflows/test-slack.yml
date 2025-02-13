@@ -1,0 +1,14 @@
+name: Test Slack Notification
+
+on: workflow_dispatch  # Allows manual trigger
+
+jobs:
+  send-test-message:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Test Message to Slack
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_CHANNEL: "#acs-2930-group-2"
+          SLACK_MESSAGE: "🚀 Hello bellow in my cello from GitHub Actions! Tell me if this works lol!"
