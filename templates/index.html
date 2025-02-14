@@ -1,47 +1,99 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <nav class="bg-blue-600 p-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-white text-2xl font-bold">ArtSonix</h1>
-            <ul class="flex space-x-4">
-                <li><a href="/" class="text-white hover:underline">Home</a></li>
-                <li><a href="/about" class="text-white hover:underline">About</a></li>
-                <li><a href="#" class="text-white hover:underline">Contact</a></li>
-            </ul>
-        </div>
-    </nav>
-    <header class="text-center py-10">
-        <h2 class="text-3xl font-bold text-gray-800">Welcome to ArtSonix!</h2>
-    </header>
-    
-    <div class="flex items-center justify-center min-h-screen">
-        <div class="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-2xl">
-            <h1 class="text-2xl font-bold text-gray-800">Discover Music Through Art</h1>
-            <form id="user-form" class="mt-4">
-                <label for="mood" class="block text-gray-600">What is your current mood?</label>
-                <input type="text" id="mood" name="mood" placeholder="e.g. Happy, Relaxed, Energetic" class="w-full p-2 border rounded-lg" required>
-
-                <label for="art-style" class="block text-gray-600 mt-2">Favorite Art Style?</label>
-                <input type="text" id="art-style" name="art_style" placeholder="e.g. Impressionism, Abstract" class="w-full p-2 border rounded-lg" required>
-
-                <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                    Get Recommendations
-                </button>
-            </form>
-        </div>
+<nav class="bg-blue-600 p-4">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <h1 class="text-white text-2xl font-bold">ArtSonix</h1>
+        <ul class="flex space-x-4">
+            <li><a href="/" class="text-white hover:underline">Home</a></li>
+            <li><a href="/about" class="text-white hover:underline">About</a></li>
+            <li><a href="#" class="text-white hover:underline">Contact</a></li>
+        </ul>
     </div>
+</nav>
 
-    <script>
-        document.getElementById("user-form").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent default form submission
-            
-            const mood = document.getElementById("mood").value;
-            const artStyle = document.getElementById("art-style").value;
-            
-            if (mood.trim() && artStyle.trim()) {
-                window.location.href = `/results?mood=${encodeURIComponent(mood)}&artStyle=${encodeURIComponent(artStyle)}`;
-            }
-        });
-    </script>
+<header class="text-center py-10">
+    <h2 class="text-3xl font-bold text-gray-800">Welcome to ArtSonix!</h2>
+</header>
+
+<div class="flex items-center justify-center py-10">
+    <div class="max-w-xl w-full mx-auto p-6 bg-white shadow-lg rounded-2xl">
+        <h1 class="text-2xl font-bold text-gray-800">Discover Music Through Art</h1>
+        
+        <form id="user-form" class="mt-4" action="/results" method="get">
+            <!-- Recommendation Type Selection -->
+            <label for="rec-type" class="block text-gray-600">What do you want to search for?</label>
+            <select id="rec-type" name="rec_type" class="w-full p-2 border rounded-lg" required>
+                <option value="playlist">Playlists</option>
+                <option value="album">Albums</option>
+                <option value="artist">Artists</option>
+                <option value="track">Tracks</option>
+            </select>
+
+            <!-- Mood Selection -->
+            <label for="mood" class="block text-gray-600 mt-4">Pick a mood:</label>
+            <select id="mood" name="mood" class="w-full p-2 border rounded-lg">
+                <option value="" disabled selected>Select a mood</option>
+                <option value="happy">Happy</option>
+                <option value="sad">Sad</option>
+                <option value="energetic">Energetic</option>
+                <option value="relaxed">Relaxed</option>
+                <option value="romantic">Romantic</option>
+                <option value="melancholic">Melancholic</option>
+                <option value="focused">Focused</option>
+                <option value="upbeat">Upbeat</option>
+                <option value="rebellious">Rebellious</option>
+                <option value="mystical">Mystical</option>
+                <option value="dark">Dark</option>
+                <option value="nostalgic">Nostalgic</option>
+                <option value="trippy">Trippy</option>
+                <option value="lofi">Lo-Fi</option>
+                <option value="party">Party</option>
+                <option value="driving">Driving</option>
+                <option value="workout">Workout</option>
+                <option value="epic">Epic</option>
+                <option value="spiritual">Spiritual</option>
+                <option value="chill">Chill</option>
+                <option value="experimental">Experimental</option>
+                <option value="video game">Video Game</option>
+                <option value="anime">Anime</option>
+                <option value="industrial">Industrial</option>
+                <option value="gothic">Gothic</option>
+                <option value="cyberpunk">Cyberpunk</option>
+                <option value="emotional">Emotional</option>
+                <option value="gangster">Gangster</option>
+                <option value="roadtrip">Roadtrip</option>
+                <option value="latin vibes">Latin Vibes</option>
+                <option value="weird">Weird</option>
+                <option value="meme">Meme</option>
+            </select>
+
+            <!-- Search Option -->
+            <div class="mt-4">
+                <button type="button" id="toggle-search" class="text-blue-500 underline">
+                    Do you want to just search instead?
+                </button>
+                <input type="text" id="search-query" name="query"
+                    class="w-full p-2 mt-2 border rounded-lg hidden"
+                    placeholder="Enter search keyword (e.g., artist, album, song)">
+            </div>
+
+            <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                Search Music
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById("toggle-search").addEventListener("click", function () {
+        let searchInput = document.getElementById("search-query");
+        if (searchInput.classList.contains("hidden")) {
+            searchInput.classList.remove("hidden");
+        } else {
+            searchInput.classList.add("hidden");
+        }
+    });
+  </script>
+
 {% endblock %}
