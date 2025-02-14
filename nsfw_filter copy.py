@@ -23,12 +23,12 @@ OBLIVIOUS_HTTP_RELAY = os.getenv("OBLIVIOUS_HTTP_RELAY")
 GOOGLE_SAFE_BROWSING_API_KEY = os.getenv("GOOGLE_SAFE_BROWSING_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 openai.api_key = OPENAI_API_KEY
+CACHE_EXPIRY = 6 * 3600  # Cache expiry in seconds (6 hours)
+OPENAI_RATE_LIMIT = 500
 
 # ✅ Google Cloud Vision API Configuration
 GOOGLE_CLOUD_VISION_CLIENT = vision.ImageAnnotatorClient()
 GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-CACHE_EXPIRY = 6 * 3600  # Cache expiry in seconds (6 hours)
-OPENAI_RATE_LIMIT = 500
 
 # ✅ Rate Limits & Caching
 OPENAI_REQUEST_COUNT = 0
