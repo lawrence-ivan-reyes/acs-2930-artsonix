@@ -190,11 +190,13 @@ async def results():
 
     rec_type = request.args.get('rec_type', 'playlist')
     moods = request.args.getlist('mood')
-    query = request.args.get('query', '')
+    query = request.args.get('query', '').strip()  # Ensure query is stripped of whitespace
 
     # ✅ Use mapped genres if no direct query is provided
     genre_queries = [genre for mood in moods if mood in MOOD_GENRE_MAP for genre in MOOD_GENRE_MAP[mood]]
-    search_query = query if query else " ".join(genre_queries)
+    
+    # ✅ Ensure there's always a query (to prevent API 400 errors)
+    search_query = query if query else " ".join(genre_queries) if genre_queries else "music"
 
     access_token = await get_access_token()
     if not access_token:
@@ -203,13 +205,14 @@ async def results():
     headers = {"Authorization": f"Bearer {access_token}"}
     results = []
     offset = 0  
-    limit = 50  # Spotify max per request
+    limit = 50  
 
-    while offset < 1000 and len(results) < 50:  # ✅ Cap at 50 results
+    while offset < 1000 and len(results) < 50:
         if offset + limit > 1000:
             limit = 1000 - offset  
 
         params = {"q": search_query, "type": rec_type, "limit": limit, "offset": offset}
+        
         async with aiohttp.ClientSession() as session:
             async with session.get(SPOTIFY_API_URL, headers=headers, params=params) as response:
                 if response.status != 200:
@@ -243,8 +246,15 @@ async def results():
 # ✅ **Process Results with NSFW Filtering**
 async def process_results(results, rec_type):
     """Processes Spotify results with NSFW filtering and image safety checks."""
-    tasks = [process_item(item, rec_type) for item in results]
+    valid_results = [item for item in results if isinstance(item, dict) and "name" in item]  # ✅ Remove None & invalid items
+
+    if not valid_results:
+        logging.error("❌ No valid items to process after filtering!")
+        return []
+
+    tasks = [process_item(item, rec_type) for item in valid_results]
     processed_results = await asyncio.gather(*tasks)
+    
     return [res for res in processed_results if res]  # ✅ Remove None (Blocked Items)
 
 # ✅ **Process Each Item (Async)**
