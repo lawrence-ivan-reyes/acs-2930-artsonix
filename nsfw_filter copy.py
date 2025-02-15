@@ -14,7 +14,6 @@ from cachetools import TTLCache
 from google.cloud import vision
 import urllib.parse
 from rapidfuzz import fuzz
-from metaphone import doublemetaphone
 
 # Load environment variables
 load_dotenv()
