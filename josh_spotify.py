@@ -196,14 +196,17 @@ def about():
 
 @app.route('/results', methods=['GET'])
 def results():
-    """Fetches Spotify results, applies NSFW filtering, and renders an HTML page."""
-    
+    """Fetches Spotify results using subgenres mapped to moods, applies NSFW filtering, and renders results."""
+
     rec_type = request.args.get('rec_type', 'playlist')
     mood = request.args.get('mood', 'anime')
     query = request.args.get('query', '')
 
-    if not query:
-        query = mood  # Use mood as default search if no query provided
+    # ✅ Use subgenres from mood map instead of the mood itself
+    search_genres = MOOD_GENRE_MAP.get(mood, [mood])  # Defaults to mood if no mapping exists
+    query = " OR ".join(search_genres) if not query else query  # If no manual query, use subgenres
+
+    logging.info(f"🔎 Searching Spotify for: {query} (Rec Type: {rec_type})")
 
     # ✅ Ensure a new event loop for Flask
     loop = asyncio.new_event_loop()
@@ -218,7 +221,7 @@ def results():
     results = []
     offset, limit = 0, 50  
 
-    while len(results) < 50:  # Fetch a max of 50 before randomizing selection
+    while len(results) < 50:
         params = {"q": query, "type": rec_type, "limit": limit, "offset": offset}
         response = requests.get(SPOTIFY_API_URL, headers=headers, params=params)
 
@@ -238,6 +241,15 @@ def results():
 
     if len(results) < 9:
         logging.warning(f"⚠️ Only {len(results)} results available from Spotify")
+
+    # ✅ **Sort by Followers (Playlists) or Popularity (Other Media)**
+    if rec_type == "playlist":
+        results.sort(key=lambda x: x.get("followers", {}).get("total", 0), reverse=True)
+    else:
+        results.sort(key=lambda x: x.get("popularity", 0), reverse=True)
+
+    # ✅ Shuffle after sorting for randomness
+    random.shuffle(results)
 
     # ✅ Select 9 Random Results Before Filtering
     selected_results = random.sample(results, min(len(results), 9))
