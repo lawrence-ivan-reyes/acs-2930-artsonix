@@ -31,6 +31,29 @@ TOKEN_CACHE = {"access_token": None, "expires_at": 0}
 SPOTIFY_API_URL = "https://api.spotify.com/v1/search"
 RETRY_ATTEMPTS = 3  # Retries if rate-limited
 
+# ✅ Mood-to-Genre Mapping
+MOOD_GENRE_MAP = {
+    "Inspired": ["Orchestral", "Epic Soundtrack", "Power Metal", "Synthwave", "Post-Rock"],
+    "Creative": ["Lo-fi", "Jazz", "Indie Folk", "Dream Pop", "Experimental"],
+    "Calm": ["Ambient", "New Age", "Chillout", "Bossa Nova", "Soft Piano"],
+    "Energetic": ["EDM", "House", "Trance", "Drum & Bass", "Speedcore"],
+    "Adventurous": ["Prog Rock", "Folk", "Cyberpunk", "World Music", "Dungeon Synth"],
+    "Happy": ["Pop", "Disco", "Funk", "Kawaii Future Bass", "Afrobeats"],
+    "Sad": ["Indie", "Acoustic", "Slowcore", "Sadcore", "Shoegaze"],
+    "Romantic": ["R&B", "Soul", "Jazz", "Classical", "City Pop"],
+    "Focused": ["Instrumental", "Classical", "Lo-fi", "Synthwave", "IDM"],
+    "Upbeat": ["Dance", "Pop", "Funk", "Ska", "Jersey Club"],
+    "Rebellious": ["Punk", "Hardcore", "Grunge", "Riot Grrrl", "Cybergrind"],
+    "Dark": ["Gothic Rock", "Darkwave", "Industrial", "Black Metal", "Witch House"],
+    "Nostalgic": ["Classic Rock", "80s Pop", "Mallsoft", "Plunderphonics", "Y2K Pop"],
+    "Trippy": ["Psytrance", "Trip-Hop", "Neo-Psychedelia", "Space Rock", "Deep Dub"],
+    "Party": ["Hip-Hop", "EDM", "Reggaeton", "Moombahton", "Jungle"],
+    "Epic": ["Orchestral", "Cinematic", "Power Metal", "Film Score", "Trailer Music"],
+    "Quirky": ["Webcore", "Dariacore", "Hyperpop", "Electro Swing", "8-Bit"],
+    "Emotional": ["Indie Folk", "Shoegaze", "Post-Rock", "Sadcore", "Ethereal Wave"]
+}
+
+
 # ✅ Async function to get Spotify access token with lock
 async def get_access_token():
         current_time = time.time()
@@ -387,6 +410,10 @@ async def process_item(item, rec_type):
         "description": description,
         "popularity": popularity
     }
+    
+@app.route('/credits')
+def credits():
+    return render_template('credits.html')
 
 # ✅ Run Flask app
 if __name__ == "__main__":
