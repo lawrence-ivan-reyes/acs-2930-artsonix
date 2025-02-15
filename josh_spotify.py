@@ -80,12 +80,12 @@ async def get_access_token():
 async def fetch_spotify_data(session, url, headers, attempt=1):
     try:
         async with session.get(url, headers=headers, timeout=5) as response:
-            if response.status == 401:  # Token expired → Refresh
+            if response.status == 401:
                 logging.warning("⚠️ Token expired, refreshing...")
                 headers["Authorization"] = f"Bearer {await get_access_token()}"
                 return await fetch_spotify_data(session, url, headers, attempt + 1)
 
-            if response.status == 429 and attempt < RETRY_ATTEMPTS:  # Rate limit hit
+            if response.status == 429 and attempt < RETRY_ATTEMPTS:
                 retry_after = int(response.headers.get("Retry-After", 2))
                 logging.warning(f"⚠️ Rate limited! Retrying in {retry_after} sec...")
                 await asyncio.sleep(retry_after)
@@ -93,11 +93,7 @@ async def fetch_spotify_data(session, url, headers, attempt=1):
 
             response.raise_for_status()
             data = await response.json()
-            if not isinstance(data, dict):
-                logging.error(f"❌ Unexpected API response: {data}")
-                return None
-
-            return data
+            return data if isinstance(data, dict) else None
     except Exception as e:
         logging.error(f"❌ Failed request: {e} (Attempt {attempt})")
         return None
@@ -189,44 +185,46 @@ def about():
     return render_template('about.html')
 
 @app.route('/results', methods=['GET'])
-def results():
+async def results():
     """Fetches Spotify results, applies NSFW filtering, and renders an HTML page."""
 
     rec_type = request.args.get('rec_type', 'playlist')
-    mood = request.args.get('mood', 'anime')
+    moods = request.args.getlist('mood')
     query = request.args.get('query', '')
 
-    if not query:
-        query = mood  # Use mood as default search if no query provided
+    # ✅ Use mapped genres if no direct query is provided
+    genre_queries = [genre for mood in moods if mood in MOOD_GENRE_MAP for genre in MOOD_GENRE_MAP[mood]]
+    search_query = query if query else " ".join(genre_queries)
 
-    # ✅ Fetch Access Token (Asynchronous Handling)
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    access_token = loop.run_until_complete(get_access_token())
+    access_token = await get_access_token()
     if not access_token:
         return render_template("error.html", message="Failed to fetch access token"), 500
 
     headers = {"Authorization": f"Bearer {access_token}"}
     results = []
-    offset, limit = 0, 50  
+    offset = 0  
+    limit = 50  # Spotify max per request
 
-    while len(results) < 50:  # Fetch a max of 50 before randomizing selection
-        params = {"q": query, "type": rec_type, "limit": limit, "offset": offset}
-        response = requests.get(SPOTIFY_API_URL, headers=headers, params=params)
+    while offset < 1000 and len(results) < 50:  # ✅ Cap at 50 results
+        if offset + limit > 1000:
+            limit = 1000 - offset  
 
-        if response.status_code != 200:
-            return render_template("error.html", message="Failed to fetch data from Spotify"), response.status_code
+        params = {"q": search_query, "type": rec_type, "limit": limit, "offset": offset}
+        async with aiohttp.ClientSession() as session:
+            async with session.get(SPOTIFY_API_URL, headers=headers, params=params) as response:
+                if response.status != 200:
+                    error_msg = await response.text()
+                    logging.error(f"❌ Spotify API Error {response.status}: {error_msg}")
+                    return render_template("error.html", message="Failed to fetch data from Spotify"), response.status
 
-        data = response.json()
-        items = data.get(rec_type + "s", {}).get("items", [])
-        if not isinstance(items, list):
+                data = await response.json()
+
+        items = data.get(f"{rec_type}s", {}).get("items", [])
+        if not isinstance(items, list) or not items:
             break  
 
-        results.extend([item for item in items if isinstance(item, dict)])
-
+        results.extend(items)
         offset += limit  
-        if len(items) < limit:  
-            break  
 
     if len(results) < 9:
         logging.warning(f"⚠️ Only {len(results)} results available from Spotify")
@@ -234,10 +232,8 @@ def results():
     # ✅ Select 9 Random Results Before Filtering
     selected_results = random.sample(results, min(len(results), 9))
 
-    # ✅ Filter Results Asynchronously
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    filtered_results = loop.run_until_complete(process_results(selected_results, rec_type))
+    # ✅ **Filter Results Asynchronously**
+    filtered_results = await process_results(selected_results, rec_type)
 
     if not filtered_results:
         return render_template("error.html", message="No safe results found"), 404
@@ -254,112 +250,12 @@ async def process_results(results, rec_type):
 # ✅ **Process Each Item (Async)**
 async def process_item(item, rec_type):
     """Processes a single Spotify item, applying NSFW filtering."""
-    name = item.get("name", "Unknown")
-    url = item.get("external_urls", {}).get("spotify", "#")
-    image_url = item["images"][0]["url"] if item.get("images") else None
-    creator = item.get("owner", {}).get("display_name", "Unknown Creator") if rec_type == "playlist" else None
-    description = html.unescape(item.get("description", "No description available.")) if rec_type == "playlist" else None
-    track_count = item.get("tracks", {}).get("total", 0) if rec_type == "playlist" else None
-    popularity = item.get("popularity", "N/A")
-
-    # ✅ **Asynchronous NSFW Filtering**
-    safe_name, safe_description = await asyncio.gather(
-        is_safe_content(name), is_safe_content(description)
-    )
-
-    if not (safe_name and safe_description):
-        logging.warning(f"❌ NSFW Playlist Hidden: {name}")
-        return None  
-
-    if track_count and track_count < 5:
-        logging.warning(f"⚠️ Low-Track Playlist Hidden: {name} (Tracks: {track_count})")
-        return None  
-
-    # ✅ **Image Safety Check (API4AI)**
-    safe_image_url = await is_safe_image(image_url) if image_url else "/static/images/censored-image.png"
-
-    return {
-        "name": name,
-        "url": url,
-        "image": safe_image_url,
-        "type": rec_type,
-        "creator": creator,
-        "track_count": track_count,
-        "description": description,
-        "popularity": popularity
-    }
-
-@app.route('/results_test', methods=['GET'])
-async def results_test():
-    """Fetches ALL possible Spotify results while applying NSFW filtering."""
-
-    rec_type = request.args.get('rec_type', 'playlist')  # Default to playlist
-    mood = request.args.get('mood', 'anime')
-    query = request.args.get('query', '')
-
-    search_query = query if query else mood  
-    access_token = await get_access_token()
-    if not access_token:
-        return jsonify({"error": "Failed to fetch access token"}), 500
-
-    headers = {"Authorization": f"Bearer {access_token}"}
-    results = []
-    offset = 0  
-    limit = 50  # Spotify max per request
-
-    while offset < 1000:
-        if offset + limit > 1000:
-            limit = 1000 - offset  
-
-        params = {"q": search_query, "type": rec_type, "limit": limit, "offset": offset}
-        async with aiohttp.ClientSession() as session:
-            async with session.get(SPOTIFY_API_URL, headers=headers, params=params) as response:
-                if response.status != 200:
-                    error_msg = await response.text()
-                    logging.error(f"❌ Spotify API Error {response.status}: {error_msg}")
-                    return jsonify({"error": "Spotify API Error", "details": error_msg}), response.status
-
-                data = await response.json()
-
-        # ✅ Extract correct key dynamically based on rec_type
-        items = data.get(f"{rec_type}s", {}).get("items", [])
-
-        if not isinstance(items, list):
-            logging.warning(f"⚠️ Unexpected response format: {data}")
-            break  
-
-        if not items:
-            break  
-
-        results.extend(items)
-        offset += limit  
-
-    logging.info(f"✅ Retrieved {len(results)} {rec_type}(s) from Spotify")
-
-    # ✅ Format results based on type
-    formatted_results = []
-    for item in results:
-        if not isinstance(item, dict) or "name" not in item:
-            logging.warning("⚠️ Skipping invalid Spotify item (NoneType)")
-            continue  
-
-        formatted_item = await process_item(item, rec_type)
-        if formatted_item:
-            formatted_results.append(formatted_item)
-
-    logging.info(f"✅ Final Results Count: {len(formatted_results)}")
-
-    return jsonify({"results": formatted_results}), 200
-
-# ✅ **Process Each Item Correctly Based on Type**
-async def process_item(item, rec_type):
-    """Processes a single Spotify item, applying NSFW filtering and correct parsing based on type."""
     
     name = item.get("name", "Unknown")
     url = item.get("external_urls", {}).get("spotify", "#")
     image_url = item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
 
-    # ✅ Handling based on Spotify type
+    # ✅ **Handle Based on Spotify Type**
     if rec_type == "playlist":
         creator = item.get("owner", {}).get("display_name", "Unknown Creator")
         description = html.unescape(item.get("description", "No description available."))
