@@ -14,6 +14,7 @@ from cachetools import TTLCache
 from google.cloud import vision
 import urllib.parse
 from rapidfuzz import fuzz
+from metaphone import doublemetaphone
 
 # Load environment variables
 load_dotenv()
@@ -134,7 +135,19 @@ async def is_safe_url(url: str) -> bool:
             return True  # Assume safe if API fails
 
 
-# ✅ Lightweight Keyword Pre-Check
+# ✅ Phonetic Matching (Double Metaphone)
+def phonetic_match(text: str, blocklist: set) -> bool:
+    """Checks if the phonetic representation of text matches NSFW words."""
+    text_primary, text_secondary = doublemetaphone(text)
+
+    for word in blocklist:
+        word_primary, word_secondary = doublemetaphone(word)
+        if text_primary == word_primary or text_secondary == word_secondary:
+            return True  # 🚨 Phonetic match detected
+
+    return False
+
+# ✅ Lightweight Keyword & Phonetic Pre-Check
 async def keyword_filter(text: str) -> bool:
     """Quick keyword filtering before sending to OpenAI."""
     if not text:
@@ -142,20 +155,25 @@ async def keyword_filter(text: str) -> bool:
 
     text = html.unescape(text).strip().lower()
 
-    # ✅ If an explicit word is found, block immediately
-    if BLOCKLIST_PATTERN.search(text):
+    # ✅ First check: Direct word match
+    if any(word in text for word in BLOCKLIST_TERMS):
         logging.info("🚫 NSFW detected by keyword filter.")
+        return False  
+
+    # ✅ Second check: Phonetic match (Double Metaphone)
+    if phonetic_match(text, BLOCKLIST_TERMS):
+        logging.info("🚫 NSFW detected by phonetic filter (Double Metaphone).")
         return False  
 
     return True  
 
-# ✅ NSFW Text Filtering (Keyword Pre-Check + OpenAI)
+# ✅ NSFW Text Filtering (Keyword + Phonetic + OpenAI)
 async def is_safe_content(text: str) -> bool:
-    """Applies a light keyword filter before OpenAI NSFW check."""
+    """Applies a keyword filter + phonetic filter before OpenAI NSFW check."""
     if text in NSFW_TEXT_CACHE:
         return NSFW_TEXT_CACHE[text]  
 
-    # ✅ First pass: quick keyword filter
+    # ✅ First pass: keyword & phonetic filter
     if not await keyword_filter(text):
         return False  
 
@@ -164,22 +182,36 @@ async def is_safe_content(text: str) -> bool:
     NSFW_TEXT_CACHE[text] = result  # ✅ Cache result
     return result
 
-# ✅ OpenAI NSFW Text Filter
+# ✅ OpenAI NSFW Text Filter (Threshold-Based)
 async def openai_nsfw_filter(text: str) -> bool:
-    """Uses OpenAI Moderation API for NSFW text detection."""
+    """Uses OpenAI Moderation API as the final NSFW text check with custom thresholds."""
     payload = {
         "model": "omni-moderation-latest",
-        "input": [{"type": "text", "text": text}]
+        "input": [{"type": "text", "text": text}],
+        "thresholds": {  
+            "sexual": 0.001,  
+            "sexual/minors": 0.0001,  
+            "harassment/threatening": 0.001,
+        }
     }
 
     session = await get_session()
     try:
-        async with session.post(OPENAI_MODERATION_API_URL, json=payload, headers={"Authorization": f"Bearer {OPENAI_API_KEY}"}) as response:
+        async with session.post(
+            OPENAI_MODERATION_API_URL,
+            json=payload,
+            headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
+        ) as response:
             data = await response.json()
+
+            # ✅ Check if OpenAI flagged the text above the threshold
             flagged = any(result.get("flagged", False) for result in data.get("results", []))
+
             if flagged:
-                logging.info("🚫 NSFW detected by OpenAI.")
-            return not flagged
+                logging.info("🚫 NSFW detected by OpenAI (Threshold-Based).")
+
+            return not flagged  # ✅ Return True if safe, False if flagged
+
     except Exception as e:
         logging.error(f"❌ OpenAI NSFW Filter Error: {e}")
         return True  # ✅ Assume safe if API fails
@@ -249,4 +281,4 @@ async def _openai_nsfw_image_check(image_url: str) -> bool:
             return not any(result.get("flagged", False) for result in data.get("results", []))
     except Exception as e:
         logging.error(f"❌ OpenAI Image Moderation Error: {e}")
-        return False
+        return False  
