@@ -134,57 +134,23 @@ async def is_safe_url(url: str) -> bool:
         except Exception:
             return True  # Assume safe if API fails
 
-
-# ✅ Phonetic Matching (Double Metaphone)
-def phonetic_match(text: str, blocklist: set) -> bool:
-    """Checks if the phonetic representation of text matches NSFW words."""
-    text_primary, text_secondary = doublemetaphone(text)
-
-    for word in blocklist:
-        word_primary, word_secondary = doublemetaphone(word)
-        if text_primary == word_primary or text_secondary == word_secondary:
-            return True  # 🚨 Phonetic match detected
-
-    return False
-
-# ✅ Lightweight Keyword & Phonetic Pre-Check
+# ✅ **🔹 Keyword-Based NSFW Filtering (Titles & Descriptions Only)**
 async def keyword_filter(text: str) -> bool:
-    """Quick keyword filtering before sending to OpenAI."""
+    """First-pass keyword filtering against a predefined blocklist."""
     if not text:
         return True  
 
     text = html.unescape(text).strip().lower()
 
-    # ✅ First check: Direct word match
-    if any(word in text for word in BLOCKLIST_TERMS):
-        logging.info("🚫 NSFW detected by keyword filter.")
-        return False  
-
-    # ✅ Second check: Phonetic match (Double Metaphone)
-    if phonetic_match(text, BLOCKLIST_TERMS):
-        logging.info("🚫 NSFW detected by phonetic filter (Double Metaphone).")
+    # ✅ **Blocklist Check**
+    if any(word in text for word in BLOCKLIST_TERMS) or any(phrase in text for phrase in BAD_PHRASES):
         return False  
 
     return True  
 
-# ✅ NSFW Text Filtering (Keyword + Phonetic + OpenAI)
-async def is_safe_content(text: str) -> bool:
-    """Applies a keyword filter + phonetic filter before OpenAI NSFW check."""
-    if text in NSFW_TEXT_CACHE:
-        return NSFW_TEXT_CACHE[text]  
-
-    # ✅ First pass: keyword & phonetic filter
-    if not await keyword_filter(text):
-        return False  
-
-    # ✅ Second pass: OpenAI Moderation API
-    result = await openai_nsfw_filter(text)
-    NSFW_TEXT_CACHE[text] = result  # ✅ Cache result
-    return result
-
-# ✅ OpenAI NSFW Text Filter (Threshold-Based)
+# ✅ **🔹 OpenAI NSFW Check (Second-Pass)**
 async def openai_nsfw_filter(text: str) -> bool:
-    """Uses OpenAI Moderation API as the final NSFW text check with custom thresholds."""
+    """Uses OpenAI Moderation API as the final NSFW text check."""
     payload = {
         "model": "omni-moderation-latest",
         "input": [{"type": "text", "text": text}],
@@ -195,26 +161,52 @@ async def openai_nsfw_filter(text: str) -> bool:
         }
     }
 
-    session = await get_session()
-    try:
-        async with session.post(
-            OPENAI_MODERATION_API_URL,
-            json=payload,
-            headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
-        ) as response:
-            data = await response.json()
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(
+                "https://api.openai.com/v1/moderations",
+                json=payload,
+                headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
+            ) as response:
+                data = await response.json()
+                return not any(result.get("flagged", False) for result in data.get("results", []))
+        except Exception:
+            return True  # Assume safe if API fails
 
-            # ✅ Check if OpenAI flagged the text above the threshold
-            flagged = any(result.get("flagged", False) for result in data.get("results", []))
+# ✅ **🔹 Final Multi-Pass NSFW Text Filter**
+async def is_safe_content(text: str) -> bool:
+    """Applies keyword filtering first, then OpenAI NSFW check."""
+    if not await keyword_filter(text):
+        return False  
+    return await openai_nsfw_filter(text)
 
-            if flagged:
-                logging.info("🚫 NSFW detected by OpenAI (Threshold-Based).")
+# ✅ **Google Cloud Vision NSFW Check**
+async def is_safe_image(image_url: str) -> str:
+    """Uses Google Cloud Vision API first, then OpenAI for NSFW image detection."""
+    if not image_url:
+        return CENSORED_IMAGE_URL  
 
-            return not flagged  # ✅ Return True if safe, False if flagged
+    # ✅ **Check Cache First**
+    if image_url in NSFW_IMAGE_CACHE:
+        return NSFW_IMAGE_CACHE[image_url]
 
-    except Exception as e:
-        logging.error(f"❌ OpenAI NSFW Filter Error: {e}")
-        return True  # ✅ Assume safe if API fails
+    # ✅ **First Pass: Google Cloud Vision API**
+    if await google_cloud_nsfw_check(image_url):
+        NSFW_IMAGE_CACHE[image_url] = image_url
+        return image_url  # ✅ Safe image
+    else:
+        logging.warning(f"⚠️ NSFW Image Detected by Google Cloud Vision: {image_url}")
+
+    # ✅ **Second Pass: OpenAI (If Google Vision flags or fails)**
+    if await openai_nsfw_image_check(image_url):
+        NSFW_IMAGE_CACHE[image_url] = image_url
+        return image_url  # ✅ Safe after both checks
+    else:
+        logging.warning(f"⚠️ NSFW Image Detected by OpenAI: {image_url}")
+
+    # ✅ **Blocked Image**
+    NSFW_IMAGE_CACHE[image_url] = CENSORED_IMAGE_URL
+    return CENSORED_IMAGE_URL
 
 # ✅ NSFW Image Check (Google Vision + OpenAI in Parallel)
 async def is_safe_image(image_url: str) -> str:
