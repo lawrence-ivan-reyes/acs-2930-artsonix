@@ -238,4 +238,4 @@ async def _openai_nsfw_image_check(image_url: str) -> bool:
             return not any(result.get("flagged", False) for result in data.get("results", []))
     except Exception as e:
         logging.error(f"❌ OpenAI Image Moderation Error: {e}")
-        return False  
+        return False
