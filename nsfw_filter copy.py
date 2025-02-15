@@ -83,6 +83,12 @@ BLOCKLIST_TERMS = [
 
 BAD_PHRASES = { "badphrase1", "badphrase2", "badphrase3"}
 
+# ✅ Compile regex patterns once for efficiency
+BLOCKLIST_PATTERN = re.compile(r'\b(?:' + '|'.join(re.escape(word) for word in BLOCKLIST_TERMS) + r')\b', re.IGNORECASE)
+BAD_PHRASES_PATTERN = re.compile(r'\b(?:' + '|'.join(re.escape(phrase) for phrase in BAD_PHRASES) + r')\b', re.IGNORECASE)
+WHITELIST_PATTERN = re.compile(r'\b(?:' + '|'.join(re.escape(term) for term in WHITELIST_TERMS) + r')\b', re.IGNORECASE)
+WHITELIST_ARTISTS_PATTERN = re.compile(r'\b(?:' + '|'.join(re.escape(artist) for artist in WHITELIST_ARTISTS) + r')\b', re.IGNORECASE)
+
 async def get_session():
     """Ensure we reuse a single aiohttp session for efficiency."""
     global SESSION
@@ -127,51 +133,56 @@ async def is_safe_url(url: str) -> bool:
         except Exception:
             return True  # Assume safe if API fails
 
-# ✅ **🔹 Keyword-Based NSFW Filtering (Titles & Descriptions Only)**
+
+# ✅ Lightweight Keyword Pre-Check
 async def keyword_filter(text: str) -> bool:
-    """First-pass keyword filtering against a predefined blocklist."""
+    """Quick keyword filtering before sending to OpenAI."""
     if not text:
         return True  
 
     text = html.unescape(text).strip().lower()
 
-    # ✅ **Blocklist Check**
-    if any(word in text for word in BLOCKLIST_TERMS) or any(phrase in text for phrase in BAD_PHRASES):
+    # ✅ If an explicit word is found, block immediately
+    if BLOCKLIST_PATTERN.search(text):
+        logging.info("🚫 NSFW detected by keyword filter.")
         return False  
 
     return True  
 
-# ✅ **🔹 OpenAI NSFW Check (Second-Pass)**
-async def openai_nsfw_filter(text: str) -> bool:
-    """Uses OpenAI Moderation API as the final NSFW text check."""
-    payload = {
-        "model": "omni-moderation-latest",
-        "input": [{"type": "text", "text": text}],
-        "thresholds": {  
-            "sexual": 0.001,  
-            "sexual/minors": 0.0001,  
-            "harassment/threatening": 0.001,
-        }
-    }
-
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(
-                "https://api.openai.com/v1/moderations",
-                json=payload,
-                headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
-            ) as response:
-                data = await response.json()
-                return not any(result.get("flagged", False) for result in data.get("results", []))
-        except Exception:
-            return True  # Assume safe if API fails
-
-# ✅ **🔹 Final Multi-Pass NSFW Text Filter**
+# ✅ NSFW Text Filtering (Keyword Pre-Check + OpenAI)
 async def is_safe_content(text: str) -> bool:
-    """Applies keyword filtering first, then OpenAI NSFW check."""
+    """Applies a light keyword filter before OpenAI NSFW check."""
+    if text in NSFW_TEXT_CACHE:
+        return NSFW_TEXT_CACHE[text]  
+
+    # ✅ First pass: quick keyword filter
     if not await keyword_filter(text):
         return False  
-    return await openai_nsfw_filter(text)
+
+    # ✅ Second pass: OpenAI Moderation API
+    result = await openai_nsfw_filter(text)
+    NSFW_TEXT_CACHE[text] = result  # ✅ Cache result
+    return result
+
+# ✅ OpenAI NSFW Text Filter
+async def openai_nsfw_filter(text: str) -> bool:
+    """Uses OpenAI Moderation API for NSFW text detection."""
+    payload = {
+        "model": "omni-moderation-latest",
+        "input": [{"type": "text", "text": text}]
+    }
+
+    session = await get_session()
+    try:
+        async with session.post(OPENAI_MODERATION_API_URL, json=payload, headers={"Authorization": f"Bearer {OPENAI_API_KEY}"}) as response:
+            data = await response.json()
+            flagged = any(result.get("flagged", False) for result in data.get("results", []))
+            if flagged:
+                logging.info("🚫 NSFW detected by OpenAI.")
+            return not flagged
+    except Exception as e:
+        logging.error(f"❌ OpenAI NSFW Filter Error: {e}")
+        return True  # ✅ Assume safe if API fails
 
 # ✅ NSFW Image Check (Google Vision + OpenAI in Parallel)
 async def is_safe_image(image_url: str) -> str:
