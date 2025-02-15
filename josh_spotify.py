@@ -132,7 +132,13 @@ async def fetch_all_results(query, search_type):
     if len(results) < 20:
         logging.warning(f"⚠️ Only {len(results)} results available from Spotify")
 
-    # ✅ Shuffle results globally
+    # ✅ **Sorting by Followers (Playlists) or Popularity (Albums, Tracks, Artists)**
+    if search_type == "playlist":
+        results.sort(key=lambda x: x.get("followers", {}).get("total", 0), reverse=True)
+    else:
+        results.sort(key=lambda x: x.get("popularity", 0), reverse=True)
+
+    # ✅ **Shuffle after sorting to introduce randomness**
     random.shuffle(results)
 
     # ✅ Ensure exactly 20 unique results
@@ -140,7 +146,7 @@ async def fetch_all_results(query, search_type):
 
 # ✅ Format search results
 def format_results(items, search_type):
-    """Formats Spotify API results into a readable structure."""
+    """Formats Spotify API results into a readable structure with sorting applied."""
     if not items:
         return []  
 
@@ -153,23 +159,27 @@ def format_results(items, search_type):
             "name": item.get("name", "Unknown"),
             "url": item.get("external_urls", {}).get("spotify", "#"),
             "image": item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300"),
-            "type": search_type,  # ✅ Ensuring item.type is present
+            "type": search_type,  
         }
 
         if search_type == "playlist":
             data["track_count"] = item.get("tracks", {}).get("total", 0)
+            data["followers"] = item.get("followers", {}).get("total", 0)
         elif search_type == "artist":
             data["followers"] = item.get("followers", {}).get("total", 0)
             data["genres"] = item.get("genres", [])
+            data["popularity"] = item.get("popularity", 0)
         elif search_type == "album":
             data["artist"] = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
             data["release_date"] = item.get("release_date", "Unknown Date")
             data["year"] = item.get("release_date", "").split("-")[0] if item.get("release_date") else "Unknown"
+            data["popularity"] = item.get("popularity", 0)
         elif search_type == "track":
             data["artist"] = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
             data["album"] = item.get("album", {}).get("name", "Unknown Album")
             data["preview_url"] = item.get("preview_url", None)
             data["year"] = item.get("album", {}).get("release_date", "").split("-")[0] if item.get("album") else "Unknown"
+            data["popularity"] = item.get("popularity", 0)
 
         formatted_results.append(data)
 
