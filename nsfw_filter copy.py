@@ -1,5 +1,6 @@
 import requests
 import re
+import random
 import os
 import logging
 import openai
@@ -17,26 +18,31 @@ from rapidfuzz import fuzz
 # Load environment variables
 load_dotenv()
 
-# API Keys and Configurations
-OPENAI_MODERATION_API_URL = "https://api.openai.com/v1/moderations"
-OBLIVIOUS_HTTP_RELAY = os.getenv("OBLIVIOUS_HTTP_RELAY")
-GOOGLE_SAFE_BROWSING_API_KEY = os.getenv("GOOGLE_SAFE_BROWSING_API_KEY")
+# ✅ Required API Keys
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-openai.api_key = OPENAI_API_KEY
-CACHE_EXPIRY = 6 * 3600  # Cache expiry in seconds (6 hours)
-OPENAI_RATE_LIMIT = 500
+GOOGLE_SAFE_BROWSING_API_KEY = os.getenv("GOOGLE_SAFE_BROWSING_API_KEY")
+OBLIVIOUS_HTTP_RELAY = os.getenv("OBLIVIOUS_HTTP_RELAY")
 
-# ✅ Google Cloud Vision API Configuration
+# ✅ Validate required environment variables
+REQUIRED_ENV_VARS = [OPENAI_API_KEY, GOOGLE_SAFE_BROWSING_API_KEY, OBLIVIOUS_HTTP_RELAY]
+if any(var is None for var in REQUIRED_ENV_VARS):
+    raise ValueError("❌ Missing one or more required environment variables!")
+
+# ✅ Google Cloud Vision Client
 GOOGLE_CLOUD_VISION_CLIENT = vision.ImageAnnotatorClient()
-GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
-# ✅ Rate Limits & Caching
-OPENAI_REQUEST_COUNT = 0
-LAST_OPENAI_RESET = time.time()
-NSFW_IMAGE_CACHE = TTLCache(maxsize=1000, ttl=1800)  # 30 min cache
-
-# ✅ Safe Browsing API Endpoint
+# ✅ Configuration Constants
+CACHE_EXPIRY = 6 * 3600  # 6 hours
+CENSORED_IMAGE_URL = "/static/images/censored-image.png"
 SAFE_BROWSING_API_URL = f"{OBLIVIOUS_HTTP_RELAY}/v4/threatMatches:find?key={GOOGLE_SAFE_BROWSING_API_KEY}"
+OPENAI_MODERATION_API_URL = "https://api.openai.com/v1/moderations"
+
+# ✅ Caching
+NSFW_IMAGE_CACHE = TTLCache(maxsize=1000, ttl=1800)  # 30 minutes
+NSFW_TEXT_CACHE = TTLCache(maxsize=5000, ttl=1800)  # 30 minutes
+
+# ✅ Shared HTTP Session
+SESSION = None
 
 # ✅ Replacement Image for NSFW content
 CENSORED_IMAGE_URL = "/static/images/censored-image.png"
@@ -77,6 +83,26 @@ BLOCKLIST_TERMS = [
 
 BAD_PHRASES = { "badphrase1", "badphrase2", "badphrase3"}
 
+async def get_session():
+    """Ensure we reuse a single aiohttp session for efficiency."""
+    global SESSION
+    if SESSION is None:
+        SESSION = aiohttp.ClientSession()
+    return SESSION
+
+# ✅ Exponential Backoff for API Calls
+async def retry_api_call(call_func, retries=3):
+    """Retries an API call with exponential backoff."""
+    delay = 1  
+    for attempt in range(retries):
+        try:
+            return await call_func()
+        except Exception as e:
+            logging.warning(f"⚠️ API Error: {e} (Retry {attempt + 1}/{retries})")
+            await asyncio.sleep(delay)
+            delay *= random.uniform(1.5, 2.5)  
+    return False  
+
 # ✅ **🔹 Safe URL Check (Google Safe Browsing)**
 async def is_safe_url(url: str) -> bool:
     """Uses Google Safe Browsing API to check if a URL is malicious."""
@@ -101,150 +127,113 @@ async def is_safe_url(url: str) -> bool:
         except Exception:
             return True  # Assume safe if API fails
 
-# ✅ **🔹 Keyword-Based NSFW Filtering (Titles & Descriptions Only)**
-async def keyword_filter(text: str) -> bool:
-    """First-pass keyword filtering against a predefined blocklist."""
+# ✅ NSFW Text Check with Caching & Parallel Execution
+async def is_safe_content(text: str) -> bool:
+    """Applies keyword filtering first, then OpenAI NSFW check with caching."""
     if not text:
-        return True  
+        return True
 
     text = html.unescape(text).strip().lower()
 
-    # ✅ **Blocklist Check**
-    if any(word in text for word in BLOCKLIST_TERMS) or any(phrase in text for phrase in BAD_PHRASES):
-        return False  
+    if text in NSFW_TEXT_CACHE:
+        return NSFW_TEXT_CACHE[text]  
 
+    # ✅ Run both filters in parallel
+    keyword_task = keyword_filter(text)
+    openai_task = openai_nsfw_filter(text)
+    
+    keyword_safe, openai_safe = await asyncio.gather(keyword_task, openai_task)
+
+    # ✅ Cache and return final decision
+    is_safe = keyword_safe and openai_safe
+    NSFW_TEXT_CACHE[text] = is_safe  
+    return is_safe
+
+async def keyword_filter(text: str) -> bool:
+    """Basic keyword-based NSFW filtering."""
+    BLOCKLIST_TERMS = ["badwords1", "badwords2"]
+    if any(word in text for word in BLOCKLIST_TERMS):
+        return False  
     return True  
 
-# ✅ **🔹 OpenAI NSFW Check (Second-Pass)**
 async def openai_nsfw_filter(text: str) -> bool:
-    """Uses OpenAI Moderation API as the final NSFW text check."""
+    """Uses OpenAI Moderation API for NSFW text filtering."""
     payload = {
         "model": "omni-moderation-latest",
         "input": [{"type": "text", "text": text}],
-        "thresholds": {  
-            "sexual": 0.001,  
-            "sexual/minors": 0.0001,  
-            "harassment/threatening": 0.001,
-        }
     }
 
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(
-                "https://api.openai.com/v1/moderations",
-                json=payload,
-                headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
-            ) as response:
-                data = await response.json()
-                return not any(result.get("flagged", False) for result in data.get("results", []))
-        except Exception:
-            return True  # Assume safe if API fails
+    session = await get_session()
+    try:
+        async with session.post(OPENAI_MODERATION_API_URL, json=payload, headers={"Authorization": f"Bearer {OPENAI_API_KEY}"}) as response:
+            data = await response.json()
+            return not any(result.get("flagged", False) for result in data.get("results", []))
+    except Exception:
+        return False
 
-# ✅ **🔹 Final Multi-Pass NSFW Text Filter**
-async def is_safe_content(text: str) -> bool:
-    """Applies keyword filtering first, then OpenAI NSFW check."""
-    if not await keyword_filter(text):
-        return False  
-    return await openai_nsfw_filter(text)
-
-# ✅ **Google Cloud Vision NSFW Check**
+# ✅ NSFW Image Check (Google Vision + OpenAI in Parallel)
 async def is_safe_image(image_url: str) -> str:
-    """Uses Google Cloud Vision API first, then OpenAI for NSFW image detection."""
+    """Optimized NSFW check using Google Vision & OpenAI in parallel."""
     if not image_url:
-        return CENSORED_IMAGE_URL  
+        return CENSORED_IMAGE_URL
 
-    # ✅ **Check Cache First**
     if image_url in NSFW_IMAGE_CACHE:
         return NSFW_IMAGE_CACHE[image_url]
 
-    # ✅ **First Pass: Google Cloud Vision API**
-    if await google_cloud_nsfw_check(image_url):
-        NSFW_IMAGE_CACHE[image_url] = image_url
-        return image_url  # ✅ Safe image
-    else:
-        logging.warning(f"⚠️ NSFW Image Detected by Google Cloud Vision: {image_url}")
+    # ✅ Run both checks in parallel
+    google_task = google_cloud_nsfw_check(image_url)
+    openai_task = openai_nsfw_image_check(image_url)
+    
+    google_safe, openai_safe = await asyncio.gather(google_task, openai_task)
 
-    # ✅ **Second Pass: OpenAI (If Google Vision flags or fails)**
-    if await openai_nsfw_image_check(image_url):
-        NSFW_IMAGE_CACHE[image_url] = image_url
-        return image_url  # ✅ Safe after both checks
-    else:
-        logging.warning(f"⚠️ NSFW Image Detected by OpenAI: {image_url}")
+    # ✅ Determine final safety status
+    result = image_url if google_safe and openai_safe else CENSORED_IMAGE_URL
+    NSFW_IMAGE_CACHE[image_url] = result  # ✅ Cache result
+    return result
 
-    # ✅ **Blocked Image**
-    NSFW_IMAGE_CACHE[image_url] = CENSORED_IMAGE_URL
-    return CENSORED_IMAGE_URL
-
-# ✅ **Google Cloud Vision NSFW Check**
 async def google_cloud_nsfw_check(image_url: str) -> bool:
-    """Uses Google Cloud Vision API to detect explicit content in images."""
+    """Google Cloud Vision API NSFW detection with retries."""
+    return await retry_api_call(lambda: _google_cloud_nsfw_check(image_url))
+
+async def _google_cloud_nsfw_check(image_url: str) -> bool:
+    """Google Vision NSFW detection logic."""
     try:
         image = vision.Image()
         image.source.image_uri = image_url
         response = GOOGLE_CLOUD_VISION_CLIENT.safe_search_detection(image=image)
         annotations = response.safe_search_annotation
 
-        # ✅ Convert Enum Values to Readable Text
-        adult_likelihood = LIKELIHOOD_MAPPING.get(annotations.adult, "POSSIBLE")
-        violence_likelihood = LIKELIHOOD_MAPPING.get(annotations.violence, "UNKNOWN")
-        racy_likelihood = LIKELIHOOD_MAPPING.get(annotations.racy, "POSSIBLE")
-
-        logging.info(f"🔎 Google Vision Results -> Adult: {adult_likelihood}, Violence: {violence_likelihood}, Racy: {racy_likelihood}")
-
-        # ✅ Define Risk Thresholds
+        # ✅ Define Risk Levels
         risk_levels = {"POSSIBLE", "LIKELY", "VERY_LIKELY"}
-        if adult_likelihood in risk_levels or violence_likelihood in risk_levels or racy_likelihood in risk_levels:
-            return False  # 🚨 Flagged as NSFW
+        if annotations.adult.name in risk_levels or annotations.violence.name in risk_levels:
+            return False  # 🚨 NSFW Detected
 
-        return True  # ✅ Safe
-
+        return True  
     except Exception as e:
         logging.error(f"❌ Google Cloud Vision API Error: {e}")
-        return True  # ✅ Assume safe if API fails
+        return False  
 
-# ✅ **OpenAI NSFW Image Check**
 async def openai_nsfw_image_check(image_url: str) -> bool:
-    """Uses OpenAI Omni Moderation API to detect explicit content in an image."""
-    if not image_url:
-        return True  # Assume safe if no image URL
+    """OpenAI NSFW Image Moderation with retries."""
+    return await retry_api_call(lambda: _openai_nsfw_image_check(image_url))
 
+async def _openai_nsfw_image_check(image_url: str) -> bool:
+    """OpenAI NSFW Image Moderation API logic."""
     headers = {
         "Authorization": f"Bearer {OPENAI_API_KEY}",
         "Content-Type": "application/json",
     }
 
-    # ✅ Encode URL to avoid bad requests
-    encoded_url = urllib.parse.quote(image_url, safe=':/')
-
     payload = {
         "model": "omni-moderation-latest",
-        "input": [
-            {
-                "type": "image_url",
-                "image_url": {
-                    "url": encoded_url  # ✅ Ensure URL is properly formatted
-                }
-            }
-        ],
+        "input": [{"type": "image_url", "image_url": {"url": image_url}}],
     }
 
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(OPENAI_MODERATION_API_URL, json=payload, headers=headers) as response:
-                if response.status == 400:
-                    logging.error(f"❌ OpenAI Bad Request: Check Payload Structure! URL: {image_url}")
-                    return True  # Assume safe if API fails due to bad request
-
-                response.raise_for_status()
-                data = await response.json()
-
-                # ✅ Check if NSFW detected
-                if any(result.get("flagged", False) for result in data.get("results", [])):
-                    logging.warning(f"❌ NSFW Image Blocked by OpenAI: {image_url}")
-                    return False  # NSFW Detected
-
-                return True  # ✅ Safe Image
-
-        except Exception as e:
-            logging.error(f"❌ OpenAI Image Moderation Error: {e}")
-            return True  # Assume safe if API fails
+    session = await get_session()
+    try:
+        async with session.post(OPENAI_MODERATION_API_URL, json=payload, headers=headers) as response:
+            data = await response.json()
+            return not any(result.get("flagged", False) for result in data.get("results", []))
+    except Exception as e:
+        logging.error(f"❌ OpenAI Image Moderation Error: {e}")
+        return False  
