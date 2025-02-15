@@ -185,49 +185,46 @@ def about():
     return render_template('about.html')
 
 @app.route('/results', methods=['GET'])
-async def results():
+def results():
     """Fetches Spotify results, applies NSFW filtering, and renders an HTML page."""
-
-    rec_type = request.args.get('rec_type', 'playlist')
-    moods = request.args.getlist('mood')
-    query = request.args.get('query', '').strip()  # Ensure query is stripped of whitespace
-
-    # ✅ Use mapped genres if no direct query is provided
-    genre_queries = [genre for mood in moods if mood in MOOD_GENRE_MAP for genre in MOOD_GENRE_MAP[mood]]
     
-    # ✅ Ensure there's always a query (to prevent API 400 errors)
-    search_query = query if query else " ".join(genre_queries) if genre_queries else "music"
+    rec_type = request.args.get('rec_type', 'playlist')
+    mood = request.args.get('mood', 'anime')
+    query = request.args.get('query', '')
 
-    access_token = await get_access_token()
+    if not query:
+        query = mood  # Use mood as default search if no query provided
+
+    # ✅ Ensure a new event loop for Flask
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    # ✅ Fetch Access Token
+    access_token = loop.run_until_complete(get_access_token())
     if not access_token:
         return render_template("error.html", message="Failed to fetch access token"), 500
 
     headers = {"Authorization": f"Bearer {access_token}"}
     results = []
-    offset = 0  
-    limit = 50  
+    offset, limit = 0, 50  
 
-    while offset < 1000 and len(results) < 50:
-        if offset + limit > 1000:
-            limit = 1000 - offset  
+    while len(results) < 50:  # Fetch a max of 50 before randomizing selection
+        params = {"q": query, "type": rec_type, "limit": limit, "offset": offset}
+        response = requests.get(SPOTIFY_API_URL, headers=headers, params=params)
 
-        params = {"q": search_query, "type": rec_type, "limit": limit, "offset": offset}
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.get(SPOTIFY_API_URL, headers=headers, params=params) as response:
-                if response.status != 200:
-                    error_msg = await response.text()
-                    logging.error(f"❌ Spotify API Error {response.status}: {error_msg}")
-                    return render_template("error.html", message="Failed to fetch data from Spotify"), response.status
+        if response.status_code != 200:
+            return render_template("error.html", message="Failed to fetch data from Spotify"), response.status_code
 
-                data = await response.json()
-
-        items = data.get(f"{rec_type}s", {}).get("items", [])
-        if not isinstance(items, list) or not items:
+        data = response.json()
+        items = data.get(rec_type + "s", {}).get("items", [])
+        if not isinstance(items, list):
             break  
 
-        results.extend(items)
+        results.extend([item for item in items if isinstance(item, dict)])
+
         offset += limit  
+        if len(items) < limit:  
+            break  
 
     if len(results) < 9:
         logging.warning(f"⚠️ Only {len(results)} results available from Spotify")
@@ -235,8 +232,10 @@ async def results():
     # ✅ Select 9 Random Results Before Filtering
     selected_results = random.sample(results, min(len(results), 9))
 
-    # ✅ **Filter Results Asynchronously**
-    filtered_results = await process_results(selected_results, rec_type)
+    # ✅ **Fix Event Loop Issue by Creating a New Loop**
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    filtered_results = loop.run_until_complete(process_results(selected_results, rec_type))
 
     if not filtered_results:
         return render_template("error.html", message="No safe results found"), 404
