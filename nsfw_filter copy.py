@@ -127,49 +127,51 @@ async def is_safe_url(url: str) -> bool:
         except Exception:
             return True  # Assume safe if API fails
 
-# ✅ NSFW Text Check with Caching & Parallel Execution
-async def is_safe_content(text: str) -> bool:
-    """Applies keyword filtering first, then OpenAI NSFW check with caching."""
+# ✅ **🔹 Keyword-Based NSFW Filtering (Titles & Descriptions Only)**
+async def keyword_filter(text: str) -> bool:
+    """First-pass keyword filtering against a predefined blocklist."""
     if not text:
-        return True
+        return True  
 
     text = html.unescape(text).strip().lower()
 
-    if text in NSFW_TEXT_CACHE:
-        return NSFW_TEXT_CACHE[text]  
-
-    # ✅ Run both filters in parallel
-    keyword_task = keyword_filter(text)
-    openai_task = openai_nsfw_filter(text)
-    
-    keyword_safe, openai_safe = await asyncio.gather(keyword_task, openai_task)
-
-    # ✅ Cache and return final decision
-    is_safe = keyword_safe and openai_safe
-    NSFW_TEXT_CACHE[text] = is_safe  
-    return is_safe
-
-async def keyword_filter(text: str) -> bool:
-    """Basic keyword-based NSFW filtering."""
-    BLOCKLIST_TERMS = ["badwords1", "badwords2"]
-    if any(word in text for word in BLOCKLIST_TERMS):
+    # ✅ **Blocklist Check**
+    if any(word in text for word in BLOCKLIST_TERMS) or any(phrase in text for phrase in BAD_PHRASES):
         return False  
+
     return True  
 
+# ✅ **🔹 OpenAI NSFW Check (Second-Pass)**
 async def openai_nsfw_filter(text: str) -> bool:
-    """Uses OpenAI Moderation API for NSFW text filtering."""
+    """Uses OpenAI Moderation API as the final NSFW text check."""
     payload = {
         "model": "omni-moderation-latest",
         "input": [{"type": "text", "text": text}],
+        "thresholds": {  
+            "sexual": 0.001,  
+            "sexual/minors": 0.0001,  
+            "harassment/threatening": 0.001,
+        }
     }
 
-    session = await get_session()
-    try:
-        async with session.post(OPENAI_MODERATION_API_URL, json=payload, headers={"Authorization": f"Bearer {OPENAI_API_KEY}"}) as response:
-            data = await response.json()
-            return not any(result.get("flagged", False) for result in data.get("results", []))
-    except Exception:
-        return False
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(
+                "https://api.openai.com/v1/moderations",
+                json=payload,
+                headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
+            ) as response:
+                data = await response.json()
+                return not any(result.get("flagged", False) for result in data.get("results", []))
+        except Exception:
+            return True  # Assume safe if API fails
+
+# ✅ **🔹 Final Multi-Pass NSFW Text Filter**
+async def is_safe_content(text: str) -> bool:
+    """Applies keyword filtering first, then OpenAI NSFW check."""
+    if not await keyword_filter(text):
+        return False  
+    return await openai_nsfw_filter(text)
 
 # ✅ NSFW Image Check (Google Vision + OpenAI in Parallel)
 async def is_safe_image(image_url: str) -> str:
