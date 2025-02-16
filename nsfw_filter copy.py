@@ -62,12 +62,12 @@ LIKELIHOOD_MAPPING = {
 
 # ✅ Whitelisted Phrases (Allowed Content)
 WHITELIST_TERMS = [
-    "best", "anime", "edit", "dark", "phonk", "bass drop", "remix", r"(\b?:best songs\b)", "remixes", "shoujo", "shonen", "seinen", "josei",
-    "weekly updates", "top anime song", "OST", "opening", "gym", "workout", "study", "chill", "relax", "lofi", "vibes", "vibe",
-    "ending", "BGM", "OP", "ED", "JJk", "One Piece", "MHA", "soundtrack", "soundtracks", "music", "songs", "song", "playlist", "playlists",
+    "best", "anime", "edit", "dark", "phonk", "bass drop", "remix", r"(\b?:best songs\b)", "remixes", "shoujo", "shonen", "seinen", "josei", "hardstyle", "hardcore", "dubstep", "trap", "trance", "EDM", "electronic", "electro", "house", "techno", "rave", "rave music", "rave playlist", "Christmas", "Christmas music", "Christmas playlist", "Christmas songs", "Christmas carols", "Christmas vibes", "Christmas lofi", "Christmas chill", "Christmas rage", "Christmas rap", "Christmas hip hop", "Christmas EDM", "Christmas dubstep", "Christmas trap", "Christmas techno", "Christmas house", "Christmas electronic",
+    "weekly updates", "top anime song", "OST", "opening", "gym", "workout", "study", "chill", "relax", "lofi", "vibes", "vibe", "nostalgiacore", "nostalgia", "nostalgic", "nostalgic music", "nostalgic playlist", "nostalgic songs", "nostalgic song", "nostalgic vibes", "nostalgic vibe", "nostalgic lofi", "nostalgic chill", "nostalgic rage", "nostalgic rap", "nostalgic hip hop", "nostalgic EDM", "nostalgic dubstep", "nostalgic trap", "nostalgic techno", "nostalgic house", "nostalgic electronic", "nostalgic playlist", "nostalgic music playlist", "nostalgic songs playlist", "nostalgic song playlist", "nostalgic vibes playlist", "nostalgic vibe playlist", "nostalgic lofi playlist", "nostalgic chill playlist", "nostalgic rage playlist", "nostalgic rap playlist", "nostalgic hip hop playlist", "nostalgic EDM playlist", "nostalgic dubstep playlist",
+    "ending", "BGM", "OP", "ED", "JJk", "One Piece", "MHA", "soundtrack", "soundtracks", "music", "songs", "song", "playlist", "playlists", "whimsigothic", 
     "Demon Slayer", "SNK", "Naruto", "Chainsaw Man", "Yoasobi", "gym", "gym anime", "gym rage", "gym workout", "gym music", "gym playlist", "phonk", "phonk playlist",
     "DBZ", "HXH", "Jojo", "Tokyo Ghoul", "Attack on Titan", "rage", "rage music", "rage playlist", "anime rage", "anime rage music", "anime rage playlist",
-    "My Hero Academia", "main character", "boss battle", "Walter White", "chill", "sleep", "study", "hoe (tool)", "rap (music genre)", r"(\b?:play|playing\b)", 
+    "My Hero Academia", "main character", "boss battle", "Walter White", "chill", "sleep", "study", "hoe (tool)", "rap (music genre)", r"(\b?:play|playing\b)", r"(\b(?:y2k)\b)", "y2k", "y2k music", "birthday", "birthday music", "birthday playlist",
 ]
 
 WHITELIST_ARTISTS = {
@@ -82,12 +82,6 @@ BLOCKLIST_TERMS = [
 ]
 
 BAD_PHRASES = { "badphrase1", "badphrase2", "badphrase3"}
-
-# ✅ Compile regex patterns once for efficiency
-BLOCKLIST_PATTERN = re.compile(r'\b(?:' + '|'.join(re.escape(word) for word in BLOCKLIST_TERMS) + r')\b', re.IGNORECASE)
-BAD_PHRASES_PATTERN = re.compile(r'\b(?:' + '|'.join(re.escape(phrase) for phrase in BAD_PHRASES) + r')\b', re.IGNORECASE)
-WHITELIST_PATTERN = re.compile(r'\b(?:' + '|'.join(re.escape(term) for term in WHITELIST_TERMS) + r')\b', re.IGNORECASE)
-WHITELIST_ARTISTS_PATTERN = re.compile(r'\b(?:' + '|'.join(re.escape(artist) for artist in WHITELIST_ARTISTS) + r')\b', re.IGNORECASE)
 
 async def get_session():
     """Ensure we reuse a single aiohttp session for efficiency."""
