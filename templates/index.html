@@ -1,57 +1,128 @@
 {% extends 'base.html' %}
-
 {% block content %}
 <body class="bg-gray-100">
     <header class="text-center py-10">
         <h2 class="text-3xl font-bold text-gray-800">Welcome to ArtSonix!</h2>
     </header>
-    <div class="flex items-center justify-center ">
-        <div class="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-2xl">
+    <div class="flex items-center justify-center">
+        <div class="max-w-2xl mx-auto p-6 bg-white shadow-lg rounded-2xl">
             <h1 class="text-2xl font-bold text-gray-800">Discover Music Through Art</h1>
             <form id="preference-form" class="mt-4">
                 <!-- Q1: Mood Selection -->
-                <label for="moods_multiple" class="block mb-2 text-lg font-medium text-gray-800">What is your mood today? (Pick up to 3)</label>
-                <select multiple id="moods_multiple" name="moods" class="bg-gray-50 border border-gray-300 text-gray-800 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                    <option value="Inspired">Inspired</option>
-                    <option value="Creative">Creative</option>
-                    <option value="Calm">Calm</option>
-                    <option value="Energetic">Energetic</option>
-                    <option value="Adventurous">Adventurous</option>
-                    <option value="Happy">Happy</option>
-                    <option value="Sad">Sad</option>
-                    <option value="Romantic">Romantic</option>
-                    <option value="Focused">Focused</option>
-                    <option value="Upbeat">Upbeat</option>
-                    <option value="Rebellious">Rebellious</option>
-                    <option value="Dark">Dark</option>
-                    <option value="Nostalgic">Nostalgic</option>
-                    <option value="Trippy">Trippy</option>
-                    <option value="Party">Party</option>
-                    <option value="Epic">Epic</option>
-                    <option value="Quirky">Quirky</option>
-                    <option value="Emotional">Emotional</option>
-                    <option value="open">I’m open to anything</option>
-                </select>
+                <div class="form-section mb-6">
+                    <label class="block mb-2 text-lg font-medium text-gray-800">What is your mood today? (Pick up to 3)</label>
+                    <div class="checkbox-group" id="mood-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Inspired"> Inspired
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Creative"> Creative
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Calm"> Calm
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Energetic"> Energetic
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Adventurous"> Adventurous
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Happy"> Happy
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Sad"> Sad
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Romantic"> Romantic
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Focused"> Focused
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Upbeat"> Upbeat
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Rebellious"> Rebellious
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Dark"> Dark
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Nostalgic"> Nostalgic
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Trippy"> Trippy
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Party"> Party
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Epic"> Epic
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Quirky"> Quirky
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="Emotional"> Emotional
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="moods" value="open"> I'm open to anything
+                        </label>
+                    </div>
+                    <div class="max-selections-warning text-red-500 text-sm mt-2" id="mood-warning">
+                        Maximum 3 selections allowed
+                    </div>
+                </div>
 
                 <!-- Q2: Art Style Selection -->
-                <label for="art_styles_multiple" class="block mb-2 text-lg font-medium text-gray-800 mt-4">What is your favorite art style? (Pick up to 3)</label>
-                <select multiple id="art_styles_multiple" name="art_styles" class="bg-gray-50 border border-gray-300 text-gray-800 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                    <option value="Cubism">Cubism</option>
-                    <option value="Abstract">Abstract</option>
-                    <option value="Contemporary art">Contemporary art</option>
-                    <option value="Modern">Modern</option>
-                    <option value="Impressionism">Impressionism</option>
-                    <option value="Baroque">Baroque</option>
-                    <option value="Romanticism">Romanticism</option>
-                    <option value="Pre-Raphaelite">Pre-Raphaelite</option>
-                    <option value="Op Art">Op Art</option>
-                    <option value="Futurism">Futurism</option>
-                    <option value="Tonalism">Tonalism</option>
-                    <option value="Open">I’m open to anything</option>
-                </select>
+                <div class="form-section mb-6">
+                    <label class="block mb-2 text-lg font-medium text-gray-800">What is your favorite art style? (Pick up to 3)</label>
+                    <div class="checkbox-group" id="art-style-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="art_styles" value="Cubism"> Cubism
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="art_styles" value="Abstract"> Abstract
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="art_styles" value="Contemporary art"> Contemporary art
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="art_styles" value="Modern"> Modern
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="art_styles" value="Impressionism"> Impressionism
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="art_styles" value="Baroque"> Baroque
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="art_styles" value="Romanticism"> Romanticism
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="art_styles" value="Pre-Raphaelite"> Pre-Raphaelite
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="art_styles" value="Op Art"> Op Art
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="art_styles" value="Futurism"> Futurism
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="art_styles" value="Tonalism"> Tonalism
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="art_styles" value="Open"> I'm open to anything
+                        </label>
+                    </div>
+                    <div class="max-selections-warning text-red-500 text-sm mt-2" id="art-style-warning">
+                        Maximum 3 selections allowed
+                    </div>
+                </div>
 
                 <!-- Q3: Art Period Selection -->
-                <label for="period" class="block mb-2 text-lg font-medium text-gray-800 mt-4">Do you have a favorite art period?</label>
+                <label for="period" class="block mb-2 text-lg font-medium text-gray-800">Do you have a favorite art period?</label>
                 <select id="period" name="period" class="bg-gray-50 border border-gray-300 text-gray-800 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                     <option value="">Choose an art period</option>
                     <option value="Ancient">Ancient (Before 500 CE)</option>
@@ -59,7 +130,7 @@
                     <option value="Early Modern">Early Modern (1500-1800 CE)</option>
                     <option value="Modern">Modern (1800-1945 CE)</option>
                     <option value="Contemporary">Contemporary (1945-present CE)</option>
-                    <option value="Open">I’m open to anything</option>
+                    <option value="Open">I'm open to anything</option>
                 </select>
 
                 <!-- Q4: Subject Selection -->
@@ -71,71 +142,131 @@
                     <option value="Religious & Mythological">Religious & Mythological</option>
                     <option value="Historical Events">Historical Events</option>
                     <option value="Abstract & Decorative">Abstract & Decorative</option>
-                    <option value="Open">I’m open to anything</option>
+                    <option value="Open">I'm open to anything</option>
                 </select>
 
-                <!-- Buttons for form submission and "Surprise Me" feature -->
-                <div class="mt-4 flex space-x-4">
-                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                <!-- Buttons -->
+                <div class="mt-6 flex space-x-4">
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 cursor-pointer">
                         Get Recommendations
                     </button>
-                    <button type="button" id="surpriseBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600" style="width: auto;">
+                    <button type="button" id="surpriseBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 cursor-pointer" style="width: auto;">
                         Surprise Me!
                     </button>
                 </div>
             </form>
         </div>
     </div>
+
     <script>
-        // Handle form submission for getting recommendations
+        function setupCheckboxGroup(groupName, maxSelections) {
+            const checkboxes = document.querySelectorAll(`input[name="${groupName}"]`);
+            const warningElement = document.getElementById(`${groupName.replace('_', '-')}-warning`);
+    
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    const checkedBoxes = document.querySelectorAll(`input[name="${groupName}"]:checked`);
+                    
+                    if (checkedBoxes.length > maxSelections) {
+                        checkbox.checked = false;
+                        warningElement.style.display = 'block';
+                        setTimeout(() => {
+                            warningElement.style.display = 'none';
+                        }, 2000);
+                    }
+                });
+            });
+        }
+    
+        // Form submission handler
         document.getElementById("preference-form").addEventListener("submit", function(event) {
             event.preventDefault();
-            const selectedMoods = Array.from(document.getElementById("moods_multiple").selectedOptions).map(option => option.value);
-            const selectedArtStyles = Array.from(document.getElementById("art_styles_multiple").selectedOptions).map(option => option.value);
+            
+            // Show loading overlay ONLY when button is clicked
+            const loadingOverlay = document.getElementById("loading-overlay");
+            loadingOverlay.classList.remove("hidden");
+            
+            const selectedMoods = Array.from(document.querySelectorAll('input[name="moods"]:checked'))
+                .map(checkbox => checkbox.value);
+    
+            const selectedArtStyles = Array.from(document.querySelectorAll('input[name="art_styles"]:checked'))
+                .map(checkbox => checkbox.value);
+    
             const period = document.getElementById("period").value;
             const subject = document.getElementById("subject").value;
-
-            // Send selected options to Flask
+    
             fetch('/process-preferences', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ moods: selectedMoods, art_styles: selectedArtStyles, period: period, subject: subject })
+                body: JSON.stringify({ 
+                    moods: selectedMoods, 
+                    art_styles: selectedArtStyles, 
+                    period: period, 
+                    subject: subject 
+                })
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 return response.json();
             })
             .then(data => {
-                console.log('Response from Server:', data);
                 if (!data.error) {
                     localStorage.setItem('artworks', JSON.stringify(data));
                     window.location.href = '/results';
                 } else {
-                    alert('An error occurred: ' + data.error);
+                    loadingOverlay.classList.add("hidden");
+                    alert('Error: ' + data.error);
                 }
             })
-            .catch(error => console.error('Fetch Error:', error));
+            .catch(error => {
+                loadingOverlay.classList.add("hidden");
+                console.error('Fetch Error:', error);
+                alert('Failed to get recommendations. Please try again.');
+            });
         });
-
-        // Handle "Surprise Me" button click
+    
+        // Surprise button handler
         document.getElementById("surpriseBtn").addEventListener("click", function() {
-            // Send a request to fetch the surprise me results
+            const loadingOverlay = document.getElementById("loading-overlay");
+            loadingOverlay.classList.remove("hidden");
+    
             fetch('/surprise-me')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
                 .then(data => {
                     if (!data.error) {
                         localStorage.setItem('artworks', JSON.stringify(data));
                         window.location.href = '/results';
                     } else {
-                        alert('An error occurred: ' + data.error);
+                        loadingOverlay.classList.add("hidden");
+                        alert('Error: ' + data.error);
                     }
                 })
-                .catch(error => console.error('Error fetching surprise data:', error));
+                .catch(error => {
+                    loadingOverlay.classList.add("hidden");
+                    console.error('Error:', error);
+                    alert('Failed to load surprise recommendations. Please try again.');
+                });
+        });
+    
+        // Initialize checkbox groups
+        document.addEventListener('DOMContentLoaded', () => {
+            setupCheckboxGroup('moods', 3);
+            setupCheckboxGroup('art_styles', 3);
+            
+            // Ensure overlay is hidden on initial load
+            document.getElementById("loading-overlay").classList.add("hidden");
+        });
+    
+        // Handle browser navigation
+        window.addEventListener('pageshow', function(event) {
+            document.getElementById("loading-overlay").classList.add("hidden");
         });
     </script>
-</body>
-{% endblock %}
+
+    </body>
+    {% endblock %}

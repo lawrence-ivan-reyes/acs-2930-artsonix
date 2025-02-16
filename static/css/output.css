@@ -864,3 +864,48 @@
 .artwork-card p strong {
   color: #2d3748;
 }
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin: 0.5rem 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.checkbox-container:hover {
+    background: #f1f5f9;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-right: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+}
+
+.max-selections-warning {
+    display: none;
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+button {
+    cursor: pointer !important;
+}
