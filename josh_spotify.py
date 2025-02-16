@@ -6,6 +6,7 @@ from nsfw_filter import is_safe_content, is_safe_url, is_safe_image
 import requests
 import os
 import html
+from rapidfuzz import process as fuzz_process
 
 # Load environment variables
 load_dotenv()
@@ -89,6 +90,18 @@ MOOD_GENRE_MAP = {
     ]
 }
 
+# ✅ Categorize genres into different tiers for weighted randomness
+MAINSTREAM_GENRES = [
+    "Pop", "Rock", "Hip-Hop", "EDM", "R&B", "Jazz", "Classical", "Indie", "Reggaeton"
+]
+
+NICHE_GENRES = [
+    "Dungeon Synth", "Cybergrind", "Witch House", "Plunderphonics", "Dariacore", 
+    "Mallsoft", "Darkwave", "Vaporwave", "Synthwave", "Hardstyle"
+]
+
+# ✅ All possible subgenres for Levenshtein Distance Matching
+ALL_SUBGENRES = {subgenre for genres in MOOD_GENRE_MAP.values() for subgenre in genres}
 
 # ✅ Async function to get Spotify access token with lock
 async def get_access_token():
@@ -235,20 +248,35 @@ def results():
     """Fetches Spotify results using subgenres mapped to moods, applies NSFW filtering, and renders results."""
 
     rec_type = request.args.get('rec_type', 'playlist')
-    mood = request.args.get('mood', 'anime')
-    query = request.args.get('query', '')
+    moods = request.args.getlist('moods')  # Get list of selected moods
+    query = request.args.get('query', '').strip()
+    open_to_anything = request.args.get('rec_type') == "anything"
 
-    # ✅ Use subgenres from mood map instead of the mood itself
-    search_genres = MOOD_GENRE_MAP.get(mood, [mood])  # Defaults to mood if no mapping exists
-    query = " OR ".join(search_genres) if not query else query  # If no manual query, use subgenres
+    logging.info(f"🔎 Received request → Rec Type: {rec_type}, Moods: {moods}, Query: {query}")
 
-    logging.info(f"🔎 Searching Spotify for: {query} (Rec Type: {rec_type})")
+    # ✅ Handle Different Search Scenarios
+    if open_to_anything:
+        # 🎲 **Better Randomization for "Open to Anything"**
+        search_genres = random.choices(MAINSTREAM_GENRES, k=2) + random.choices(NICHE_GENRES, k=1)
+        rec_type = random.choice(["playlist", "album", "artist", "track"])  # Random media type
+    elif moods:
+        # 🎭 Use subgenres based on selected moods (limit: 3 moods)
+        search_genres = [genre for mood in moods[:3] for genre in MOOD_GENRE_MAP.get(mood, [mood])]
+    elif query:
+        # 🧐 Use fuzzy matching for free-text queries
+        best_match, score, _ = fuzz_process.extractOne(query, ALL_SUBGENRES)
+        search_genres = [best_match] if score > 75 else [query]
+    else:
+        # ❌ No valid input given
+        return render_template("error.html", message="Please select moods or enter a search query"), 400
 
-    # ✅ Ensure a new event loop for Flask
+    # 🔎 Format query for Spotify Search
+    search_query = " OR ".join(search_genres)
+    logging.info(f"🎶 Spotify Search Query: {search_query}")
+
+    # ✅ Fetch Spotify Access Token
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-
-    # ✅ Fetch Access Token
     access_token = loop.run_until_complete(get_access_token())
     if not access_token:
         return render_template("error.html", message="Failed to fetch access token"), 500
@@ -258,14 +286,14 @@ def results():
     offset, limit = 0, 50  
 
     while len(results) < 50:
-        params = {"q": query, "type": rec_type, "limit": limit, "offset": offset}
+        params = {"q": search_query, "type": rec_type, "limit": limit, "offset": offset}
         response = requests.get(SPOTIFY_API_URL, headers=headers, params=params)
 
         if response.status_code != 200:
             return render_template("error.html", message="Failed to fetch data from Spotify"), response.status_code
 
         data = response.json()
-        items = data.get(rec_type + "s", {}).get("items", [])
+        items = data.get(f"{rec_type}s", {}).get("items", [])
         if not isinstance(items, list):
             break  
 
