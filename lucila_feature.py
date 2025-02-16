@@ -66,16 +66,19 @@ def process_preferences():
     try:
         preferences = request.json
         print("Preferences Received:", preferences)  # Logging
+        # Extract preferences
         moods = preferences.get('moods', [])
         art_styles = preferences.get('art_styles', [])
         period = preferences.get('period')
         subject = preferences.get('subject')
 
+        # Fetch results
         mood_results = fetch_results_based_on_moods(moods, limit=3)
         art_style_results = fetch_results_based_on_art_styles(art_styles, limit=3)
         period_results = fetch_results_based_on_period(period, limit=1)
         subject_results = fetch_results_based_on_subject(subject, limit=1)
 
+        # Combine reslts and limit to 9
         combined_results = mood_results + art_style_results + period_results + subject_results
         combined_results = combined_results[:9]  # Limit to 9 results
         print("Combined Results:", combined_results)  # Logging
@@ -244,4 +247,4 @@ def error():
     return render_template('error.html')
 
 if __name__ == '__main__':
-    app.run(debug=True, port=3005)
+    app.run(debug=True, port=3004)
