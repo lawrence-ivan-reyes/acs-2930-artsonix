@@ -54,30 +54,34 @@
                 <option value="Emotional">Emotional</option>
             </select>
 
-            <!-- Search Option -->
-            <div class="mt-4">
-                <button type="button" id="toggle-search" class="text-blue-500 underline">
-                    Do you want to just search instead?
-                </button>
-                <input type="text" id="search-query" name="query"
-                    class="w-full p-2 mt-2 border rounded-lg hidden"
-                    placeholder="Enter search keyword (e.g., artist, album, song)">
-            </div>
+<!-- Search Option -->
+<div class="mt-4">
+    <button type="button" id="toggle-search" class="text-blue-500 underline">
+        Do you want to just search instead?
+    </button>
+    
+    <div id="search-section" class="hidden mt-2">
+        <label for="search-type" class="block text-gray-600">Select media type:</label>
+        <select id="search-type" name="search_type" class="w-full p-2 border rounded-lg">
+            <option value="playlist">Playlists</option>
+            <option value="album">Albums</option>
+            <option value="artist">Artists</option>
+            <option value="track">Tracks</option>
+        </select>
 
-            <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                Search Music
-            </button>
-        </form>
+        <input type="text" id="search-query" name="query"
+            class="w-full p-2 mt-2 border rounded-lg"
+            placeholder="Enter search keyword (e.g., artist, album, song)">
     </div>
 </div>
 
 <script>
     document.getElementById("toggle-search").addEventListener("click", function () {
-        let searchInput = document.getElementById("search-query");
-        if (searchInput.classList.contains("hidden")) {
-            searchInput.classList.remove("hidden");
+        let searchSection = document.getElementById("search-section");
+        if (searchSection.classList.contains("hidden")) {
+            searchSection.classList.remove("hidden");
         } else {
-            searchInput.classList.add("hidden");
+            searchSection.classList.add("hidden");
         }
     });
 </script>
