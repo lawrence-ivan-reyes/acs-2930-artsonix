@@ -224,11 +224,23 @@ def format_results(items, search_type):
             data["year"] = item.get("release_date", "").split("-")[0] if item.get("release_date") else "Unknown"
             data["popularity"] = item.get("popularity", 0)
         elif search_type == "track":
-            data["artist"] = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
-            data["album"] = item.get("album", {}).get("name", "Unknown Album")
-            data["preview_url"] = item.get("preview_url", None)
-            data["year"] = item.get("album", {}).get("release_date", "").split("-")[0] if item.get("album") else "Unknown"
-            data["popularity"] = item.get("popularity", 0)
+            creator = ", ".join([artist["name"] for artist in item.get("artists", []) if "name" in artist]) or "Unknown Artist"
+            description = item.get("album", {}).get("name", "Unknown Album")
+            popularity = item.get("popularity", "N/A")
+            preview_url = item.get("preview_url", None)  # Could be None if unavailable
+
+            # ✅ Properly retrieve album cover
+            image_url = (
+                item.get("album", {}).get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
+            )
+
+            data.update({
+                "creator": creator,
+                "album": description,
+                "popularity": popularity,
+                "preview_url": preview_url,
+                "image": image_url,
+            })
 
         formatted_results.append(data)
 
