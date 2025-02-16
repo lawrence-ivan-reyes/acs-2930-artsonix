@@ -21,74 +21,59 @@
         <h1 class="text-2xl font-bold text-gray-800">Discover Music Through Art</h1>
         
         <form id="user-form" class="mt-4" action="/results" method="get">
-            <!-- Recommendation Type Selection -->
-            <label for="rec-type" class="block text-gray-600">What do you want to search for?</label>
-            <select id="rec-type" name="rec_type" class="w-full p-2 border rounded-lg" required>
-                <option value="playlist">Playlists</option>
-                <option value="album">Albums</option>
-                <option value="artist">Artists</option>
-                <option value="track">Tracks</option>
-            </select>
+            
+            <!-- 📌 Form Legend -->
+            <fieldset class="border border-gray-300 p-4 rounded-lg">
+                <legend class="text-lg font-bold text-gray-800">Find Your Music Match</legend>
 
-            <!-- Mood Selection -->
-            <label for="mood" class="block text-gray-600 mt-4">Pick a mood:</label>
-            <select id="mood" name="mood" class="w-full p-2 border rounded-lg">
-                <option value="" disabled selected>Select a mood</option>
-                <option value="Inspired">Inspired</option>
-                <option value="Creative">Creative</option>
-                <option value="Calm">Calm</option>
-                <option value="Energetic">Energetic</option>
-                <option value="Adventurous">Adventurous</option>
-                <option value="Happy">Happy</option>
-                <option value="Sad">Sad</option>
-                <option value="Romantic">Romantic</option>
-                <option value="Focused">Focused</option>
-                <option value="Upbeat">Upbeat</option>
-                <option value="Rebellious">Rebellious</option>
-                <option value="Dark">Dark</option>
-                <option value="Nostalgic">Nostalgic</option>
-                <option value="Trippy">Trippy</option>
-                <option value="Party">Party</option>
-                <option value="Epic">Epic</option>
-                <option value="Quirky">Quirky</option>
-                <option value="Emotional">Emotional</option>
-            </select>
+                <!-- 🎭 Mood Selection (Multi-Select Limit: 3) -->
+                <p class="block text-gray-600 mt-2">Select up to 3 moods:</p>
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    {% for mood in ["Inspired", "Creative", "Calm", "Energetic", "Adventurous", "Happy", "Sad", "Romantic", "Focused", "Upbeat", "Rebellious", "Dark", "Nostalgic", "Trippy", "Party", "Epic", "Quirky", "Emotional"] %}
+                        <label class="flex items-center">
+                            <input type="checkbox" name="moods" value="{{ mood }}" class="mood-checkbox">
+                            <span class="ml-2">{{ mood }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
 
-    <!-- Search Option -->
-    <div class="mt-4">
-        <button type="button" id="toggle-search" class="text-blue-500 underline">
-            Do you want to just search instead?
-        </button>
-        
-        <div id="search-section" class="hidden mt-2">
-            <label for="search-type" class="block text-gray-600">Select media type:</label>
-            <select id="search-type" name="search_type" class="w-full p-2 border rounded-lg">
-                <option value="playlist">Playlists</option>
-                <option value="album">Albums</option>
-                <option value="artist">Artists</option>
-                <option value="track">Tracks</option>
-            </select>
+                <!-- 🔍 Search Query (Optional) -->
+                <p class="block text-gray-600 mt-4">Or enter a specific search query:</p>
+                <input type="text" id="search-query" name="query"
+                    class="w-full p-2 border rounded-lg mt-2"
+                    placeholder="Enter artist, album, or song (optional)">
 
-            <input type="text" id="search-query" name="query"
-                class="w-full p-2 mt-2 border rounded-lg"
-                placeholder="Enter search keyword (e.g., artist, album, song)">
-        </div>
+                <!-- 🎵 Media Type Selection (Radio Buttons) -->
+                <p class="block text-gray-600 mt-4">Choose what you want to search for:</p>
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    {% for media in ["Playlist", "Album", "Artist", "Track", "I’m open to anything"] %}
+                        <label class="flex items-center">
+                            <input type="radio" name="rec_type" value="{{ media.lower() }}" required>
+                            <span class="ml-2">{{ media }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <!-- 🎯 Submit Button -->
+            <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 w-full">
+                Find Music
+            </button>
+
+        </form>
     </div>
-
-    <!-- ✅ Submit Button Restored -->
-    <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-        Search Music
-    </button>
-</form>
+</div>
 
 <script>
-    document.getElementById("toggle-search").addEventListener("click", function () {
-        let searchSection = document.getElementById("search-section");
-        if (searchSection.classList.contains("hidden")) {
-            searchSection.classList.remove("hidden");
-        } else {
-            searchSection.classList.add("hidden");
-        }
+    // 🛑 Limit mood selection to 3
+    document.querySelectorAll('.mood-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            let checkedBoxes = document.querySelectorAll('.mood-checkbox:checked');
+            if (checkedBoxes.length > 3) {
+                this.checked = false;
+                alert("You can only select up to 3 moods.");
+            }
+        });
     });
 </script>
 
