@@ -1,52 +1,49 @@
 {% extends 'base.html' %}
-
 {% block content %}
 <body class="bg-gray-100">
-    <nav class="bg-blue-600 p-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-white text-2xl font-bold">ArtSonix</h1>
-            <ul class="flex space-x-4">
-                <li><a href="/" class="text-white hover:underline">Home</a></li>
-                <li><a href="/about" class="text-white hover:underline">About</a></li>
-                <li><a href="#" class="text-white hover:underline">Contact</a></li>
-            </ul>
-        </div>
-    </nav>
     <header class="text-center py-10">
-        <h2 class="text-3xl font-bold text-gray-800">Your Personalized Art & Music Recommendations</h2>
+        <h2 class="text-3xl font-bold text-gray-800">Your Personalized Art Recommendations</h2>
     </header>
     <div class="flex items-center justify-center min-h-screen">
-        <div class="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-2xl">
-            <h1 class="text-2xl font-bold text-gray-800">Here are your results:</h1>
+        <div class="w-full max-w-5xl mx-auto p-6 bg-gray-100 shadow-lg rounded-2xl">
             <div id="results" class="mt-4">
-                {% if has_results %}
-                    <h3 class="text-xl font-semibold text-blue-600">Music Recommendations:</h3>
-                    <ul class="list-disc list-inside text-gray-700">
-                        <li>{{ music_placeholder_1 }}</li>
-                        <li>{{ music_placeholder_2 }}</li>
-                        <li>{{ music_placeholder_3 }}</li>
-                    </ul>
-                    
-                    <h3 class="text-xl font-semibold text-blue-600 mt-4">Art Recommendations:</h3>
-                    <ul class="list-disc list-inside text-gray-700">
-                        {% for artwork in artworks %}
-                            <li>
-                                <img src="{{ artwork.primaryImageSmall }}" alt="{{ artwork.title }}" class="w-full mb-4">
-                                <p><strong>Title:</strong> {{ artwork.title }}</p>
-                                {% if artwork.artistDisplayName %}
-                                    <p><strong>Artist:</strong> {{ artwork.artistDisplayName }}</p>
-                                {% else %}
-                                    <p><strong>Artist:</strong> Unknown</p>
-                                {% endif %}
-                                <p><strong>Object Date:</strong> {{ artwork.objectDate }}</p>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-center text-gray-600">No results found for the selected art style. Please try a different art style.</p>
-                {% endif %}
+                <div id="artworks-grid" class="artworks-grid"></div>
             </div>
         </div>
     </div>
+    <script>
+        // Retrieve the artworks data stored in localStorage
+        const artworks = JSON.parse(localStorage.getItem('artworks'));
+
+        // Check if there are artworks to display
+        if (artworks && artworks.length) {
+            // Populate the artworks-grid with the artwork data
+            document.getElementById('artworks-grid').innerHTML = artworks.map(artwork => `
+                <div class="artwork-card">
+                    <img src="${artwork.primaryImageSmall}" alt="${artwork.title}">
+                    <div class="content">
+                        <h4>${artwork.title}</h4>
+                        ${artwork.artistDisplayName ?
+                          `<p><strong>Artist:</strong> ${artwork.artistDisplayName}</p>` :
+                          `<p><strong>Artist:</strong> Unknown</p>`
+                        }
+                        ${artwork.objectDate ?
+                          `<p><strong>Object Date:</strong> ${artwork.objectDate}</p>` :
+                          `<p><strong>Object Date:</strong> Unknown</p>`
+                        }
+                        ${artwork.medium ?
+                          `<p><strong>Medium:</strong> ${artwork.medium}</p>` :
+                          `<p><strong>Medium:</strong> Unknown</p>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            // Display a message if no artworks are found
+            document.getElementById('results').innerHTML = `
+                <p class="text-center text-gray-600">No results found for the selected preferences. Please try different preferences.</p>
+            `;
+        }
+    </script>
 </body>
 {% endblock %}
