@@ -215,9 +215,24 @@ def format_results(items, search_type):
             data["track_count"] = item.get("tracks", {}).get("total", 0)
             data["followers"] = item.get("followers", {}).get("total", 0)
         elif search_type == "artist":
-            data["followers"] = item.get("followers", {}).get("total", 0)
-            data["genres"] = item.get("genres", [])
-            data["popularity"] = item.get("popularity", 0)
+            creator = item.get("name", "Unknown Artist")
+            description = ", ".join(item.get("genres", ["No genres available"]))
+            popularity = item.get("popularity", "N/A")
+            followers = item.get("followers", {}).get("total", 0)
+
+            # ✅ Ensure image_url doesn't cause IndexError
+            images = item.get("images", [])
+            image_url = images[0]["url"] if images else "https://via.placeholder.com/300"
+
+            return {
+                "name": creator,
+                "url": item.get("external_urls", {}).get("spotify", "#"),
+                "image": image_url,
+                "type": search_type,
+                "genres": description,
+                "popularity": popularity,
+                "followers": followers,
+            }
         elif search_type == "album":
             data["artist"] = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
             data["release_date"] = item.get("release_date", "Unknown Date")
