@@ -2,41 +2,139 @@
 
 {% block content %}
 <body class="bg-gray-100">
-    <nav class="bg-blue-600 p-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-white text-2xl font-bold">ArtSonix</h1>
-            <ul class="flex space-x-4">
-                <li><a href="#" class="text-white hover:underline">Home</a></li>
-                <li><a href="#" class="text-white hover:underline">About</a></li>
-                <li><a href="#" class="text-white hover:underline">Contact</a></li>
-            </ul>
-        </div>
-    </nav>
     <header class="text-center py-10">
         <h2 class="text-3xl font-bold text-gray-800">Welcome to ArtSonix!</h2>
     </header>
-    <div class="flex items-center justify-center h-screen">
+    <div class="flex items-center justify-center ">
         <div class="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-2xl">
             <h1 class="text-2xl font-bold text-gray-800">Discover Music Through Art</h1>
-            <form id="user-form" class="mt-4">
-                <label class="block text-gray-600 mt-2">Favorite Art Style:</label>
-                <input type="text" id="art-style" name="art_style" placeholder="e.g. Impressionism, Abstract" class="w-full p-2 border rounded-lg" required>
+            <form id="preference-form" class="mt-4">
+                <!-- Q1: Mood Selection -->
+                <label for="moods_multiple" class="block mb-2 text-lg font-medium text-gray-800">What is your mood today? (Pick up to 3)</label>
+                <select multiple id="moods_multiple" name="moods" class="bg-gray-50 border border-gray-300 text-gray-800 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <option value="Inspired">Inspired</option>
+                    <option value="Creative">Creative</option>
+                    <option value="Calm">Calm</option>
+                    <option value="Energetic">Energetic</option>
+                    <option value="Adventurous">Adventurous</option>
+                    <option value="Happy">Happy</option>
+                    <option value="Sad">Sad</option>
+                    <option value="Romantic">Romantic</option>
+                    <option value="Focused">Focused</option>
+                    <option value="Upbeat">Upbeat</option>
+                    <option value="Rebellious">Rebellious</option>
+                    <option value="Dark">Dark</option>
+                    <option value="Nostalgic">Nostalgic</option>
+                    <option value="Trippy">Trippy</option>
+                    <option value="Party">Party</option>
+                    <option value="Epic">Epic</option>
+                    <option value="Quirky">Quirky</option>
+                    <option value="Emotional">Emotional</option>
+                    <option value="open">I’m open to anything</option>
+                </select>
 
-                <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                    Get Recommendations
-                </button>
+                <!-- Q2: Art Style Selection -->
+                <label for="art_styles_multiple" class="block mb-2 text-lg font-medium text-gray-800 mt-4">What is your favorite art style? (Pick up to 3)</label>
+                <select multiple id="art_styles_multiple" name="art_styles" class="bg-gray-50 border border-gray-300 text-gray-800 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <option value="Cubism">Cubism</option>
+                    <option value="Abstract">Abstract</option>
+                    <option value="Contemporary art">Contemporary art</option>
+                    <option value="Modern">Modern</option>
+                    <option value="Impressionism">Impressionism</option>
+                    <option value="Baroque">Baroque</option>
+                    <option value="Romanticism">Romanticism</option>
+                    <option value="Pre-Raphaelite">Pre-Raphaelite</option>
+                    <option value="Op Art">Op Art</option>
+                    <option value="Futurism">Futurism</option>
+                    <option value="Tonalism">Tonalism</option>
+                    <option value="Open">I’m open to anything</option>
+                </select>
+
+                <!-- Q3: Art Period Selection -->
+                <label for="period" class="block mb-2 text-lg font-medium text-gray-800 mt-4">Do you have a favorite art period?</label>
+                <select id="period" name="period" class="bg-gray-50 border border-gray-300 text-gray-800 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <option value="">Choose an art period</option>
+                    <option value="Ancient">Ancient (Before 500 CE)</option>
+                    <option value="Medieval & Renaissance">Medieval & Renaissance (500-1500 CE)</option>
+                    <option value="Early Modern">Early Modern (1500-1800 CE)</option>
+                    <option value="Modern">Modern (1800-1945 CE)</option>
+                    <option value="Contemporary">Contemporary (1945-present CE)</option>
+                    <option value="Open">I’m open to anything</option>
+                </select>
+
+                <!-- Q4: Subject Selection -->
+                <label for="subject" class="block mb-2 text-lg font-medium text-gray-800 mt-4">What subjects capture your interest?</label>
+                <select id="subject" name="subject" class="bg-gray-50 border border-gray-300 text-gray-800 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <option value="">Choose a subject</option>
+                    <option value="Human Stories">Human Stories (portraits, daily life)</option>
+                    <option value="Nature & Landscapes">Nature & Landscapes</option>
+                    <option value="Religious & Mythological">Religious & Mythological</option>
+                    <option value="Historical Events">Historical Events</option>
+                    <option value="Abstract & Decorative">Abstract & Decorative</option>
+                    <option value="Open">I’m open to anything</option>
+                </select>
+
+                <!-- Buttons for form submission and "Surprise Me" feature -->
+                <div class="mt-4 flex space-x-4">
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                        Get Recommendations
+                    </button>
+                    <button type="button" id="surpriseBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600" style="width: auto;">
+                        Surprise Me!
+                    </button>
+                </div>
             </form>
         </div>
     </div>
     <script>
-        document.getElementById("user-form").addEventListener("submit", function(event) {
-            event.preventDefault(); 
-            
-            const artStyle = document.getElementById("art-style").value;
-            
-            if (artStyle.trim()) {
-                window.location.href = `/results?art_style=${encodeURIComponent(artStyle)}`;
-            }
+        // Handle form submission for getting recommendations
+        document.getElementById("preference-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const selectedMoods = Array.from(document.getElementById("moods_multiple").selectedOptions).map(option => option.value);
+            const selectedArtStyles = Array.from(document.getElementById("art_styles_multiple").selectedOptions).map(option => option.value);
+            const period = document.getElementById("period").value;
+            const subject = document.getElementById("subject").value;
+
+            // Send selected options to Flask
+            fetch('/process-preferences', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ moods: selectedMoods, art_styles: selectedArtStyles, period: period, subject: subject })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response from Server:', data);
+                if (!data.error) {
+                    localStorage.setItem('artworks', JSON.stringify(data));
+                    window.location.href = '/results';
+                } else {
+                    alert('An error occurred: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Fetch Error:', error));
+        });
+
+        // Handle "Surprise Me" button click
+        document.getElementById("surpriseBtn").addEventListener("click", function() {
+            // Send a request to fetch the surprise me results
+            fetch('/surprise-me')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.error) {
+                        localStorage.setItem('artworks', JSON.stringify(data));
+                        window.location.href = '/results';
+                    } else {
+                        alert('An error occurred: ' + data.error);
+                    }
+                })
+                .catch(error => console.error('Error fetching surprise data:', error));
         });
     </script>
 </body>
