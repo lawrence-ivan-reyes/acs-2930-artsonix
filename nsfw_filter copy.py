@@ -203,30 +203,32 @@ async def is_safe_image(image_url: str) -> str:
 
 # ✅ NSFW Image Check (Google Vision + OpenAI in Parallel)
 async def is_safe_image(image_url: str) -> str:
-    """Optimized NSFW check using Google Vision & OpenAI in parallel."""
+    """Runs Google Vision first; if flagged, checks OpenAI before blocking."""
     if not image_url:
-        return CENSORED_IMAGE_URL
+        return CENSORED_IMAGE_URL  # ✅ Default to censored image if URL is missing
 
+    # ✅ Check Cache First
     if image_url in NSFW_IMAGE_CACHE:
         return NSFW_IMAGE_CACHE[image_url]
 
-    # ✅ Run both checks in parallel
-    google_task = google_cloud_nsfw_check(image_url)
-    openai_task = openai_nsfw_image_check(image_url)
-    
-    google_safe, openai_safe = await asyncio.gather(google_task, openai_task)
+    # ✅ Run Google Vision First
+    google_safe = await google_cloud_nsfw_check(image_url)
 
-    # ✅ Determine final safety status
-    result = image_url if google_safe and openai_safe else CENSORED_IMAGE_URL
+    if google_safe:
+        NSFW_IMAGE_CACHE[image_url] = image_url  # ✅ Mark as safe
+        return image_url  
+
+    # ❌ Google Vision flagged → Run OpenAI Check
+    logging.warning(f"⚠️ Google flagged {image_url}. Running OpenAI check...")
+
+    openai_safe = await openai_nsfw_image_check(image_url)
+
+    result = image_url if openai_safe else CENSORED_IMAGE_URL
     NSFW_IMAGE_CACHE[image_url] = result  # ✅ Cache result
     return result
 
 async def google_cloud_nsfw_check(image_url: str) -> bool:
-    """Google Cloud Vision API NSFW detection with retries."""
-    return await retry_api_call(lambda: _google_cloud_nsfw_check(image_url))
-
-async def _google_cloud_nsfw_check(image_url: str) -> bool:
-    """Google Vision NSFW detection logic."""
+    """Runs Google Cloud Vision NSFW detection."""
     try:
         image = vision.Image()
         image.source.image_uri = image_url
@@ -235,25 +237,13 @@ async def _google_cloud_nsfw_check(image_url: str) -> bool:
 
         # ✅ Define Risk Levels
         risk_levels = {"POSSIBLE", "LIKELY", "VERY_LIKELY"}
-        if annotations.adult.name in risk_levels or annotations.violence.name in risk_levels:
-            return False  # 🚨 NSFW Detected
-
-        return True  
+        return annotations.adult.name not in risk_levels and annotations.violence.name not in risk_levels
     except Exception as e:
         logging.error(f"❌ Google Cloud Vision API Error: {e}")
-        return False  
+        return False  # Assume unsafe if Vision API fails
 
 async def openai_nsfw_image_check(image_url: str) -> bool:
-    """OpenAI NSFW Image Moderation with retries."""
-    return await retry_api_call(lambda: _openai_nsfw_image_check(image_url))
-
-async def _openai_nsfw_image_check(image_url: str) -> bool:
-    """OpenAI NSFW Image Moderation API logic."""
-    headers = {
-        "Authorization": f"Bearer {OPENAI_API_KEY}",
-        "Content-Type": "application/json",
-    }
-
+    """Runs OpenAI NSFW Image Moderation."""
     payload = {
         "model": "omni-moderation-latest",
         "input": [{"type": "image_url", "image_url": {"url": image_url}}],
@@ -261,9 +251,11 @@ async def _openai_nsfw_image_check(image_url: str) -> bool:
 
     session = await get_session()
     try:
-        async with session.post(OPENAI_MODERATION_API_URL, json=payload, headers=headers) as response:
+        async with session.post(
+            OPENAI_MODERATION_API_URL, json=payload, headers={"Authorization": f"Bearer {OPENAI_API_KEY}"}
+        ) as response:
             data = await response.json()
             return not any(result.get("flagged", False) for result in data.get("results", []))
     except Exception as e:
         logging.error(f"❌ OpenAI Image Moderation Error: {e}")
-        return False  
+        return False  # Assume unsafe if OpenAI API fails
