@@ -260,80 +260,75 @@ def about():
 
 @app.route('/results', methods=['GET'])
 def results():
-    """Fetches Spotify results using subgenres mapped to moods, applies NSFW filtering, and renders results."""
+    """Fetches Spotify results based on mood and media type, or surprises the user."""
 
     rec_type = request.args.get('rec_type', 'playlist')
-    moods = request.args.getlist('moods')  # Get list of selected moods
+    moods = request.args.getlist('moods')  # Multi-select moods
     query = request.args.get('query', '').strip()
-    open_to_anything = request.args.get('rec_type') == "anything"
 
-    logging.info(f"🔎 Received request → Rec Type: {rec_type}, Moods: {moods}, Query: {query}")
+    # ✅ Handle 'Surprise Me' (Bypassing all filters)
+    if rec_type.lower() == "i’m open to anything":
+        rec_type = random.choice(["playlist", "album", "artist", "track"])  # Pick a random media type
+        all_genres = sum(MOOD_GENRE_MAP.values(), [])  # Flatten genre lists
+        query = " OR ".join(random.sample(all_genres, min(len(all_genres), 5)))  # Pick random genres
 
-    # ✅ Handle Different Search Scenarios
-    if open_to_anything:
-        # 🎲 **Better Randomization for "Open to Anything"**
-        search_genres = random.choices(MAINSTREAM_GENRES, k=2) + random.choices(NICHE_GENRES, k=1)
-        rec_type = random.choice(["playlist", "album", "artist", "track"])  # Random media type
-    elif moods:
-        # 🎭 Use subgenres based on selected moods (limit: 3 moods)
-        search_genres = [genre for mood in moods[:3] for genre in MOOD_GENRE_MAP.get(mood, [mood])]
-    elif query:
-        # 🧐 Use fuzzy matching for free-text queries
-        best_match, score, _ = fuzz_process.extractOne(query, ALL_SUBGENRES)
-        search_genres = [best_match] if score > 75 else [query]
     else:
-        # ❌ No valid input given
-        return render_template("error.html", message="Please select moods or enter a search query"), 400
+        # ✅ Use subgenres mapped to selected moods
+        selected_genres = [genre for mood in moods if mood in MOOD_GENRE_MAP for genre in MOOD_GENRE_MAP[mood]]
+        query = " OR ".join(selected_genres) if not query else query  # Prioritize manual query
 
-    # 🔎 Format query for Spotify Search
-    search_query = " OR ".join(search_genres)
-    logging.info(f"🎶 Spotify Search Query: {search_query}")
+    # ✅ Ensure query length is within Spotify's 250-character limit
+    if len(query) > 250:
+        query = " OR ".join(query.split(" OR ")[:5])
 
-    # ✅ Fetch Spotify Access Token
+    logging.info(f"🔎 Searching Spotify for: {query} (Rec Type: {rec_type})")
+
+    # ✅ Fetch Spotify data
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     access_token = loop.run_until_complete(get_access_token())
+
     if not access_token:
         return render_template("error.html", message="Failed to fetch access token"), 500
 
     headers = {"Authorization": f"Bearer {access_token}"}
     results = []
-    offset, limit = 0, 50  
+    offset, limit = 0, 50
 
     while len(results) < 50:
-        params = {"q": search_query, "type": rec_type, "limit": limit, "offset": offset}
+        params = {"q": query, "type": rec_type, "limit": limit, "offset": offset}
         response = requests.get(SPOTIFY_API_URL, headers=headers, params=params)
 
         if response.status_code != 200:
             return render_template("error.html", message="Failed to fetch data from Spotify"), response.status_code
 
         data = response.json()
-        items = data.get(f"{rec_type}s", {}).get("items", [])
+        items = data.get(rec_type + "s", {}).get("items", [])
         if not isinstance(items, list):
-            break  
+            break
 
-        results.extend([item for item in items if isinstance(item, dict)])
-
-        offset += limit  
-        if len(items) < limit:  
-            break  
+        results.extend(items)
+        offset += limit
+        if len(items) < limit:
+            break
 
     if len(results) < 9:
         logging.warning(f"⚠️ Only {len(results)} results available from Spotify")
 
-    # ✅ **Sort by Followers (Playlists) or Popularity (Other Media)**
+    # ✅ Sort Playlists by Followers, Others by Popularity
     if rec_type == "playlist":
         results.sort(key=lambda x: x.get("followers", {}).get("total", 0), reverse=True)
     else:
         results.sort(key=lambda x: x.get("popularity", 0), reverse=True)
 
-    # ✅ Shuffle after sorting for randomness
-    random.shuffle(results)
+    # ✅ Add More Randomness for "Surprise Me"
+    if rec_type == "i’m open to anything":
+        random.shuffle(results)  # Re-shuffle after sorting
 
     # ✅ Select 9 Random Results Before Filtering
     selected_results = random.sample(results, min(len(results), 9))
 
-    # ✅ **Fix Event Loop Issue by Creating a New Loop**
+    # ✅ Process NSFW Filtering
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     filtered_results = loop.run_until_complete(process_results(selected_results, rec_type))
