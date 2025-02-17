@@ -64,6 +64,21 @@
     </div>
 </div>
 
+<!-- ⚠️ Modal Alert for Mood Limit -->
+<div id="mood-modal" class="fixed inset-0 hidden bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-96">
+        <div class="p-4">
+            <h3 class="text-lg font-semibold text-gray-900">Too Many Moods Selected</h3>
+            <p class="text-sm text-gray-600 mt-2">You can only select up to 3 moods. Please deselect one before selecting another.</p>
+        </div>
+        <div class="flex justify-end p-4">
+            <button id="close-modal" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                Okay
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     // 🛑 Limit mood selection to 3
     document.querySelectorAll('.mood-checkbox').forEach(checkbox => {
@@ -71,9 +86,14 @@
             let checkedBoxes = document.querySelectorAll('.mood-checkbox:checked');
             if (checkedBoxes.length > 3) {
                 this.checked = false;
-                alert("You can only select up to 3 moods.");
+                document.getElementById('mood-modal').classList.remove('hidden');
             }
         });
+    });
+
+    // Close modal when "Okay" button is clicked
+    document.getElementById('close-modal').addEventListener('click', function () {
+        document.getElementById('mood-modal').classList.add('hidden');
     });
 </script>
 
