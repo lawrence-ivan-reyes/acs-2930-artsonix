@@ -548,6 +548,9 @@
   .mt-6 {
     margin-top: calc(var(--spacing) * 6);
   }
+  .mr-2 {
+    margin-right: calc(var(--spacing) * 2);
+  }
   .mb-2 {
     margin-bottom: calc(var(--spacing) * 2);
   }
@@ -578,8 +581,14 @@
   .aspect-square {
     aspect-ratio: 1 / 1;
   }
+  .h-6 {
+    height: calc(var(--spacing) * 6);
+  }
   .min-h-screen {
     min-height: 100vh;
+  }
+  .w-6 {
+    width: calc(var(--spacing) * 6);
   }
   .w-96 {
     width: calc(var(--spacing) * 96);
