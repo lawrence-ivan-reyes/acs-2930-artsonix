@@ -6,7 +6,6 @@ from nsfw_filter import is_safe_content, is_safe_url, is_safe_image
 import requests
 import os
 import html
-from rapidfuzz import process as fuzz_process
 
 # Load environment variables
 load_dotenv()
@@ -99,9 +98,6 @@ NICHE_GENRES = [
     "Dungeon Synth", "Cybergrind", "Witch House", "Plunderphonics", "Dariacore", 
     "Mallsoft", "Darkwave", "Vaporwave", "Synthwave", "Hardstyle"
 ]
-
-# ✅ All possible subgenres for Levenshtein Distance Matching
-ALL_SUBGENRES = {subgenre for genres in MOOD_GENRE_MAP.values() for subgenre in genres}
 
 # ✅ Async function to get Spotify access token with lock
 async def get_access_token():
