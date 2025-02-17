@@ -179,31 +179,13 @@ async def fetch_all_results(query, search_type):
 
     # ✅ **Sorting by Followers (Playlists) or Popularity (Albums, Tracks, Artists)**
     if search_type == "playlist":
-        # ✅ Remove None values and ensure valid dictionaries before sorting
-        results = [item for item in results if isinstance(item, dict)]
+        results.sort(key=lambda x: x.get("followers", {}).get("total", 0) if isinstance(x.get("followers"), dict) else 0, reverse=True)
+    else:
+        results.sort(key=lambda x: x.get("popularity", 0) if isinstance(x, dict) else 0, reverse=True)
 
-        # ✅ Check for empty results after filtering
-        if not results:
-            logging.error("❌ No valid results to sort after filtering!")
-            return render_template("error.html", message="No valid results found"), 500
-
-        # ✅ Ensure correct sorting logic
-        if search_type == "playlist":
-            results.sort(
-                key=lambda x: x.get("followers", {}).get("total", 0)
-                if isinstance(x.get("followers"), dict) else 0,
-                reverse=True
-            )
-        else:
-            results.sort(
-                key=lambda x: x.get("popularity", 0) if isinstance(x, dict) else 0,
-                reverse=True
-            )
-
-    # ✅ **Shuffle after sorting to introduce randomness**
+    # ✅ Shuffle after sorting to introduce randomness
     random.shuffle(results)
 
-    # ✅ Ensure exactly 20 unique results
     return results[:20]
 
 # ✅ Format search results
@@ -273,26 +255,10 @@ def about():
 
 @app.route('/results', methods=['GET'])
 def results():
-    """Fetches Spotify results based on mood and media type, or surprises the user."""
-
+    """Fetches Spotify results based on search or mood selection."""
+    
     rec_type = request.args.get('rec_type', 'playlist')
-    moods = request.args.getlist('moods')  # Multi-select moods
     query = request.args.get('query', '').strip()
-
-    # ✅ Handle 'Surprise Me' (Bypassing all filters)
-    if rec_type.lower() == "i’m open to anything":
-        rec_type = random.choice(["playlist", "album", "artist", "track"])  # Pick a random media type
-        all_genres = sum(MOOD_GENRE_MAP.values(), [])  # Flatten genre lists
-        query = " OR ".join(random.sample(all_genres, min(len(all_genres), 5)))  # Pick random genres
-
-    else:
-        # ✅ Use subgenres mapped to selected moods
-        selected_genres = [genre for mood in moods if mood in MOOD_GENRE_MAP for genre in MOOD_GENRE_MAP[mood]]
-        query = " OR ".join(selected_genres) if not query else query  # Prioritize manual query
-
-    # ✅ Ensure query length is within Spotify's 250-character limit
-    if len(query) > 250:
-        query = " OR ".join(query.split(" OR ")[:5])
 
     logging.info(f"🔎 Searching Spotify for: {query} (Rec Type: {rec_type})")
 
@@ -328,37 +294,7 @@ def results():
     if len(results) < 9:
         logging.warning(f"⚠️ Only {len(results)} results available from Spotify")
 
-    # ✅ Sort Playlists by Followers, Others by Popularity
-    if rec_type == "playlist":
-        # ✅ Remove None values and ensure valid dictionaries before sorting
-        results = [item for item in results if isinstance(item, dict)]
-
-        # ✅ Check for empty results after filtering
-        if not results:
-            logging.error("❌ No valid results to sort after filtering!")
-            return render_template("error.html", message="No valid results found"), 500
-
-        # ✅ Ensure correct sorting logic
-        if rec_type == "playlist":
-            results.sort(
-                key=lambda x: x.get("followers", {}).get("total", 0)
-                if isinstance(x.get("followers"), dict) else 0,
-                reverse=True
-            )
-        else:
-            results.sort(
-                key=lambda x: x.get("popularity", 0) if isinstance(x, dict) else 0,
-                reverse=True
-            )
-            
-        # ✅ Shuffle results for better randomness
-        random.shuffle(results)
-
-    # ✅ Add More Randomness for "Surprise Me"
-    if rec_type == "i’m open to anything":
-        random.shuffle(results)  # Re-shuffle after sorting
-
-    # ✅ Select 9 Random Results Before Filtering
+    # ✅ Select 9 Random Results
     selected_results = random.sample(results, min(len(results), 9))
 
     # ✅ Process NSFW Filtering
