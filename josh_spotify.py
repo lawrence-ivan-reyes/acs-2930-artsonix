@@ -193,9 +193,16 @@ async def fetch_all_results(query, search_type):
 
         # ✅ Ensure correct sorting logic
         if search_type == "playlist":
-            results.sort(key=lambda x: x.get("followers", {}).get("total", 0) if isinstance(x.get("followers", {}), dict) else 0, reverse=True)
+            results.sort(
+                key=lambda x: x.get("followers", {}).get("total", 0)
+                if isinstance(x.get("followers"), dict) else 0,
+                reverse=True
+            )
         else:
-            results.sort(key=lambda x: x.get("popularity", 0) if isinstance(x, dict) else 0, reverse=True)
+            results.sort(
+                key=lambda x: x.get("popularity", 0) if isinstance(x, dict) else 0,
+                reverse=True
+            )
 
     # ✅ **Shuffle after sorting to introduce randomness**
     random.shuffle(results)
@@ -327,9 +334,29 @@ def results():
 
     # ✅ Sort Playlists by Followers, Others by Popularity
     if rec_type == "playlist":
-        results.sort(key=lambda x: x.get("followers", {}).get("total", 0), reverse=True)
-    else:
-        results.sort(key=lambda x: x.get("popularity", 0), reverse=True)
+        # ✅ Remove None values and ensure valid dictionaries before sorting
+        results = [item for item in results if isinstance(item, dict)]
+
+        # ✅ Check for empty results after filtering
+        if not results:
+            logging.error("❌ No valid results to sort after filtering!")
+            return render_template("error.html", message="No valid results found"), 500
+
+        # ✅ Ensure correct sorting logic
+        if rec_type == "playlist":
+            results.sort(
+                key=lambda x: x.get("followers", {}).get("total", 0)
+                if isinstance(x.get("followers"), dict) else 0,
+                reverse=True
+            )
+        else:
+            results.sort(
+                key=lambda x: x.get("popularity", 0) if isinstance(x, dict) else 0,
+                reverse=True
+            )
+            
+        # ✅ Shuffle results for better randomness
+        random.shuffle(results)
 
     # ✅ Add More Randomness for "Surprise Me"
     if rec_type == "i’m open to anything":
