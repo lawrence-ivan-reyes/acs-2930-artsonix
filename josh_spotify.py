@@ -183,9 +183,14 @@ async def fetch_all_results(query, search_type):
 
     # ✅ **Sorting by Followers (Playlists) or Popularity (Albums, Tracks, Artists)**
     if search_type == "playlist":
-        results.sort(key=lambda x: x.get("followers", {}).get("total", 0), reverse=True)
-    else:
-        results.sort(key=lambda x: x.get("popularity", 0), reverse=True)
+        # Remove None values before sorting
+        results = [item for item in results if isinstance(item, dict)]
+
+        # Sort playlists by followers, other media by popularity
+        if search_type == "playlist":
+            results.sort(key=lambda x: x.get("followers", {}).get("total", 0), reverse=True)
+        else:
+            results.sort(key=lambda x: x.get("popularity", 0), reverse=True)
 
     # ✅ **Shuffle after sorting to introduce randomness**
     random.shuffle(results)
