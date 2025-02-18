@@ -202,38 +202,29 @@ def format_results(items, search_type):
         data = {
             "name": item.get("name", "Unknown"),
             "url": item.get("external_urls", {}).get("spotify", "#"),
-            "image": item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300"),
             "type": search_type,  
         }
 
-        if search_type == "playlist":
-            data["track_count"] = item.get("tracks", {}).get("total", 0)
-            data["followers"] = item.get("followers", {}).get("total", 0)
-        elif search_type == "artist":
-            creator = item.get("name", "Unknown Artist")
-            description = ", ".join(item.get("genres", ["No genres available"]))
-            popularity = item.get("popularity", "N/A")
-            followers = item.get("followers", {}).get("total", 0)
-
-            # ✅ Ensure image_url doesn't cause IndexError
+        # ✅ **Fix for artist image retrieval**
+        if search_type == "artist":
             images = item.get("images", [])
             image_url = images[0]["url"] if images else "https://via.placeholder.com/300"
-
-            return {
-                "name": creator,
-                "url": item.get("external_urls", {}).get("spotify", "#"),
-                "image": image_url,
-                "type": search_type,
-                "genres": description,
-                "popularity": popularity,
-                "followers": followers,
-            }
+            data["image"] = image_url
+            data["genres"] = ", ".join(item.get("genres", ["No genres available"]))
+            data["popularity"] = item.get("popularity", "N/A")
+            data["followers"] = item.get("followers", {}).get("total", 0)
+        elif search_type == "playlist":
+            data["image"] = item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
+            data["track_count"] = item.get("tracks", {}).get("total", 0)
+            data["followers"] = item.get("followers", {}).get("total", 0)
         elif search_type == "album":
+            data["image"] = item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
             data["artist"] = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
             data["release_date"] = item.get("release_date", "Unknown Date")
             data["year"] = item.get("release_date", "").split("-")[0] if item.get("release_date") else "Unknown"
             data["popularity"] = item.get("popularity", 0)
         elif search_type == "track":
+            data["image"] = item.get("album", {}).get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
             data["artist"] = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
             data["album"] = item.get("album", {}).get("name", "Unknown Album")
             data["preview_url"] = item.get("preview_url", None)
