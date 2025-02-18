@@ -303,7 +303,11 @@ def results():
     subgenre_results = []
     for mood in moods:
         if mood in MOOD_GENRE_MAP:
-            genre_based_results = [item for item in results if any(g in item.get("name", "").lower() for g in MOOD_GENRE_MAP[mood])]
+            genre_based_results = [
+                item for item in results
+                if item and isinstance(item, dict) and "name" in item and 
+                any(g in item.get("name", "").lower() for g in MOOD_GENRE_MAP.get(mood, []))
+            ]
             subgenre_results.extend(random.sample(genre_based_results, min(len(genre_based_results), 9)))
 
     final_results = subgenre_results if subgenre_results else results[:9]
