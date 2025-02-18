@@ -246,39 +246,31 @@ def about():
 
 @app.route('/results', methods=['GET'])
 def results():
-    """Fetches Spotify results based on search query or mood selection."""
-
+    """Fetches Spotify results based on mood and media type, while ensuring proper filtering and structured search queries."""
+    
     rec_type = request.args.get('rec_type', 'playlist')
+    moods = request.args.getlist('moods')  # Multi-select moods
     query = request.args.get('query', '').strip()
-    moods = request.args.getlist('moods')
+
+    # ✅ Handle 'Surprise Me' (Bypassing all filters)
+    if rec_type.lower() == "i’m open to anything":
+        rec_type = random.choice(["playlist", "album", "artist", "track"])  # Pick a random media type
+        all_genres = sum(MOOD_GENRE_MAP.values(), [])  # Flatten all genre lists
+        query = " OR ".join(random.sample(all_genres, min(len(all_genres), 5)))  # Pick random genres
+
+    else:
+        # ✅ Construct search query from selected moods
+        selected_genres = [genre for mood in moods if mood in MOOD_GENRE_MAP for genre in MOOD_GENRE_MAP[mood]]
+        if selected_genres and not query:
+            query = " OR ".join(selected_genres)
+
+    # ✅ Ensure query length is within Spotify's 250-character limit
+    if len(query) > 250:
+        query = " OR ".join(query.split(" OR ")[:5])
 
     logging.info(f"🔎 Searching Spotify for: {query} (Rec Type: {rec_type})")
 
-    # ✅ Handle "I'm Open to Anything"
-    if rec_type.lower() == "i’m open to anything":
-        rec_type = random.choice(["playlist", "album", "artist", "track"])  # Choose a valid type
-        all_genres = sum(MOOD_GENRE_MAP.values(), [])  # Flatten genre lists
-        random.shuffle(all_genres)
-        query = " OR ".join(all_genres[:5])  # Select up to 5 random genres
-
-    else:
-        # ✅ Use subgenres mapped to selected moods
-        selected_genres = [
-            genre for mood in moods if mood in MOOD_GENRE_MAP for genre in MOOD_GENRE_MAP[mood]
-        ]
-        query = " OR ".join(selected_genres) if selected_genres else query
-
-    # ✅ Ensure query is within Spotify's 250-character limit
-    if len(query) > 250:
-        query = " OR ".join(query.split(" OR ")[:5])  # Trim to first 5 terms
-
-    # ✅ URL Encode Query
-    query = quote_plus(query)
-
-    if not query:
-        return render_template("error.html", message="No valid moods or search query provided"), 400
-
-    # ✅ Fetch Spotify Access Token
+    # ✅ Fetch Spotify data
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     access_token = loop.run_until_complete(get_access_token())
@@ -287,103 +279,93 @@ def results():
         return render_template("error.html", message="Failed to fetch access token"), 500
 
     headers = {"Authorization": f"Bearer {access_token}"}
-    url = f"{SPOTIFY_API_URL}?q={query}&type={rec_type}&limit=20"
+    results = []
+    offset, limit = 0, 50
 
-    response = requests.get(url, headers=headers)
+    while len(results) < 50:
+        params = {"q": query, "type": rec_type, "limit": limit, "offset": offset}
+        response = requests.get(SPOTIFY_API_URL, headers=headers, params=params)
 
-    if response.status_code != 200:
-        logging.error(f"❌ Spotify API Error {response.status_code}: {response.text}")
-        return render_template("error.html", message="Failed to fetch data from Spotify"), response.status_code
+        if response.status_code != 200:
+            return render_template("error.html", message="Failed to fetch data from Spotify"), response.status_code
 
-    data = response.json()
-    items = data.get(rec_type + "s", {}).get("items", [])
+        data = response.json()
+        items = data.get(rec_type + "s", {}).get("items", [])
+        if not isinstance(items, list):
+            break
 
-    if not items:
-        return render_template("error.html", message="No results found"), 404
+        results.extend(items)
+        offset += limit
+        if len(items) < limit:
+            break
 
-    # ✅ Format results and return
-    formatted_results = format_results(items, rec_type)
-    return render_template("results.html", results=formatted_results)
+    # ✅ Ensure at least 9 results per subgenre
+    subgenre_results = []
+    for mood in moods:
+        if mood in MOOD_GENRE_MAP:
+            genre_based_results = [item for item in results if any(g in item.get("name", "").lower() for g in MOOD_GENRE_MAP[mood])]
+            subgenre_results.extend(random.sample(genre_based_results, min(len(genre_based_results), 9)))
+
+    final_results = subgenre_results if subgenre_results else results[:9]
+
+    # ✅ Apply NSFW filtering
+    filtered_results = loop.run_until_complete(process_results(final_results, rec_type))
+
+    if not filtered_results:
+        return render_template("error.html", message="No safe results found"), 404
+
+    return render_template("results.html", results=filtered_results)
 
 # ✅ **Process Results with NSFW Filtering**
 async def process_results(results, rec_type):
-    """Processes Spotify results with NSFW filtering and ensures only valid items are returned."""
-    
-    logging.info(f"🔍 Processing {len(results)} results for filtering...")
-
-    if not results:
-        logging.error("❌ No results returned from Spotify API before filtering!")
-        return []
-
-    # ✅ Log first 5 results before filtering
-    for i, item in enumerate(results[:5]):
-        logging.info(f"🔍 [Before Filtering] {i+1}. {item.get('name', 'Unknown')} - {item.get('url', 'No URL')}")
-
-    # ✅ Remove invalid items
-    valid_results = [
-        item for item in results
-        if isinstance(item, dict) and item.get("name") and item.get("external_urls", {}).get("spotify")
-    ]
+    """Processes Spotify results with NSFW filtering and image safety checks."""
+    valid_results = [item for item in results if isinstance(item, dict) and "name" in item]  # ✅ Remove None & invalid items
 
     if not valid_results:
-        logging.error("❌ No valid items remaining after initial filtering!")
+        logging.error("❌ No valid items to process after filtering!")
         return []
 
-    logging.info(f"✅ {len(valid_results)} valid items remaining after initial filtering.")
-
-    # ✅ Process filtering
     tasks = [process_item(item, rec_type) for item in valid_results]
     processed_results = await asyncio.gather(*tasks)
-
-    # ✅ Remove blocked NSFW items
-    safe_results = [res for res in processed_results if res]
-
-    if not safe_results:
-        logging.warning("⚠️ All results were blocked due to NSFW filtering.")
     
-    logging.info(f"✅ {len(safe_results)} safe items remaining after NSFW filtering.")
-
-    return safe_results
+    return [res for res in processed_results if res]  # ✅ Remove None (Blocked Items)
 
 # ✅ **Process Each Item (Async)**
 async def process_item(item, rec_type):
-    """Processes a single Spotify item, applying NSFW filtering and replacing unsafe images."""
-
+    """Processes a single Spotify item, applying NSFW filtering."""
+    
     name = item.get("name", "Unknown")
     url = item.get("external_urls", {}).get("spotify", "#")
-
-    # ✅ **Fix artist image handling (Ensure correct structure)**
-    images = item.get("images", [])
-    image_url = images[0]["url"] if images else None  # ✅ Use None instead of placeholder
+    image_url = item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
 
     # ✅ **Handle Based on Spotify Type**
     if rec_type == "playlist":
         creator = item.get("owner", {}).get("display_name", "Unknown Creator")
         description = html.unescape(item.get("description", "No description available."))
         track_count = item.get("tracks", {}).get("total", 0)
-        popularity = item.get("followers", {}).get("total", 0) if isinstance(item.get("followers"), dict) else 0
+        popularity = item.get("popularity", "N/A")
 
     elif rec_type == "album":
         creator = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
         description = item.get("release_date", "Unknown Release Date")
         track_count = item.get("total_tracks", 0)
-        popularity = item.get("popularity", 0)
+        popularity = item.get("popularity", "N/A")
 
     elif rec_type == "track":
         creator = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
         description = item.get("album", {}).get("name", "Unknown Album")
         track_count = None
-        popularity = item.get("popularity", 0)
+        popularity = item.get("popularity", "N/A")
 
     elif rec_type == "artist":
-        creator = name  
+        creator = None  # No creator field for artists
         description = ", ".join(item.get("genres", ["No genres available"]))
         track_count = None
-        popularity = item.get("popularity", 0)
+        popularity = item.get("popularity", "N/A")
 
     else:
         logging.warning(f"⚠️ Unsupported Spotify Type: {rec_type}")
-        return None  
+        return None  # Ignore unsupported types
 
     # ✅ **NSFW Filtering**
     safe_name, safe_description = await asyncio.gather(
@@ -394,8 +376,8 @@ async def process_item(item, rec_type):
         logging.warning(f"❌ NSFW Content Hidden: {name}")
         return None  
 
-    # ✅ **Image Safety Check - Only replace if actually unsafe**
-    safe_image_url = await is_safe_image(image_url) if image_url else "/static/images/censored-image.png"
+    # ✅ **Image Safety Check**
+    safe_image_url = await is_safe_image(image_url) if image_url else "https://via.placeholder.com/300"
 
     return {
         "name": name,
