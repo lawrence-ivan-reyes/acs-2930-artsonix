@@ -205,7 +205,7 @@ async def is_safe_image(image_url: str) -> str:
 async def is_safe_image(image_url: str) -> str:
     """Runs Google Vision first; if flagged, checks OpenAI before blocking."""
     if not image_url:
-        return CENSORED_IMAGE_URL  # ✅ Default to censored image if URL is missing
+        return "/static/images/censored-image.png"  # ✅ Default to censored image if URL is missing
 
     # ✅ Check Cache First
     if image_url in NSFW_IMAGE_CACHE:
@@ -223,7 +223,7 @@ async def is_safe_image(image_url: str) -> str:
 
     openai_safe = await openai_nsfw_image_check(image_url)
 
-    result = image_url if openai_safe else CENSORED_IMAGE_URL
+    result = image_url if openai_safe else "/static/images/censored-image.png"
     NSFW_IMAGE_CACHE[image_url] = result  # ✅ Cache result
     return result
 
