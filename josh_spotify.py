@@ -255,14 +255,15 @@ def about():
 
 @app.route('/results', methods=['GET'])
 def results():
-    """Fetches Spotify results based on search or mood selection."""
-    
+    """Fetches Spotify results based on search query or mood selection."""
+
     rec_type = request.args.get('rec_type', 'playlist')
     query = request.args.get('query', '').strip()
+    moods = request.args.getlist('moods')  # Supports multiple moods
 
     logging.info(f"🔎 Searching Spotify for: {query} (Rec Type: {rec_type})")
 
-    # ✅ Fetch Spotify data
+    # ✅ Fetch Spotify Access Token
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     access_token = loop.run_until_complete(get_access_token())
@@ -271,35 +272,43 @@ def results():
         return render_template("error.html", message="Failed to fetch access token"), 500
 
     headers = {"Authorization": f"Bearer {access_token}"}
-    results = []
-    offset, limit = 0, 50
-
-    while len(results) < 50:
-        params = {"q": query, "type": rec_type, "limit": limit, "offset": offset}
-        response = requests.get(SPOTIFY_API_URL, headers=headers, params=params)
-
+    
+    # ✅ If a specific search query is provided, directly fetch from Spotify Search API
+    if query:
+        url = f"{SPOTIFY_API_URL}?q={quote_plus(query)}&type={rec_type}&limit=20"
+        response = requests.get(url, headers=headers)
+        
         if response.status_code != 200:
             return render_template("error.html", message="Failed to fetch data from Spotify"), response.status_code
 
         data = response.json()
         items = data.get(rec_type + "s", {}).get("items", [])
-        if not isinstance(items, list):
-            break
 
-        results.extend(items)
-        offset += limit
-        if len(items) < limit:
-            break
+        if not items:
+            return render_template("error.html", message="No results found"), 404
 
-    if len(results) < 9:
-        logging.warning(f"⚠️ Only {len(results)} results available from Spotify")
+        # ✅ Directly return results (NO RANDOMIZATION)
+        formatted_results = format_results(items, rec_type)
+        return render_template("results.html", results=formatted_results)
 
-    # ✅ Select 9 Random Results
+    # ✅ If no specific search query, use mood-based genres
+    if not query:
+        selected_genres = [genre for mood in moods if mood in MOOD_GENRE_MAP for genre in MOOD_GENRE_MAP[mood]]
+        query = " OR ".join(selected_genres) if selected_genres else ""
+
+    if not query:
+        return render_template("error.html", message="No valid moods or search query provided"), 400
+
+    # ✅ Fetch mood-based results
+    results = loop.run_until_complete(fetch_all_results(query, rec_type))
+
+    if not results:
+        return render_template("error.html", message="No valid results found"), 404
+
+    # ✅ Select 9 Random Results (Only for Mood-Based Search)
     selected_results = random.sample(results, min(len(results), 9))
 
     # ✅ Process NSFW Filtering
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
     filtered_results = loop.run_until_complete(process_results(selected_results, rec_type))
 
     if not filtered_results:
