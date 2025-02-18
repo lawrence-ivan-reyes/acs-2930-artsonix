@@ -1,11 +1,8 @@
-from flask import Flask, request, render_template, redirect, url_for, jsonify
-import os, random, time, aiohttp, logging, asyncio
+from flask import Flask, request, render_template, jsonify
+import os, random, time, aiohttp, logging, asyncio, requests, html
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
-from nsfw_filter import is_safe_content, is_safe_url, is_safe_image
-import requests
-import os
-import html
+from nsfw_filter import is_safe_content, is_safe_image
 
 # Load environment variables
 load_dotenv()
