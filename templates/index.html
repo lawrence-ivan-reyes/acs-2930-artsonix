@@ -79,6 +79,14 @@
     </div>
 </div>
 
+<!-- 🛑 LOADING SCREEN -->
+<div id="loading-screen" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
+    <div class="text-center text-white">
+        <span class="text-xl font-bold">Checking for safety, Please wait</span>
+        <div class="mt-2 text-3xl animate-spin">ε</div>
+    </div>
+</div>
+
 <script>
     // 🛑 Limit mood selection to 3
     document.querySelectorAll('.mood-checkbox').forEach(checkbox => {
@@ -95,6 +103,24 @@
     document.getElementById('close-modal').addEventListener('click', function () {
         document.getElementById('mood-modal').classList.add('hidden');
     });
+
+    // Show loading screen on form submission
+    document.getElementById('user-form').addEventListener('submit', function () {
+        document.getElementById('loading-screen').classList.remove('hidden');
+    });
 </script>
+
+<style>
+    /* Epsilon Animation */
+    .animate-spin {
+        display: inline-block;
+        animation: spin 1.5s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
 
 {% endblock %}
