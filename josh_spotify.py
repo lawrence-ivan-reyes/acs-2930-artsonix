@@ -299,6 +299,9 @@ def results():
         if len(items) < limit:
             break
 
+    # ✅ Shuffle the results before filtering
+    random.shuffle(results)
+
     # ✅ Ensure at least 9 results per subgenre
     subgenre_results = []
     for mood in moods:
