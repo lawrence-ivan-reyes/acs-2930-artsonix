@@ -336,7 +336,13 @@ async def process_item(item, rec_type):
     
     name = item.get("name", "Unknown")
     url = item.get("external_urls", {}).get("spotify", "#")
-    image_url = item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
+    
+    # ✅ **Fix artist image handling**
+    if rec_type == "artist":
+        images = item.get("images", [])
+        image_url = images[0]["url"] if images else "https://via.placeholder.com/300"
+    else:
+        image_url = item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
 
     # ✅ **Handle Based on Spotify Type**
     if rec_type == "playlist":
