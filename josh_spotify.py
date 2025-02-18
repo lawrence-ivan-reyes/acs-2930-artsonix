@@ -340,7 +340,7 @@ async def process_results(results, rec_type):
 
 # ✅ **Process Each Item (Async)**
 async def process_item(item, rec_type):
-    """Processes a single Spotify item, applying NSFW filtering."""
+    """Processes a single Spotify item, applying NSFW filtering and replacing unsafe images."""
 
     name = item.get("name", "Unknown")
     url = item.get("external_urls", {}).get("spotify", "#")
@@ -348,16 +348,16 @@ async def process_item(item, rec_type):
     # ✅ **Fix artist image handling**
     if rec_type == "artist":
         images = item.get("images", [])
-        image_url = images[0]["url"] if images else "https://via.placeholder.com/300"
+        image_url = images[0]["url"] if images else "/static/images/censored-image.png"
     else:
-        image_url = item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
+        image_url = item.get("images", [{}])[0].get("url", "/static/images/censored-image.png")
 
     # ✅ **Handle Based on Spotify Type**
     if rec_type == "playlist":
         creator = item.get("owner", {}).get("display_name", "Unknown Creator")
         description = html.unescape(item.get("description", "No description available."))
         track_count = item.get("tracks", {}).get("total", 0)
-        popularity = item.get("followers", {}).get("total", 0)  # Playlists use followers for popularity
+        popularity = item.get("followers", {}).get("total", 0)
 
     elif rec_type == "album":
         creator = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
@@ -391,7 +391,8 @@ async def process_item(item, rec_type):
         return None  
 
     # ✅ **Image Safety Check**
-    safe_image_url = await is_safe_image(image_url) if image_url else "https://via.placeholder.com/300"
+    is_image_safe = await is_safe_image(image_url) if image_url else False
+    safe_image_url = image_url if is_image_safe else "/static/images/censored-image.png"
 
     return {
         "name": name,
