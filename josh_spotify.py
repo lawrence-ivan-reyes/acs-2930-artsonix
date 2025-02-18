@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify
+from quart import Quart, request, render_template, jsonify
 import os, random, time, aiohttp, logging, asyncio, requests, html
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
@@ -19,7 +19,7 @@ if not GOOGLE_SAFE_BROWSING_API_KEY:
     raise ValueError("Missing Google Safe Browsing API key in .env file!")
 
 # Flask app setup
-app = Flask(__name__)
+app = Quart(__name__)
 
 # Token caching with lock
 TOKEN_CACHE = {"access_token": None, "expires_at": 0}
@@ -198,72 +198,62 @@ def format_results(items, search_type):
 
 # ✅ Flask Routes
 @app.route('/')
-def index():
-    return render_template('index.html')
+async def index():
+    return await render_template('index.html')
 
 @app.route('/about')
-def about():
-    return render_template('about.html')
+async def about():
+    return await render_template('about.html')
 
 @app.route('/results', methods=['GET'])
-def results():
+async def results():
     """Fetches Spotify results based on mood and media type, while ensuring proper filtering and structured search queries."""
     
     rec_type = request.args.get('rec_type', 'playlist')
     moods = request.args.getlist('moods')  # Multi-select moods
     query = request.args.get('query', '').strip()
 
-    # ✅ Handle 'Surprise Me' (Bypassing all filters)
     if rec_type.lower() == "i’m open to anything":
-        rec_type = random.choice(["playlist", "album", "artist", "track"])  # Pick a random media type
-        all_genres = sum(MOOD_GENRE_MAP.values(), [])  # Flatten all genre lists
-        query = " OR ".join(random.sample(all_genres, min(len(all_genres), 5)))  # Pick random genres
-
+        rec_type = random.choice(["playlist", "album", "artist", "track"])
+        all_genres = sum(MOOD_GENRE_MAP.values(), [])
+        query = " OR ".join(random.sample(all_genres, min(len(all_genres), 5)))
     else:
-        # ✅ Construct search query from selected moods
         selected_genres = [genre for mood in moods if mood in MOOD_GENRE_MAP for genre in MOOD_GENRE_MAP[mood]]
         if selected_genres and not query:
             query = " OR ".join(selected_genres)
 
-    # ✅ Ensure query length is within Spotify's 250-character limit
     if len(query) > 250:
         query = " OR ".join(query.split(" OR ")[:5])
 
     logging.info(f"🔎 Searching Spotify for: {query} (Rec Type: {rec_type})")
 
-    # ✅ Fetch Spotify data
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    access_token = loop.run_until_complete(get_access_token())
-
+    access_token = await get_access_token()
     if not access_token:
-        return render_template("error.html", message="Failed to fetch access token"), 500
+        return await render_template("error.html", message="Failed to fetch access token"), 500
 
     headers = {"Authorization": f"Bearer {access_token}"}
     results = []
     offset, limit = 0, 50
 
-    while len(results) < 50:
-        params = {"q": query, "type": rec_type, "limit": limit, "offset": offset}
-        response = requests.get(SPOTIFY_API_URL, headers=headers, params=params)
+    async with aiohttp.ClientSession() as session:
+        while len(results) < 50:
+            url = f"{SPOTIFY_API_URL}?q={quote_plus(query)}&type={rec_type}&limit={limit}&offset={offset}"
+            async with session.get(url, headers=headers) as response:
+                if response.status != 200:
+                    return await render_template("error.html", message="Failed to fetch data from Spotify"), response.status
+                data = await response.json()
 
-        if response.status_code != 200:
-            return render_template("error.html", message="Failed to fetch data from Spotify"), response.status_code
+            items = data.get(rec_type + "s", {}).get("items", [])
+            if not isinstance(items, list):
+                break
 
-        data = response.json()
-        items = data.get(rec_type + "s", {}).get("items", [])
-        if not isinstance(items, list):
-            break
+            results.extend(items)
+            offset += limit
+            if len(items) < limit:
+                break
 
-        results.extend(items)
-        offset += limit
-        if len(items) < limit:
-            break
-
-    # ✅ Shuffle the results before filtering
     random.shuffle(results)
 
-    # ✅ Ensure at least 9 results per subgenre
     subgenre_results = []
     for mood in moods:
         if mood in MOOD_GENRE_MAP:
@@ -276,13 +266,11 @@ def results():
 
     final_results = subgenre_results if subgenre_results else results[:9]
 
-    # ✅ Apply NSFW filtering
-    filtered_results = loop.run_until_complete(process_results(final_results, rec_type))
-
+    filtered_results = await process_results(final_results, rec_type)
     if not filtered_results:
-        return render_template("error.html", message="No safe results found"), 404
+        return await render_template("error.html", message="No safe results found"), 404
 
-    return render_template("results.html", results=filtered_results)
+    return await render_template("results.html", results=filtered_results)
 
 # ✅ **Process Results with NSFW Filtering**
 async def process_results(results, rec_type):
