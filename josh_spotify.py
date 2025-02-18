@@ -336,7 +336,7 @@ async def process_results(results, rec_type):
 
 # ✅ **Process Each Item (Async)**
 async def process_item(item, rec_type):
-    """Processes a single Spotify item, applying NSFW filtering."""
+    """Processes a single Spotify item, applying NSFW filtering and replacing unsafe images."""
     
     name = item.get("name", "Unknown")
     url = item.get("external_urls", {}).get("spotify", "#")
@@ -347,41 +347,41 @@ async def process_item(item, rec_type):
         creator = item.get("owner", {}).get("display_name", "Unknown Creator")
         description = html.unescape(item.get("description", "No description available."))
         track_count = item.get("tracks", {}).get("total", 0)
-        popularity = item.get("popularity", "N/A")
+        popularity = item.get("popularity", 0)
 
     elif rec_type == "album":
         creator = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
         description = item.get("release_date", "Unknown Release Date")
         track_count = item.get("total_tracks", 0)
-        popularity = item.get("popularity", "N/A")
+        popularity = item.get("popularity", 0)
 
     elif rec_type == "track":
         creator = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
         description = item.get("album", {}).get("name", "Unknown Album")
         track_count = None
-        popularity = item.get("popularity", "N/A")
+        popularity = item.get("popularity", 0)
 
     elif rec_type == "artist":
-        creator = None  # No creator field for artists
+        creator = None  
         description = ", ".join(item.get("genres", ["No genres available"]))
         track_count = None
-        popularity = item.get("popularity", "N/A")
+        popularity = item.get("popularity", 0)
 
     else:
         logging.warning(f"⚠️ Unsupported Spotify Type: {rec_type}")
-        return None  # Ignore unsupported types
-
-    # ✅ **NSFW Filtering**
-    safe_name, safe_description = await asyncio.gather(
-        is_safe_content(name), is_safe_content(description)
-    )
-
-    if not (safe_name and safe_description):
-        logging.warning(f"❌ NSFW Content Hidden: {name}")
         return None  
 
-    # ✅ **Image Safety Check**
-    safe_image_url = await is_safe_image(image_url) if image_url else "https://via.placeholder.com/300"
+    # ✅ **Run NSFW Filtering (Text & Image) in Parallel**
+    safe_name, safe_description, safe_image_url = await asyncio.gather(
+        is_safe_content(name), 
+        is_safe_content(description),
+        is_safe_image(image_url) if image_url else "/static/images/censored-image.png"
+    )
+
+    # ✅ **Filter out NSFW Content**
+    if not safe_name or not safe_description:
+        logging.warning(f"❌ NSFW Content Hidden: {name}")
+        return None  
 
     return {
         "name": name,
