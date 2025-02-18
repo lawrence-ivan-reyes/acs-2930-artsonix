@@ -246,7 +246,7 @@ def about():
 
 @app.route('/results', methods=['GET'])
 def results():
-    """Fetches Spotify results based on search query or mood selection."""
+    """Fetches Spotify results based on search query or mood selection, ensuring proper filtering."""
 
     rec_type = request.args.get('rec_type', 'playlist')
     query = request.args.get('query', '').strip()
@@ -303,12 +303,24 @@ def results():
 
     # ✅ Format results and return
     formatted_results = format_results(items, rec_type)
-    return render_template("results.html", results=formatted_results)
 
-# ✅ **Process Results with NSFW Filtering**
+    # ✅ Apply NSFW Filtering
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    filtered_results = loop.run_until_complete(process_results(formatted_results, rec_type))
+
+    if not filtered_results:
+        return render_template("error.html", message="No safe results found"), 404
+
+    return render_template("results.html", results=filtered_results)
+
+
+# ✅ **Process Results with NSFW Filtering & Image Checks**
 async def process_results(results, rec_type):
-    """Processes Spotify results with NSFW filtering and image safety checks."""
-    valid_results = [item for item in results if isinstance(item, dict) and "name" in item]  # ✅ Remove None & invalid items
+    """Processes Spotify results with NSFW filtering and ensures only valid items are returned."""
+    
+    # ✅ Remove invalid items
+    valid_results = [item for item in results if isinstance(item, dict) and "name" in item and item.get("url")]
 
     if not valid_results:
         logging.error("❌ No valid items to process after filtering!")
@@ -316,16 +328,23 @@ async def process_results(results, rec_type):
 
     tasks = [process_item(item, rec_type) for item in valid_results]
     processed_results = await asyncio.gather(*tasks)
+
+    # ✅ Remove blocked NSFW items
+    safe_results = [res for res in processed_results if res]
+
+    if not safe_results:
+        logging.warning("⚠️ All results were blocked due to NSFW filtering.")
     
-    return [res for res in processed_results if res]  # ✅ Remove None (Blocked Items)
+    return safe_results
+
 
 # ✅ **Process Each Item (Async)**
 async def process_item(item, rec_type):
     """Processes a single Spotify item, applying NSFW filtering."""
-    
+
     name = item.get("name", "Unknown")
     url = item.get("external_urls", {}).get("spotify", "#")
-    
+
     # ✅ **Fix artist image handling**
     if rec_type == "artist":
         images = item.get("images", [])
@@ -338,7 +357,7 @@ async def process_item(item, rec_type):
         creator = item.get("owner", {}).get("display_name", "Unknown Creator")
         description = html.unescape(item.get("description", "No description available."))
         track_count = item.get("tracks", {}).get("total", 0)
-        popularity = item.get("popularity", "N/A")
+        popularity = item.get("followers", {}).get("total", 0)  # Playlists use followers for popularity
 
     elif rec_type == "album":
         creator = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
@@ -353,7 +372,7 @@ async def process_item(item, rec_type):
         popularity = item.get("popularity", "N/A")
 
     elif rec_type == "artist":
-        creator = None  # No creator field for artists
+        creator = name  # Artist name is their own identifier
         description = ", ".join(item.get("genres", ["No genres available"]))
         track_count = None
         popularity = item.get("popularity", "N/A")
