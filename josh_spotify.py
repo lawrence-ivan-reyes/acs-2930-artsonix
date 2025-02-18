@@ -345,12 +345,9 @@ async def process_item(item, rec_type):
     name = item.get("name", "Unknown")
     url = item.get("external_urls", {}).get("spotify", "#")
 
-    # ✅ **Fix artist image handling**
-    if rec_type == "artist":
-        images = item.get("images", [])
-        image_url = images[0]["url"] if images else "/static/images/censored-image.png"
-    else:
-        image_url = item.get("images", [{}])[0].get("url", "/static/images/censored-image.png")
+    # ✅ **Fix artist image handling (Ensure correct structure)**
+    images = item.get("images", [])
+    image_url = images[0]["url"] if images else None  # ✅ Use None instead of placeholder
 
     # ✅ **Handle Based on Spotify Type**
     if rec_type == "playlist":
@@ -393,9 +390,12 @@ async def process_item(item, rec_type):
         logging.warning(f"❌ NSFW Content Hidden: {name}")
         return None  
 
-    # ✅ **Image Safety Check**
-    is_image_safe = await is_safe_image(image_url) if image_url else False
-    safe_image_url = image_url if is_image_safe else "/static/images/censored-image.png"
+    # ✅ **Image Safety Check - Only replace if actually unsafe**
+    if image_url:
+        is_image_safe = await is_safe_image(image_url)
+        safe_image_url = image_url if is_image_safe else "/static/images/censored-image.png"
+    else:
+        safe_image_url = "/static/images/censored-image.png"  # Default for missing images
 
     return {
         "name": name,
