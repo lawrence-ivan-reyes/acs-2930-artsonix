@@ -319,8 +319,8 @@ def results():
 async def process_results(results, rec_type):
     """Processes Spotify results with NSFW filtering and ensures only valid items are returned."""
     
-    # ✅ Remove invalid items
-    valid_results = [item for item in results if isinstance(item, dict) and "name" in item and item.get("url")]
+    # ✅ Remove invalid items (must be a dict with "name" and "url")
+    valid_results = [item for item in results if isinstance(item, dict) and item.get("name") and item.get("external_urls", {}).get("spotify")]
 
     if not valid_results:
         logging.error("❌ No valid items to process after filtering!")
@@ -390,12 +390,11 @@ async def process_item(item, rec_type):
         logging.warning(f"❌ NSFW Content Hidden: {name}")
         return None  
 
-    # ✅ **Image Safety Check - Only replace if actually unsafe**
+    # ✅ **Image Safety Check - Return Correct Image**
     if image_url:
-        is_image_safe = await is_safe_image(image_url)
-        safe_image_url = image_url if is_image_safe else "/static/images/censored-image.png"
+        safe_image_url = await is_safe_image(image_url)  # ✅ `is_safe_image` now returns the correct URL
     else:
-        safe_image_url = "/static/images/censored-image.png"  # Default for missing images
+        safe_image_url = "/static/images/censored-image.png"  # ✅ Default for missing images
 
     return {
         "name": name,
