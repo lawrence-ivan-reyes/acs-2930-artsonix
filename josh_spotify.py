@@ -275,60 +275,66 @@ async def results():
 # ✅ **Process Results with NSFW Filtering**
 async def process_results(results, rec_type):
     """Processes Spotify results with NSFW filtering and image safety checks."""
-    valid_results = [item for item in results if isinstance(item, dict) and "name" in item]
+    valid_results = [item for item in results if isinstance(item, dict) and "name" in item]  # ✅ Remove None & invalid items
+
     if not valid_results:
         logging.error("❌ No valid items to process after filtering!")
         return []
-    
+
     tasks = [process_item(item, rec_type) for item in valid_results]
     processed_results = await asyncio.gather(*tasks)
     
-    return [res for res in processed_results if res]
+    return [res for res in processed_results if res]  # ✅ Remove None (Blocked Items)
 
 # ✅ **Process Each Item (Async)**
 async def process_item(item, rec_type):
     """Processes a single Spotify item, applying NSFW filtering and replacing unsafe images."""
+    
     name = item.get("name", "Unknown")
     url = item.get("external_urls", {}).get("spotify", "#")
     image_url = item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
-    
-    creator = None
-    description = "No description available."
-    track_count = None
-    popularity = 0
-    
+
+    # ✅ **Handle Based on Spotify Type**
     if rec_type == "playlist":
         creator = item.get("owner", {}).get("display_name", "Unknown Creator")
         description = html.unescape(item.get("description", "No description available."))
         track_count = item.get("tracks", {}).get("total", 0)
         popularity = item.get("popularity", 0)
+
     elif rec_type == "album":
         creator = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
         description = item.get("release_date", "Unknown Release Date")
         track_count = item.get("total_tracks", 0)
         popularity = item.get("popularity", 0)
+
     elif rec_type == "track":
         creator = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
         description = item.get("album", {}).get("name", "Unknown Album")
+        track_count = None
         popularity = item.get("popularity", 0)
+
     elif rec_type == "artist":
+        creator = None  
         description = ", ".join(item.get("genres", ["No genres available"]))
+        track_count = None
         popularity = item.get("popularity", 0)
+
     else:
         logging.warning(f"⚠️ Unsupported Spotify Type: {rec_type}")
-        return None
-    
+        return None  
+
     # ✅ **Run NSFW Filtering (Text & Image) in Parallel**
     safe_name, safe_description, safe_image_url = await asyncio.gather(
         is_safe_content(name), 
         is_safe_content(description),
         is_safe_image(image_url) if image_url else "/static/images/censored-image.png"
     )
-    
+
+    # ✅ **Filter out NSFW Content**
     if not safe_name or not safe_description:
         logging.warning(f"❌ NSFW Content Hidden: {name}")
-        return None
-    
+        return None  
+
     return {
         "name": name,
         "url": url,
