@@ -357,25 +357,28 @@ async def process_item(item, rec_type):
         creator = item.get("owner", {}).get("display_name", "Unknown Creator")
         description = html.unescape(item.get("description", "No description available."))
         track_count = item.get("tracks", {}).get("total", 0)
-        popularity = item.get("followers", {}).get("total", 0)
+
+        # ✅ Fix for AttributeError when accessing followers
+        followers_data = item.get("followers", {})
+        popularity = followers_data.get("total", 0) if isinstance(followers_data, dict) else followers_data
 
     elif rec_type == "album":
         creator = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
         description = item.get("release_date", "Unknown Release Date")
         track_count = item.get("total_tracks", 0)
-        popularity = item.get("popularity", "N/A")
+        popularity = item.get("popularity", 0)
 
     elif rec_type == "track":
         creator = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
         description = item.get("album", {}).get("name", "Unknown Album")
         track_count = None
-        popularity = item.get("popularity", "N/A")
+        popularity = item.get("popularity", 0)
 
     elif rec_type == "artist":
         creator = name  # Artist name is their own identifier
         description = ", ".join(item.get("genres", ["No genres available"]))
         track_count = None
-        popularity = item.get("popularity", "N/A")
+        popularity = item.get("popularity", 0)
 
     else:
         logging.warning(f"⚠️ Unsupported Spotify Type: {rec_type}")
