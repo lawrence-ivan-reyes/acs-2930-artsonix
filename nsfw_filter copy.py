@@ -13,7 +13,6 @@ from collections import deque
 from cachetools import TTLCache
 from google.cloud import vision
 import urllib.parse
-from rapidfuzz import fuzz
 
 # Load environment variables
 load_dotenv()
