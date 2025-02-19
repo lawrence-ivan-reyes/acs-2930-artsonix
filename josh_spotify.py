@@ -205,7 +205,6 @@ async def index():
 async def about():
     return await render_template('about.html')
 
-@app.route('/results', methods=['GET'])
 async def results():
     """Fetches Spotify results based on search query or mood selection."""
 
@@ -215,13 +214,15 @@ async def results():
 
     logging.info(f"🔎 Searching Spotify for: {query} (Rec Type: {rec_type})")
 
+    items = []  # ✅ Ensure 'items' is always defined before usage
+
     # ✅ Handle "I'm Open to Anything" mode
     if rec_type.lower() == "i’m open to anything":
         rec_type = random.choice(["playlist", "album", "artist", "track"])
         all_genres = sum(MOOD_GENRE_MAP.values(), [])
         query = " OR ".join(random.sample(all_genres, min(len(all_genres), 5)))
 
-    # ✅ Use specific search query directly (From Old Code 1)
+    # ✅ If a specific query is given, fetch directly from Spotify API
     if query:
         search_url = f"{SPOTIFY_API_URL}?q={quote_plus(query)}&type={rec_type}&limit=20"
         access_token = await get_access_token()
@@ -235,28 +236,28 @@ async def results():
             async with session.get(search_url, headers=headers) as response:
                 if response.status != 200:
                     return await render_template("error.html", message="Failed to fetch data from Spotify"), response.status
+                data = await response.json()
 
-                try:
-                    data = await response.json()
-                except Exception as e:
-                    logging.error(f"❌ JSON Parsing Error: {e}")
-                    return await render_template("error.html", message="Invalid response from Spotify"), 500
+        items = data.get(rec_type + "s", {}).get("items", [])  # ✅ Now, 'items' is always defined
+
+        if not items:
+            return await render_template("error.html", message="No results found"), 404
 
         formatted_results = await process_results(items, rec_type)
         return await render_template("results.html", results=formatted_results)
 
-    # ✅ If no query is given, use mood-based search (From Old Code 2)
+    # ✅ If no query is given, use mood-based search
     selected_genres = [
         genre for mood in moods if mood in MOOD_GENRE_MAP for genre in MOOD_GENRE_MAP[mood]
     ]
     if not query and selected_genres:
         query = " OR ".join(selected_genres)
 
-    # ✅ Enforce Query Length Limit (From Old Code 2)
+    # ✅ Enforce Query Length Limit
     if len(query) > 250:
-        query = " OR ".join(query.split(" OR ")[:5])  # Trim excess terms
+        query = " OR ".join(query.split(" OR ")[:5])
 
-    # ✅ Fetch results using Spotify API (From New Code)
+    # ✅ Fetch results using Spotify API
     access_token = await get_access_token()
     if not access_token:
         return await render_template("error.html", message="Failed to fetch access token"), 500
@@ -273,7 +274,8 @@ async def results():
                     return await render_template("error.html", message="Failed to fetch data from Spotify"), response.status
                 data = await response.json()
 
-            items = data.get(rec_type + "s", {}).get("items", [])
+            items = data.get(rec_type + "s", {}).get("items", [])  # ✅ 'items' is now always defined
+
             if not isinstance(items, list):
                 break
 
@@ -282,13 +284,13 @@ async def results():
             if len(items) < limit:
                 break  # Stop if fewer items are returned
 
-    # ✅ Move Filtering BEFORE Randomization (Fixing Old Code 2’s Issue)
+    # ✅ Move Filtering BEFORE Randomization
     filtered_results = await process_results(results, rec_type)
     if not filtered_results:
         return await render_template("error.html", message="No safe results found"), 404
 
     # ✅ Select 9 Random Results After Filtering
-    final_results = random.sample(filtered_results, min(len(filtered_results), 9))
+    final_results = random.sample(filtered_results, min(len(filtered_results), 9)) if filtered_results else []
 
     return await render_template("results.html", results=final_results)
 
