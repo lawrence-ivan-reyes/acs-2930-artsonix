@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Error - Page Not Found</title>
+    <title>Error</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="text-center">
-        <h1 class="text-6xl font-bold text-red-600">404</h1>
-        <p class="text-xl text-gray-700 mt-2">Oops! The page you are looking for does not exist.</p>
-        <a href="/" class="mt-4 inline-block px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Go Home</a>
+<body>
+    <div class="error-container">
+        <h1>Something went wrong! 😞</h1>
+        <p>{{ message }}</p>
+        <a href="/" class="btn">Go Back</a>
     </div>
 </body>
 </html>

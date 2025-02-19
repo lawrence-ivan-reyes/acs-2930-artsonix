@@ -1,39 +1,97 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<body class="bg-gray-100">
-    <nav class="bg-blue-600 p-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-white text-2xl font-bold">ArtSonix</h1>
-            <ul class="flex space-x-4">
-                <li><a href="/" class="text-white hover:underline">Home</a></li>
-                <li><a href="/about" class="text-white hover:underline">About</a></li>
-                <li><a href="#" class="text-white hover:underline">Contact</a></li>
-            </ul>
-        </div>
-    </nav>
-    <header class="text-center py-10">
-        <h2 class="text-3xl font-bold text-gray-800">Your Personalized Art & Music Recommendations</h2>
-    </header>
-    <div class="flex items-center justify-center min-h-screen">
-        <div class="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-2xl">
-            <h1 class="text-2xl font-bold text-gray-800">Here are your results:</h1>
-            <div id="results" class="mt-4">
-                <h3 class="text-xl font-semibold text-blue-600">Music Recommendations:</h3>
-                <ul class="list-disc list-inside text-gray-700">
-                    <li>{{ music_placeholder_1 }}</li>
-                    <li>{{ music_placeholder_2 }}</li>
-                    <li>{{ music_placeholder_3 }}</li>
-                </ul>
-                
-                <h3 class="text-xl font-semibold text-blue-600 mt-4">Art Recommendations:</h3>
-                <ul class="list-disc list-inside text-gray-700">
-                    <li>{{ art_placeholder_1 }}</li>
-                    <li>{{ art_placeholder_2 }}</li>
-                    <li>{{ art_placeholder_3 }}</li>
-                </ul>
-            </div>
-        </div>
+<nav class="bg-blue-600 p-4">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <h1 class="text-white text-2xl font-bold">ArtSonix</h1>
+        <ul class="flex space-x-4">
+            <li><a href="/" class="text-white hover:underline">Home</a></li>
+            <li><a href="/about" class="text-white hover:underline">About</a></li>
+            <li><a href="#" class="text-white hover:underline">Contact</a></li>
+        </ul>
     </div>
-</body>
+</nav>
+
+<!-- 🛑 LOADING SCREEN -->
+<div id="loading-screen" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
+    <div class="text-center text-black p-8 bg-white rounded-lg shadow-lg">
+        <span class="text-xl font-bold">Checking for safety, Please wait<span id="loading-dots">.</span></span>
+    </div>
+</div>
+
+<header class="text-center py-10">
+    <h2 class="text-3xl font-bold text-gray-800">Your Personalized Recommendations</h2>
+</header>
+
+<div class="px-4 py-8 max-w-7xl mx-auto">
+    {% if results %}
+        <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for item in results %}
+                <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105 will-change-transform">
+                    <div class="relative w-full flex justify-center">
+                        <img src="{{ item.image if item.image else '/static/images/censored-image.png' }}" 
+                             alt="{{ item.name }}" 
+                             width="200" height="200"
+                             loading="lazy"
+                             class="w-full max-w-[200px] aspect-square object-cover rounded-md mb-4">
+                    </div>
+                    <h3 class="text-lg font-semibold truncate mb-2 text-gray-900 text-center">{{ item.name }}</h3>
+                    <p class="text-sm text-gray-600 mb-2 text-center">
+                        {% if item.type == 'playlist' %}
+                            <span class="text-blue-500 font-medium">Spotify Playlist</span>
+                        {% elif item.type == 'album' %}
+                            <span class="text-blue-500 font-medium">Spotify Album</span>
+                            <br>by {{ item.artist or "Unknown Artist" }} ({{ item.year or "N/A" }})
+                        {% elif item.type == 'artist' %}
+                            <span class="text-blue-500 font-medium">Spotify Artist</span>
+                        {% elif item.type == 'track' %}
+                            <span class="text-blue-500 font-medium">Spotify Track</span>
+                            <br>by {{ item.artist or "Unknown Artist" }} ({{ item.year or "N/A" }})
+                        {% elif item.type == 'artwork' %}
+                            <span class="text-purple-500 font-medium">MET Artwork</span>
+                            <br>by {{ item.artist or "Unknown Artist" }} ({{ item.year or "N/A" }})
+                        {% endif %}
+                    </p>
+                    <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer"
+                       class="block text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
+                        View on Spotify
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="text-center py-10">
+            <p class="text-red-500 text-lg font-semibold">No results found for your search.</p>
+            <p class="text-gray-600 mt-2">Try using a different keyword or selecting another mood.</p>
+            <a href="/" class="mt-4 inline-block bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">
+                Go Back & Search Again
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Show the loading screen before page loads completely
+        document.getElementById('loading-screen').classList.remove('hidden');
+
+        // Hide the loading screen when the page fully loads
+        window.onload = function() {
+            document.getElementById('loading-screen').classList.add('hidden');
+        };
+
+        // Animate the dots (".", "..", "...")
+        function animateDots() {
+            const dotsElement = document.getElementById('loading-dots');
+            let dots = 1;
+            setInterval(() => {
+                dotsElement.textContent = '.'.repeat(dots);
+                dots = dots < 3 ? dots + 1 : 1; // Loop between 1 to 3 dots
+            }, 500); // Update every 500ms
+        }
+
+        animateDots();
+    });
+</script>
+
 {% endblock %}

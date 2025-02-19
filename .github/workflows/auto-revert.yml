@@ -4,6 +4,10 @@ on:
   push:
     branches: [ "main" ]
 
+env:
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  SLACK_CHANNEL: "#acs-2930-group-2"
+
 jobs:
   check-build:
     name: Validate Main Branch
@@ -26,21 +30,55 @@ jobs:
           script: |
             const lastCommit = context.payload.head_commit.id;
             const commitMessage = context.payload.head_commit.message;
+            const repoOwner = context.repo.owner;
+            const repoName = context.repo.repo;
 
-            github.rest.repos.createCommit({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+            console.log(`🚨 Detected failing commit: ${lastCommit}`);
+
+            // Create a commit to revert the latest changes
+            await github.rest.repos.createCommit({
+              owner: repoOwner,
+              repo: repoName,
               message: `🚨 Reverting commit: ${commitMessage}`,
               parents: [context.payload.before],
               tree: context.payload.head_commit.tree_id
             });
 
-            github.rest.git.updateRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+            // Force update the main branch to the previous stable commit
+            await github.rest.git.updateRef({
+              owner: repoOwner,
+              repo: repoName,
               ref: "heads/main",
               sha: context.payload.before,
               force: true
             });
 
             console.log("🚨 Main branch is broken. Reverted last commit.");
+
+      - name: Create GitHub Issue for Reverted Commit
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueTitle = `🚨 Auto-Revert: Broken Commit`;
+            const issueBody = `The commit **${context.payload.head_commit.id}** was automatically reverted due to failing tests.\n\nCommit Message: _${context.payload.head_commit.message}_\n\nPlease review and fix before pushing again.`;
+
+            console.log("Creating GitHub Issue for tracking.");
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: ["auto-revert", "needs-fix"]
+            });
+
+      - name: Notify Slack on Revert
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          message: "🚨 *Commit Reverted* on main branch! <${{ github.event.head_commit.url }}|View Commit>\nCommit Message: _${{ github.event.head_commit.message }}_"
+          channel: ${{ env.SLACK_CHANNEL }}

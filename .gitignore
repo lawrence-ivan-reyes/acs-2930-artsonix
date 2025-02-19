@@ -476,4 +476,12 @@ pyrightconfig.json
 .history
 .ionide
 
+# unsafe files
+nsfw_filter.py
+*/nsfw_filter.py
+**/nsfw_filter.py/
+
+#json files
+*.json
+
 # End of https://www.toptal.com/developers/gitignore/api/macos,python,flask,java,node,visualstudiocode
