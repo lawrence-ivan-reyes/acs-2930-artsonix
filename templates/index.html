@@ -1,47 +1,94 @@
 {% extends 'base.html' %}
-
 {% block content %}
-    <nav class="bg-blue-600 p-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-white text-2xl font-bold">ArtSonix</h1>
-            <ul class="flex space-x-4">
-                <li><a href="/" class="text-white hover:underline">Home</a></li>
-                <li><a href="/about" class="text-white hover:underline">About</a></li>
-                <li><a href="#" class="text-white hover:underline">Contact</a></li>
-            </ul>
+<nav class="bg-blue-600 p-4">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <h1 class="text-white text-2xl font-bold">ArtSonix</h1>
+        <ul class="flex space-x-4">
+            <li><a href="/" class="text-white hover:underline">Home</a></li>
+            <li><a href="/about" class="text-white hover:underline">About</a></li>
+            <li><a href="#" class="text-white hover:underline">Contact</a></li>
+        </ul>
+    </div>
+</nav>
+<header class="text-center py-10">
+    <h2 class="text-3xl font-bold text-gray-800">Welcome to ArtSonix! Discover Music Through Art</h2>
+</header>
+<div class="flex items-center justify-center py-10">
+    <div class="max-w-4xl w-full mx-auto p-6 bg-white shadow-lg rounded-2xl">
+        <form id="user-form" class="mt-4" action="/results" method="get">
+            <fieldset class="border border-gray-300 p-4 rounded-lg">
+                <legend class="text-lg font-bold text-gray-800">Find Your Music Match</legend>
+                <p class="block text-gray-600 mt-2">Select up to 3 moods:</p>
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    {% for mood in ["Inspired", "Creative", "Calm", "Energetic", "Adventurous", "Happy", "Sad", "Romantic", "Focused", "Upbeat", "Rebellious", "Dark", "Nostalgic", "Trippy", "Party", "Epic", "Quirky", "Emotional"] %}
+                        <label class="flex items-center">
+                            <input type="checkbox" name="moods" value="{{ mood }}" class="mood-checkbox">
+                            <span class="ml-2">{{ mood }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+                <p class="block text-gray-600 mt-4">Or enter a specific search query:</p>
+                <input type="text" id="search-query" name="query"
+                    class="w-full p-2 border rounded-lg mt-2"
+                    placeholder="Enter artist, album, playlist, or song (optional)">
+                <p class="block text-gray-600 mt-4">Choose what you want to search for:</p>
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    {% for media in ["Playlist", "Album", "Artist", "Track", "I’m open to anything"] %}
+                        <label class="flex items-center">
+                            <input type="radio" name="rec_type" value="{{ media.lower() }}" required>
+                            <span class="ml-2">{{ media }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 w-full">
+                Find Music
+            </button>
+        </form>
+    </div>
+</div>
+<div id="mood-modal" class="fixed inset-0 hidden bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-96">
+        <div class="p-4">
+            <h3 class="text-lg font-semibold text-gray-900">Too Many Moods Selected</h3>
+            <p class="text-sm text-gray-600 mt-2">You can only select up to 3 moods. Please deselect one before selecting another.</p>
         </div>
-    </nav>
-    <header class="text-center py-10">
-        <h2 class="text-3xl font-bold text-gray-800">Welcome to ArtSonix!</h2>
-    </header>
-    
-    <div class="flex items-center justify-center min-h-screen">
-        <div class="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-2xl">
-            <h1 class="text-2xl font-bold text-gray-800">Discover Music Through Art</h1>
-            <form id="user-form" class="mt-4">
-                <label for="mood" class="block text-gray-600">What is your current mood?</label>
-                <input type="text" id="mood" name="mood" placeholder="e.g. Happy, Relaxed, Energetic" class="w-full p-2 border rounded-lg" required>
-
-                <label for="art-style" class="block text-gray-600 mt-2">Favorite Art Style?</label>
-                <input type="text" id="art-style" name="art_style" placeholder="e.g. Impressionism, Abstract" class="w-full p-2 border rounded-lg" required>
-
-                <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                    Get Recommendations
-                </button>
-            </form>
+        <div class="flex justify-end p-4">
+            <button id="close-modal" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                Okay
+            </button>
         </div>
     </div>
-
-    <script>
-        document.getElementById("user-form").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent default form submission
-            
-            const mood = document.getElementById("mood").value;
-            const artStyle = document.getElementById("art-style").value;
-            
-            if (mood.trim() && artStyle.trim()) {
-                window.location.href = `/results?mood=${encodeURIComponent(mood)}&artStyle=${encodeURIComponent(artStyle)}`;
+</div>
+<div id="loading-screen" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
+    <div class="text-center text-black p-8 bg-white rounded-lg shadow-lg">
+        <span class="text-xl font-bold">Checking for safety, Please wait<span id="loading-dots">.</span></span>
+    </div>
+</div>
+<script>
+    document.querySelectorAll('.mood-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            let checkedBoxes = document.querySelectorAll('.mood-checkbox:checked');
+            if (checkedBoxes.length > 3) {
+                this.checked = false;
+                document.getElementById('mood-modal').classList.remove('hidden');
             }
         });
-    </script>
+    });
+    document.getElementById('close-modal').addEventListener('click', function () {
+        document.getElementById('mood-modal').classList.add('hidden');
+    });
+    document.getElementById('user-form').addEventListener('submit', function () {
+        document.getElementById('loading-screen').classList.remove('hidden');
+        animateDots();
+    });
+    function animateDots() {
+        const dotsElement = document.getElementById('loading-dots');
+        let dots = 1;
+        setInterval(() => {
+            dotsElement.textContent = '.'.repeat(dots);
+            dots = dots < 3 ? dots + 1 : 1;
+        }, 500);
+    }
+</script>
 {% endblock %}
