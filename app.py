@@ -1,10 +1,7 @@
 # combined_flask_quart_app.py
 
-# ✅ Flask (Ivan's Version) - Met Museum API
 from flask import Flask as FlaskApp, render_template as flask_render_template, request as flask_request, jsonify as flask_jsonify
-# ✅ Quart (Your Version) - Spotify API
 from quart import Quart as QuartApp, request as quart_request, render_template as quart_render_template, jsonify as quart_jsonify
-
 import os, random, time, aiohttp, logging, asyncio, requests, html
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
@@ -13,20 +10,19 @@ from nsfw_filter import is_safe_content, is_safe_image
 # Load environment variables
 load_dotenv()
 
-# Flask App Setup (Met Museum)
+# ✅ Flask (Met Museum)
 flask_app = FlaskApp(__name__)
 BASE_URL = "https://collectionapi.metmuseum.org/public/collection/v1"
 
-# Quart App Setup (Spotify)
+# ✅ Quart (Spotify)
 quart_app = QuartApp(__name__)
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 SPOTIFY_API_URL = "https://api.spotify.com/v1/search"
 
-# Token caching for Spotify
 TOKEN_CACHE = {"access_token": None, "expires_at": 0}
 
-# ✅ Flask Route (Met Museum)
+# ✅ Flask Routes (Met Museum)
 @flask_app.route('/')
 def flask_index():
     return flask_render_template('index.html')
@@ -39,7 +35,7 @@ def flask_process_preferences():
 def flask_surprise_me():
     return flask_jsonify({"message": "Surprise me (Met Museum)"})
 
-# ✅ Quart Route (Spotify)
+# ✅ Quart Routes (Spotify)
 @quart_app.route('/')
 async def quart_index():
     return await quart_render_template('index.html')
@@ -52,7 +48,7 @@ async def quart_results():
 async def quart_surprise_me():
     return quart_jsonify({"message": "Surprise me (Spotify)"})
 
-# ✅ Combined App Runner
+# ✅ Combined Runner
 if __name__ == '__main__':
     import threading
     import uvicorn
@@ -63,7 +59,6 @@ if __name__ == '__main__':
     def run_quart():
         uvicorn.run("app:quart_app", host="127.0.0.1", port=3001, log_level="info")
 
-    # Start both apps in separate threads
     flask_thread = threading.Thread(target=run_flask)
     quart_thread = threading.Thread(target=run_quart)
 

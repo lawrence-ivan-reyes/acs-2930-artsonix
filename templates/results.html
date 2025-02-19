@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
-
 {% block content %}
 <nav class="bg-blue-600 p-4">
     <div class="max-w-7xl mx-auto flex justify-between items-center">
-        <h1 class="text-white text-2xl font-bold">ArtSonix</h1>
+        <h1 class="text-white text-2xl font-bold">ArtSonix Results</h1>
         <ul class="flex space-x-4">
             <li><a href="/" class="text-white hover:underline">Home</a></li>
             <li><a href="/about" class="text-white hover:underline">About</a></li>
@@ -12,86 +11,58 @@
     </div>
 </nav>
 
-<!-- 🛑 LOADING SCREEN -->
-<div id="loading-screen" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
-    <div class="text-center text-black p-8 bg-white rounded-lg shadow-lg">
-        <span class="text-xl font-bold">Checking for safety, Please wait<span id="loading-dots">.</span></span>
-    </div>
-</div>
-
 <header class="text-center py-10">
     <h2 class="text-3xl font-bold text-gray-800">Your Personalized Recommendations</h2>
+    <a href="/" class="inline-block mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+        Back to Form
+    </a>
 </header>
 
 <div class="px-4 py-8 max-w-7xl mx-auto">
-    {% if results %}
-        <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {% for item in results %}
-                <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105 will-change-transform">
-                    <div class="relative w-full flex justify-center">
-                        <img src="{{ item.image if item.image else '/static/images/censored-image.png' }}" 
-                             alt="{{ item.name }}" 
-                             width="200" height="200"
-                             loading="lazy"
-                             class="w-full max-w-[200px] aspect-square object-cover rounded-md mb-4">
-                    </div>
-                    <h3 class="text-lg font-semibold truncate mb-2 text-gray-900 text-center">{{ item.name }}</h3>
-                    <p class="text-sm text-gray-600 mb-2 text-center">
-                        {% if item.type == 'playlist' %}
-                            <span class="text-blue-500 font-medium">Spotify Playlist</span>
-                        {% elif item.type == 'album' %}
-                            <span class="text-blue-500 font-medium">Spotify Album</span>
-                            <br>by {{ item.artist or "Unknown Artist" }} ({{ item.year or "N/A" }})
-                        {% elif item.type == 'artist' %}
-                            <span class="text-blue-500 font-medium">Spotify Artist</span>
-                        {% elif item.type == 'track' %}
-                            <span class="text-blue-500 font-medium">Spotify Track</span>
-                            <br>by {{ item.artist or "Unknown Artist" }} ({{ item.year or "N/A" }})
-                        {% elif item.type == 'artwork' %}
-                            <span class="text-purple-500 font-medium">MET Artwork</span>
-                            <br>by {{ item.artist or "Unknown Artist" }} ({{ item.year or "N/A" }})
-                        {% endif %}
-                    </p>
-                    <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer"
-                       class="block text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
-                        View on Spotify
-                    </a>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <div class="text-center py-10">
-            <p class="text-red-500 text-lg font-semibold">No results found for your search.</p>
-            <p class="text-gray-600 mt-2">Try using a different keyword or selecting another mood.</p>
-            <a href="/" class="mt-4 inline-block bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">
-                Go Back & Search Again
-            </a>
+    <div id="results-container">
+        <div id="music-results" class="mb-10">
+            <h3 class="text-2xl font-semibold text-gray-700 mb-4">Spotify Music Recommendations</h3>
+            <ul id="music-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></ul>
         </div>
-    {% endif %}
+        <div id="art-results">
+            <h3 class="text-2xl font-semibold text-gray-700 mb-4">Met Museum Art Recommendations</h3>
+            <div id="artworks-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+        </div>
+    </div>
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Show the loading screen before page loads completely
-        document.getElementById('loading-screen').classList.remove('hidden');
+    // Display Spotify Music Results
+    const musicResults = JSON.parse(localStorage.getItem('musicResults')) || [];
+    const musicGrid = document.getElementById('music-grid');
+    if (musicResults.length) {
+        musicGrid.innerHTML = musicResults.map(item => `
+            <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
+                <img src="${item.image || '/static/images/censored-image.png'}" alt="${item.name}" class="w-full h-48 object-cover rounded-md mb-4">
+                <h4 class="text-lg font-semibold truncate mb-2 text-center">${item.name}</h4>
+                <p class="text-sm text-gray-600 text-center">${item.type} by ${item.artist || 'Unknown'}</p>
+                <a href="${item.url}" target="_blank" class="block text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 mt-2">View on Spotify</a>
+            </li>
+        `).join('');
+    } else {
+        document.getElementById('music-results').innerHTML = '<p class="text-center text-gray-600">No music recommendations found.</p>';
+    }
 
-        // Hide the loading screen when the page fully loads
-        window.onload = function() {
-            document.getElementById('loading-screen').classList.add('hidden');
-        };
-
-        // Animate the dots (".", "..", "...")
-        function animateDots() {
-            const dotsElement = document.getElementById('loading-dots');
-            let dots = 1;
-            setInterval(() => {
-                dotsElement.textContent = '.'.repeat(dots);
-                dots = dots < 3 ? dots + 1 : 1; // Loop between 1 to 3 dots
-            }, 500); // Update every 500ms
-        }
-
-        animateDots();
-    });
+    // Display Met Museum Art Results
+    const artworks = JSON.parse(localStorage.getItem('artworks')) || [];
+    const artGrid = document.getElementById('artworks-grid');
+    if (artworks.length) {
+        artGrid.innerHTML = artworks.map(artwork => `
+            <div class="artwork-card bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
+                <img src="${artwork.primaryImageSmall || '/static/images/censored-image.png'}" alt="${artwork.title}" class="w-full h-48 object-cover rounded-md mb-4">
+                <h4 class="text-lg font-semibold truncate mb-2 text-center">${artwork.title}</h4>
+                <p class="text-sm text-gray-600 text-center">${artwork.artistDisplayName || 'Unknown Artist'}</p>
+                <p class="text-sm text-gray-600 text-center">${artwork.objectDate || 'Unknown Date'}</p>
+            </div>
+        `).join('');
+    } else {
+        document.getElementById('art-results').innerHTML = '<p class="text-center text-gray-600">No art recommendations found.</p>';
+    }
 </script>
 
 {% endblock %}

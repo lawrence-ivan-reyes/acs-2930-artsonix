@@ -1,23 +1,15 @@
 {% extends 'base.html' %}
 {% block content %}
-<nav class="bg-blue-600 p-4">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
-        <h1 class="text-white text-2xl font-bold">ArtSonix</h1>
-        <ul class="flex space-x-4">
-            <li><a href="/" class="text-white hover:underline">Home</a></li>
-            <li><a href="/about" class="text-white hover:underline">About</a></li>
-            <li><a href="#" class="text-white hover:underline">Contact</a></li>
-        </ul>
-    </div>
-</nav>
 <header class="text-center py-10">
     <h2 class="text-3xl font-bold text-gray-800">Welcome to ArtSonix! Discover Music Through Art</h2>
 </header>
 <div class="flex items-center justify-center py-10">
     <div class="max-w-4xl w-full mx-auto p-6 bg-white shadow-lg rounded-2xl">
-        <form id="user-form" class="mt-4" action="/results" method="get">
+        <form id="combined-form" class="mt-4" action="/results" method="get">
             <fieldset class="border border-gray-300 p-4 rounded-lg">
-                <legend class="text-lg font-bold text-gray-800">Find Your Music Match</legend>
+                <legend class="text-lg font-bold text-gray-800">Find Your Music and Art Match</legend>
+
+                <!-- Mood Selection -->
                 <p class="block text-gray-600 mt-2">Select up to 3 moods:</p>
                 <div class="grid grid-cols-2 gap-2 mt-2">
                     {% for mood in ["Inspired", "Creative", "Calm", "Energetic", "Adventurous", "Happy", "Sad", "Romantic", "Focused", "Upbeat", "Rebellious", "Dark", "Nostalgic", "Trippy", "Party", "Epic", "Quirky", "Emotional"] %}
@@ -27,10 +19,12 @@
                         </label>
                     {% endfor %}
                 </div>
+
+                <!-- Search Query -->
                 <p class="block text-gray-600 mt-4">Or enter a specific search query:</p>
-                <input type="text" id="search-query" name="query"
-                    class="w-full p-2 border rounded-lg mt-2"
-                    placeholder="Enter artist, album, playlist, or song (optional)">
+                <input type="text" id="search-query" name="query" class="w-full p-2 border rounded-lg mt-2" placeholder="Enter artist, album, playlist, or song (optional)">
+
+                <!-- Media Type Selection -->
                 <p class="block text-gray-600 mt-4">Choose what you want to search for:</p>
                 <div class="grid grid-cols-2 gap-2 mt-2">
                     {% for media in ["Playlist", "Album", "Artist", "Track", "I’m open to anything"] %}
@@ -40,55 +34,88 @@
                         </label>
                     {% endfor %}
                 </div>
+
+                <!-- Art Style Selection -->
+                <p class="block text-gray-600 mt-4">Select your favorite art styles (up to 3):</p>
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    {% for art_style in ["Cubism", "Abstract", "Contemporary art", "Modern", "Impressionism", "Baroque", "Romanticism", "Pre-Raphaelite", "Op Art", "Futurism", "Tonalism"] %}
+                        <label class="flex items-center">
+                            <input type="checkbox" name="art_styles" value="{{ art_style }}" class="art-style-checkbox">
+                            <span class="ml-2">{{ art_style }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+
+                <!-- Subject Selection -->
+                <label for="subject" class="block text-gray-600 mt-4">Choose a subject that captures your interest:</label>
+                <select id="subject" name="subject" class="w-full p-2 border rounded-lg mt-2">
+                    <option value="">Choose a subject</option>
+                    <option value="Human Stories">Human Stories (portraits, daily life)</option>
+                    <option value="Nature & Landscapes">Nature & Landscapes</option>
+                    <option value="Religious & Mythological">Religious & Mythological</option>
+                    <option value="Historical Events">Historical Events</option>
+                    <option value="Abstract & Decorative">Abstract & Decorative</option>
+                    <option value="Open">I'm open to anything</option>
+                </select>
             </fieldset>
-            <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 w-full">
-                Find Music
-            </button>
+
+            <!-- Submit Buttons -->
+            <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 w-full">Find Music & Art</button>
+            <button type="button" id="surpriseBtn" class="mt-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 w-full">Surprise Me!</button>
         </form>
     </div>
 </div>
+
+<!-- Modal for Too Many Selections -->
 <div id="mood-modal" class="fixed inset-0 hidden bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg w-96">
-        <div class="p-4">
-            <h3 class="text-lg font-semibold text-gray-900">Too Many Moods Selected</h3>
-            <p class="text-sm text-gray-600 mt-2">You can only select up to 3 moods. Please deselect one before selecting another.</p>
-        </div>
-        <div class="flex justify-end p-4">
-            <button id="close-modal" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                Okay
-            </button>
-        </div>
+    <div class="bg-white rounded-lg shadow-lg w-96 p-4 text-center">
+        <h3 class="text-lg font-semibold">Too Many Selections</h3>
+        <p class="text-sm text-gray-600 mt-2">You can only select up to 3 items. Please deselect one before adding another.</p>
+        <button id="close-modal" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Okay</button>
     </div>
 </div>
+
+<!-- Loading Screen -->
 <div id="loading-screen" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
     <div class="text-center text-black p-8 bg-white rounded-lg shadow-lg">
-        <span class="text-xl font-bold">Checking for safety, Please wait<span id="loading-dots">.</span></span>
+        <span class="text-xl font-bold">Loading<span id="loading-dots">.</span></span>
     </div>
 </div>
+
 <script>
-    document.querySelectorAll('.mood-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', function () {
-            let checkedBoxes = document.querySelectorAll('.mood-checkbox:checked');
-            if (checkedBoxes.length > 3) {
-                this.checked = false;
-                document.getElementById('mood-modal').classList.remove('hidden');
-            }
+    const limitSelections = (className) => {
+        document.querySelectorAll(className).forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                let checkedBoxes = document.querySelectorAll(`${className}:checked`);
+                if (checkedBoxes.length > 3) {
+                    this.checked = false;
+                    document.getElementById('mood-modal').classList.remove('hidden');
+                }
+            });
         });
-    });
+    };
+
     document.getElementById('close-modal').addEventListener('click', function () {
         document.getElementById('mood-modal').classList.add('hidden');
     });
-    document.getElementById('user-form').addEventListener('submit', function () {
+
+    document.getElementById('combined-form').addEventListener('submit', function () {
         document.getElementById('loading-screen').classList.remove('hidden');
-        animateDots();
     });
-    function animateDots() {
-        const dotsElement = document.getElementById('loading-dots');
-        let dots = 1;
-        setInterval(() => {
-            dotsElement.textContent = '.'.repeat(dots);
-            dots = dots < 3 ? dots + 1 : 1;
-        }, 500);
-    }
+
+    document.getElementById('surpriseBtn').addEventListener('click', function () {
+        document.getElementById('loading-screen').classList.remove('hidden');
+        window.location.href = '/surprise-me';
+    });
+
+    limitSelections('.mood-checkbox');
+    limitSelections('.art-style-checkbox');
+
+    const dotsElement = document.getElementById('loading-dots');
+    let dots = 1;
+    setInterval(() => {
+        dotsElement.textContent = '.'.repeat(dots);
+        dots = dots < 3 ? dots + 1 : 1;
+    }, 500);
 </script>
 {% endblock %}
