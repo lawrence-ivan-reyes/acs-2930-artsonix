@@ -133,7 +133,6 @@ async def openai_nsfw_filter(text: str) -> bool:
             "sexual": 0.001,  
             "sexual/minors": 0.0001,  
             "harassment/threatening": 0.001,
-            "violence": 0.8,
         }
     }
 
