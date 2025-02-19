@@ -235,11 +235,12 @@ async def results():
             async with session.get(search_url, headers=headers) as response:
                 if response.status != 200:
                     return await render_template("error.html", message="Failed to fetch data from Spotify"), response.status
-                data = await response.json()
 
-        items = data.get(rec_type + "s", {}).get("items", [])
-        if not items:
-            return await render_template("error.html", message="No results found"), 404
+                try:
+                    data = await response.json()
+                except Exception as e:
+                    logging.error(f"❌ JSON Parsing Error: {e}")
+                    return await render_template("error.html", message="Invalid response from Spotify"), 500
 
         formatted_results = await process_results(items, rec_type)
         return await render_template("results.html", results=formatted_results)
@@ -311,7 +312,12 @@ async def process_item(item, rec_type):
     
     name = item.get("name", "Unknown")
     url = item.get("external_urls", {}).get("spotify", "#")
-    image_url = item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
+    # ✅ Fix IndexError by safely checking if "images" exist and have at least one entry
+    image_url = (
+        item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
+        if item.get("images") and isinstance(item.get("images"), list) and len(item["images"]) > 0
+        else "https://via.placeholder.com/300"
+    )
 
     # ✅ **Handle Based on Spotify Type**
     if rec_type == "playlist":
