@@ -347,8 +347,8 @@ async def process_item(item, rec_type):
     }
     
 @app.route('/credits')
-def credits():
-    return render_template('credits.html')
+async def credits():
+    return await render_template('credits.html')
 
 # ✅ Run Flask app
 if __name__ == "__main__":
