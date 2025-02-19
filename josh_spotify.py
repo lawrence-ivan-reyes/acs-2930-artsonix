@@ -207,26 +207,55 @@ async def about():
 
 @app.route('/results', methods=['GET'])
 async def results():
-    """Fetches Spotify results based on mood and media type, while ensuring proper filtering and structured search queries."""
-    
-    rec_type = request.args.get('rec_type', 'playlist')
-    moods = request.args.getlist('moods')  # Multi-select moods
-    query = request.args.get('query', '').strip()
+    """Fetches Spotify results based on search query or mood selection."""
 
+    rec_type = request.args.get('rec_type', 'playlist')
+    query = request.args.get('query', '').strip()
+    moods = request.args.getlist('moods')
+
+    logging.info(f"🔎 Searching Spotify for: {query} (Rec Type: {rec_type})")
+
+    # ✅ Handle "I'm Open to Anything" mode
     if rec_type.lower() == "i’m open to anything":
         rec_type = random.choice(["playlist", "album", "artist", "track"])
         all_genres = sum(MOOD_GENRE_MAP.values(), [])
         query = " OR ".join(random.sample(all_genres, min(len(all_genres), 5)))
-    else:
-        selected_genres = [genre for mood in moods if mood in MOOD_GENRE_MAP for genre in MOOD_GENRE_MAP[mood]]
-        if selected_genres and not query:
-            query = " OR ".join(selected_genres)
 
+    # ✅ Use specific search query directly (From Old Code 1)
+    if query:
+        search_url = f"{SPOTIFY_API_URL}?q={quote_plus(query)}&type={rec_type}&limit=20"
+        access_token = await get_access_token()
+
+        if not access_token:
+            return await render_template("error.html", message="Failed to fetch access token"), 500
+
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(search_url, headers=headers) as response:
+                if response.status != 200:
+                    return await render_template("error.html", message="Failed to fetch data from Spotify"), response.status
+                data = await response.json()
+
+        items = data.get(rec_type + "s", {}).get("items", [])
+        if not items:
+            return await render_template("error.html", message="No results found"), 404
+
+        formatted_results = await process_results(items, rec_type)
+        return await render_template("results.html", results=formatted_results)
+
+    # ✅ If no query is given, use mood-based search (From Old Code 2)
+    selected_genres = [
+        genre for mood in moods if mood in MOOD_GENRE_MAP for genre in MOOD_GENRE_MAP[mood]
+    ]
+    if not query and selected_genres:
+        query = " OR ".join(selected_genres)
+
+    # ✅ Enforce Query Length Limit (From Old Code 2)
     if len(query) > 250:
-        query = " OR ".join(query.split(" OR ")[:5])
+        query = " OR ".join(query.split(" OR ")[:5])  # Trim excess terms
 
-    logging.info(f"🔎 Searching Spotify for: {query} (Rec Type: {rec_type})")
-
+    # ✅ Fetch results using Spotify API (From New Code)
     access_token = await get_access_token()
     if not access_token:
         return await render_template("error.html", message="Failed to fetch access token"), 500
@@ -250,27 +279,17 @@ async def results():
             results.extend(items)
             offset += limit
             if len(items) < limit:
-                break
+                break  # Stop if fewer items are returned
 
-    random.shuffle(results)
-
-    subgenre_results = []
-    for mood in moods:
-        if mood in MOOD_GENRE_MAP:
-            genre_based_results = [
-                item for item in results
-                if item and isinstance(item, dict) and "name" in item and 
-                any(g in item.get("name", "").lower() for g in MOOD_GENRE_MAP.get(mood, []))
-            ]
-            subgenre_results.extend(random.sample(genre_based_results, min(len(genre_based_results), 9)))
-
-    final_results = subgenre_results if subgenre_results else results[:9]
-
-    filtered_results = await process_results(final_results, rec_type)
+    # ✅ Move Filtering BEFORE Randomization (Fixing Old Code 2’s Issue)
+    filtered_results = await process_results(results, rec_type)
     if not filtered_results:
         return await render_template("error.html", message="No safe results found"), 404
 
-    return await render_template("results.html", results=filtered_results)
+    # ✅ Select 9 Random Results After Filtering
+    final_results = random.sample(filtered_results, min(len(filtered_results), 9))
+
+    return await render_template("results.html", results=final_results)
 
 # ✅ **Process Results with NSFW Filtering**
 async def process_results(results, rec_type):
