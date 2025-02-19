@@ -70,9 +70,10 @@ WHITELIST_TERMS = [
 ]
 
 WHITELIST_ARTISTS = {
-    "Drake", "Eminem", "Kanye West", "Beyoncé", "Aimer", "Yoasobi", "Ariana Grande", 
+    "Drake", "Eminem", "Kanye West", "Beyoncé", "Aimer", "Yoasobi", "Ariana Grande", "Fleetwood Mac", 
     "Taylor Swift", "The Weeknd", "Bruno Mars", "Billie Eilish", "Doja Cat",
-    "Kenshi Yonezu", "Lisa", "Radwimps", "King Gnu", "Vaundy"
+    "Kenshi Yonezu", "Lisa", "Radwimps", "King Gnu", "Vaundy", "Eagles", "Queen", "The Beatles", "Led Zeppelin", "Pink Floyd", "The Rolling Stones", "The Who", "The Doors", "Jimi Hendrix", "Bob Dylan", "David Bowie", "Elton John", "Prince", "Michael Jackson", "Madonna", "Whitney Houston", "Mariah Carey", "Janet Jackson", "Stevie Wonder", "Bob Marley", "James Brown", "Aretha Franklin", "Ray Charles", "Sam Cooke", "Otis Redding", "Marvin Gaye", "Al Green", "Smokey Robinson", "Stevie Wonder", "Earth, Wind & Fire", "The Temptations", "The Supremes", "The Four Tops", "The Jackson 5", "The Isley Brothers", "The O'Jays", "The Commodores", "The Bee Gees", "The Eagles", "The Doobie Brothers", "The Allman Brothers Band", "The Grateful Dead", "The Band", "The Byrds", "The Velvet Underground", "The Doors", "The Who", "The Kinks", "The Rolling Stones", "The Beatles",
+    "The Beach Boys", "The Supremes", "The Ronettes", "The Shirelles", "The Crystals", "The Chiffons", "The Marvelettes", "The Shangri-Las", "The Angels", "The Cookies", "The Shirelles", "The Chantels", "The Shangri-Las", 
 }
 
 # ✅ Expanded NSFW List (English + Japanese + Romanji)
@@ -102,62 +103,43 @@ async def retry_api_call(call_func, retries=3):
             delay *= random.uniform(1.5, 2.5)  
     return False  
 
-# ✅ **🔹 Safe URL Check (Google Safe Browsing)**
-async def is_safe_url(url: str) -> bool:
-    """Uses Google Safe Browsing API to check if a URL is malicious."""
-    if not GOOGLE_SAFE_BROWSING_API_KEY or not url:
-        return True  # Assume safe if API key is missing
-
-    payload = {
-        "client": {"clientId": "nsfw-filter", "clientVersion": "1.0"},
-        "threatInfo": {
-            "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE"],
-            "platformTypes": ["ANY_PLATFORM"],
-            "threatEntryTypes": ["URL"],
-            "threatEntries": [{"url": url}],
-        },
-    }
-
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(SAFE_BROWSING_API_URL, json=payload) as response:
-                data = await response.json()
-                return "matches" not in data  # ✅ Safe if no matches found
-        except Exception:
-            return True  # Assume safe if API fails
-
-# ✅ **🔹 Keyword-Based NSFW Filtering (Titles & Descriptions Only)**
+# ✅ **🔹 Keyword-Based NSFW Filtering (Lightweight)**
 async def keyword_filter(text: str) -> bool:
-    """First-pass keyword filtering against a predefined blocklist."""
+    """First-pass keyword filtering using exact match blocklist, allowing whitelisted content."""
     if not text:
-        return True  
+        return True  # Empty text is safe
 
     text = html.unescape(text).strip().lower()
 
-    # ✅ **Blocklist Check**
-    if any(word in text for word in BLOCKLIST_TERMS) or any(phrase in text for phrase in BAD_PHRASES):
-        return False  
+    # ✅ Allow Whitelisted Terms (Bypass Filtering)
+    if any(whitelist.lower() in text for whitelist in WHITELIST_TERMS):
+        return True
+    
+    # ✅ Allow Whitelisted Artists (Bypass Filtering)
+    if any(artist.lower() in text for artist in WHITELIST_ARTISTS):
+        return True
 
-    return True  
+    # ✅ Strict Blocklist Check (Exact Matches Only)
+    return not any(term in text for term in BLOCKLIST_TERMS)
 
-# ✅ **🔹 OpenAI NSFW Check (Second-Pass)**
+# ✅ **🔹 OpenAI NSFW Check (Final Pass)**
 async def openai_nsfw_filter(text: str) -> bool:
     """Uses OpenAI Moderation API as the final NSFW text check."""
     payload = {
         "model": "omni-moderation-latest",
         "input": [{"type": "text", "text": text}],
-        "thresholds": {  
+        "thresholds": {
             "sexual": 0.001,  
             "sexual/minors": 0.0001,  
             "harassment/threatening": 0.001,
+            "violence": 0.8,
         }
     }
 
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(
-                "https://api.openai.com/v1/moderations",
-                json=payload,
+                OPENAI_MODERATION_API_URL, json=payload,
                 headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
             ) as response:
                 data = await response.json()
@@ -165,67 +147,15 @@ async def openai_nsfw_filter(text: str) -> bool:
         except Exception:
             return True  # Assume safe if API fails
 
-# ✅ **🔹 Final Multi-Pass NSFW Text Filter**
+# ✅ **🔹 Multi-Pass NSFW Text Filter**
 async def is_safe_content(text: str) -> bool:
-    """Applies keyword filtering first, then OpenAI NSFW check."""
+    """Applies lightweight keyword filtering first, then OpenAI NSFW check."""
     if not await keyword_filter(text):
-        return False  
-    return await openai_nsfw_filter(text)
+        return False  # ❌ Blocked by keyword filter
 
-# ✅ **Google Cloud Vision NSFW Check**
-async def is_safe_image(image_url: str) -> str:
-    """Uses Google Cloud Vision API first, then OpenAI for NSFW image detection."""
-    if not image_url:
-        return CENSORED_IMAGE_URL  
+    return await openai_nsfw_filter(text)  # ✅ Final OpenAI check
 
-    # ✅ **Check Cache First**
-    if image_url in NSFW_IMAGE_CACHE:
-        return NSFW_IMAGE_CACHE[image_url]
-
-    # ✅ **First Pass: Google Cloud Vision API**
-    if await google_cloud_nsfw_check(image_url):
-        NSFW_IMAGE_CACHE[image_url] = image_url
-        return image_url  # ✅ Safe image
-    else:
-        logging.warning(f"⚠️ NSFW Image Detected by Google Cloud Vision: {image_url}")
-
-    # ✅ **Second Pass: OpenAI (If Google Vision flags or fails)**
-    if await openai_nsfw_image_check(image_url):
-        NSFW_IMAGE_CACHE[image_url] = image_url
-        return image_url  # ✅ Safe after both checks
-    else:
-        logging.warning(f"⚠️ NSFW Image Detected by OpenAI: {image_url}")
-
-    # ✅ **Blocked Image**
-    NSFW_IMAGE_CACHE[image_url] = CENSORED_IMAGE_URL
-    return CENSORED_IMAGE_URL
-
-# ✅ NSFW Image Check (Google Vision + OpenAI in Parallel)
-async def is_safe_image(image_url: str) -> str:
-    """Runs Google Vision first; if flagged, checks OpenAI before blocking."""
-    if not image_url:
-        return "/static/images/censored-image.png"  # ✅ Default to censored image if URL is missing
-
-    # ✅ Check Cache First
-    if image_url in NSFW_IMAGE_CACHE:
-        return NSFW_IMAGE_CACHE[image_url]
-
-    # ✅ Run both checks in parallel
-    google_safe, openai_safe = await asyncio.gather(
-        google_cloud_nsfw_check(image_url),
-        openai_nsfw_image_check(image_url)
-    )
-
-    if google_safe and openai_safe:
-        NSFW_IMAGE_CACHE[image_url] = image_url  # ✅ Mark as safe
-        return image_url  
-
-    # ❌ If either API flags the image, block it
-    logging.warning(f"⚠️ NSFW Image Detected: {image_url} (Google: {not google_safe}, OpenAI: {not openai_safe})")
-    NSFW_IMAGE_CACHE[image_url] = "/static/images/censored-image.png"
-    return "/static/images/censored-image.png"
-
-# ✅ Google Cloud Vision NSFW Check
+# ✅ **🔹 Google Cloud Vision NSFW Check**
 async def google_cloud_nsfw_check(image_url: str) -> bool:
     """Runs Google Cloud Vision NSFW detection with stricter thresholds."""
     try:
@@ -250,7 +180,7 @@ async def google_cloud_nsfw_check(image_url: str) -> bool:
         logging.error(f"❌ Google Cloud Vision API Error: {e}")
         return False  # Assume unsafe if Vision API fails
 
-# ✅ OpenAI NSFW Image Check
+# ✅ **🔹 OpenAI NSFW Image Check**
 async def openai_nsfw_image_check(image_url: str) -> bool:
     """Runs OpenAI NSFW Image Moderation with a focus on sexual & violent content."""
     payload = {
@@ -261,13 +191,38 @@ async def openai_nsfw_image_check(image_url: str) -> bool:
         }
     }
 
-    session = await get_session()
-    try:
-        async with session.post(
-            OPENAI_MODERATION_API_URL, json=payload, headers={"Authorization": f"Bearer {OPENAI_API_KEY}"}
-        ) as response:
-            data = await response.json()
-            return not any(result.get("flagged", False) for result in data.get("results", []))
-    except Exception as e:
-        logging.error(f"❌ OpenAI Image Moderation Error: {e}")
-        return False  # Assume unsafe if OpenAI API fails
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(
+                OPENAI_MODERATION_API_URL, json=payload, headers={"Authorization": f"Bearer {OPENAI_API_KEY}"}
+            ) as response:
+                data = await response.json()
+                return not any(result.get("flagged", False) for result in data.get("results", []))
+        except Exception as e:
+            logging.error(f"❌ OpenAI Image Moderation Error: {e}")
+            return False  # Assume unsafe if OpenAI API fails
+
+# ✅ **🔹 NSFW Image Check (Google Vision + OpenAI in Parallel)**
+async def is_safe_image(image_url: str) -> str:
+    """Runs Google Vision first; if flagged, checks OpenAI before blocking."""
+    if not image_url:
+        return "/static/images/censored-image.png"  # ✅ Default to censored image if URL is missing
+
+    # ✅ Check Cache First
+    if image_url in NSFW_IMAGE_CACHE:
+        return NSFW_IMAGE_CACHE[image_url]
+
+    # ✅ Run both checks in parallel
+    google_safe, openai_safe = await asyncio.gather(
+        google_cloud_nsfw_check(image_url),
+        openai_nsfw_image_check(image_url)
+    )
+
+    if google_safe and openai_safe:
+        NSFW_IMAGE_CACHE[image_url] = image_url  # ✅ Mark as safe
+        return image_url  
+
+    # ❌ If either API flags the image, block it
+    logging.warning(f"⚠️ NSFW Image Detected: {image_url} (Google: {not google_safe}, OpenAI: {not openai_safe})")
+    NSFW_IMAGE_CACHE[image_url] = "/static/images/censored-image.png"
+    return "/static/images/censored-image.png"
