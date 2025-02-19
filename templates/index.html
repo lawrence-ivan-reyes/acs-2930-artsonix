@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-
 {% block content %}
 <nav class="bg-blue-600 p-4">
     <div class="max-w-7xl mx-auto flex justify-between items-center">
@@ -11,22 +10,14 @@
         </ul>
     </div>
 </nav>
-
 <header class="text-center py-10">
-    <h2 class="text-3xl font-bold text-gray-800">Welcome to ArtSonix!</h2>
+    <h2 class="text-3xl font-bold text-gray-800">Welcome to ArtSonix! Discover Music Through Art</h2>
 </header>
-
 <div class="flex items-center justify-center py-10">
     <div class="max-w-4xl w-full mx-auto p-6 bg-white shadow-lg rounded-2xl">
-        <h1 class="text-2xl font-bold text-gray-800">Discover Music Through Art</h1>
-        
         <form id="user-form" class="mt-4" action="/results" method="get">
-            
-            <!-- 📌 Form Legend -->
             <fieldset class="border border-gray-300 p-4 rounded-lg">
                 <legend class="text-lg font-bold text-gray-800">Find Your Music Match</legend>
-
-                <!-- 🎭 Mood Selection (Multi-Select Limit: 3) -->
                 <p class="block text-gray-600 mt-2">Select up to 3 moods:</p>
                 <div class="grid grid-cols-2 gap-2 mt-2">
                     {% for mood in ["Inspired", "Creative", "Calm", "Energetic", "Adventurous", "Happy", "Sad", "Romantic", "Focused", "Upbeat", "Rebellious", "Dark", "Nostalgic", "Trippy", "Party", "Epic", "Quirky", "Emotional"] %}
@@ -36,14 +27,10 @@
                         </label>
                     {% endfor %}
                 </div>
-
-                <!-- 🔍 Search Query (Optional) -->
                 <p class="block text-gray-600 mt-4">Or enter a specific search query:</p>
                 <input type="text" id="search-query" name="query"
                     class="w-full p-2 border rounded-lg mt-2"
                     placeholder="Enter artist, album, playlist, or song (optional)">
-
-                <!-- 🎵 Media Type Selection (Radio Buttons) -->
                 <p class="block text-gray-600 mt-4">Choose what you want to search for:</p>
                 <div class="grid grid-cols-2 gap-2 mt-2">
                     {% for media in ["Playlist", "Album", "Artist", "Track", "I’m open to anything"] %}
@@ -54,17 +41,12 @@
                     {% endfor %}
                 </div>
             </fieldset>
-
-            <!-- 🎯 Submit Button -->
             <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 w-full">
                 Find Music
             </button>
-
         </form>
     </div>
 </div>
-
-<!-- ⚠️ Modal Alert for Mood Limit -->
 <div id="mood-modal" class="fixed inset-0 hidden bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-lg w-96">
         <div class="p-4">
@@ -78,16 +60,12 @@
         </div>
     </div>
 </div>
-
-<!-- 🛑 LOADING SCREEN -->
 <div id="loading-screen" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
     <div class="text-center text-black p-8 bg-white rounded-lg shadow-lg">
         <span class="text-xl font-bold">Checking for safety, Please wait<span id="loading-dots">.</span></span>
     </div>
 </div>
-
 <script>
-    // 🛑 Limit mood selection to 3
     document.querySelectorAll('.mood-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function () {
             let checkedBoxes = document.querySelectorAll('.mood-checkbox:checked');
@@ -97,27 +75,20 @@
             }
         });
     });
-
-    // Close modal when "Okay" button is clicked
     document.getElementById('close-modal').addEventListener('click', function () {
         document.getElementById('mood-modal').classList.add('hidden');
     });
-
-    // Show loading screen on form submission
     document.getElementById('user-form').addEventListener('submit', function () {
         document.getElementById('loading-screen').classList.remove('hidden');
-        animateDots(); // Start dots animation
+        animateDots();
     });
-
-    // Animate the dots (".", "..", "...")
     function animateDots() {
         const dotsElement = document.getElementById('loading-dots');
         let dots = 1;
         setInterval(() => {
             dotsElement.textContent = '.'.repeat(dots);
-            dots = dots < 3 ? dots + 1 : 1; // Loop between 1 to 3 dots
-        }, 500); // Update every 500ms
+            dots = dots < 3 ? dots + 1 : 1;
+        }, 500);
     }
 </script>
-
 {% endblock %}
