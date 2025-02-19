@@ -111,16 +111,17 @@ async def keyword_filter(text: str) -> bool:
 
     text = html.unescape(text).strip().lower()
 
-    # ✅ Allow Whitelisted Terms (Bypass Filtering)
-    if any(whitelist.lower() in text for whitelist in WHITELIST_TERMS):
-        return True
-    
     # ✅ Allow Whitelisted Artists (Bypass Filtering)
     if any(artist.lower() in text for artist in WHITELIST_ARTISTS):
+        logging.info(f"✅ Whitelisted Artist Allowed: {text}")
         return True
 
     # ✅ Strict Blocklist Check (Exact Matches Only)
-    return not any(term in text for term in BLOCKLIST_TERMS)
+    if any(term in text for term in BLOCKLIST_TERMS):
+        logging.warning(f"❌ Blocked by Keyword Filter: {text}")
+        return False  
+
+    return None  # Not sure → Needs API check
 
 # ✅ **🔹 OpenAI NSFW Check (Final Pass)**
 async def openai_nsfw_filter(text: str) -> bool:
@@ -143,17 +144,27 @@ async def openai_nsfw_filter(text: str) -> bool:
                 headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
             ) as response:
                 data = await response.json()
-                return not any(result.get("flagged", False) for result in data.get("results", []))
-        except Exception:
+                flagged = any(result.get("flagged", False) for result in data.get("results", []))
+                
+                if flagged:
+                    logging.warning(f"❌ Blocked by OpenAI: {text}")
+                else:
+                    logging.info(f"✅ Passed OpenAI: {text}")
+
+                return not flagged
+        except Exception as e:
+            logging.error(f"❌ OpenAI API Error: {e}")
             return True  # Assume safe if API fails
 
 # ✅ **🔹 Multi-Pass NSFW Text Filter**
 async def is_safe_content(text: str) -> bool:
-    """Applies lightweight keyword filtering first, then OpenAI NSFW check."""
-    if not await keyword_filter(text):
-        return False  # ❌ Blocked by keyword filter
+    """Applies keyword filtering first, then OpenAI NSFW check if needed."""
+    keyword_check = await keyword_filter(text)
 
-    return await openai_nsfw_filter(text)  # ✅ Final OpenAI check
+    if keyword_check is None:  # ✅ Not sure → Ask OpenAI
+        return await openai_nsfw_filter(text)
+    
+    return keyword_check  # ✅ If keyword filter is sure, use its result
 
 # ✅ **🔹 Google Cloud Vision NSFW Check**
 async def google_cloud_nsfw_check(image_url: str) -> bool:
