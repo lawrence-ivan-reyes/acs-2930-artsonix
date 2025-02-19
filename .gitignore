@@ -485,3 +485,4 @@ nsfw_filter.py
 *.json
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,python,flask,java,node,visualstudiocode
+spotify-nsfw-filter-cac0489913e1.json
