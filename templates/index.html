@@ -4,6 +4,51 @@
     <header class="text-center py-10">
         <h2 class="text-3xl font-bold text-gray-800">Welcome to ArtSonix!</h2>
     </header>
+
+    <!-- Mood Selection Modal -->
+    <div id="mood-modal" class="hidden fixed inset-0 overflow-y-auto" style="z-index: 9999;">
+        <!-- Background backdrop -->
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+        
+        <!-- Modal container for centering -->
+        <div class="relative flex min-h-screen items-center justify-center">
+            <!-- Modal content -->
+            <div class="relative bg-white rounded-lg shadow-xl mx-4 w-full max-w-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Too Many Moods Selected</h3>
+                    <p class="mt-2 text-sm text-gray-500">You can only select up to 3 moods. Please deselect one before selecting another.</p>
+                    <div class="mt-4 flex justify-end">
+                        <button type="button" id="close-mood-modal" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-500 font-medium">
+                            Okay
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Art Style Selection Modal -->
+    <div id="art-style-modal" class="hidden fixed inset-0 overflow-y-auto" style="z-index: 9999;">
+        <!-- Background backdrop -->
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+        
+        <!-- Modal container for centering -->
+        <div class="relative flex min-h-screen items-center justify-center">
+            <!-- Modal content -->
+            <div class="relative bg-white rounded-lg shadow-xl mx-4 w-full max-w-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Too Many Art Styles Selected</h3>
+                    <p class="mt-2 text-sm text-gray-500">You can only select up to 3 art styles. Please deselect one before selecting another.</p>
+                    <div class="mt-4 flex justify-end">
+                        <button type="button" id="close-art-style-modal" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-500 font-medium">
+                            Okay
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="flex items-center justify-center">
         <div class="max-w-2xl mx-auto p-6 bg-white shadow-lg rounded-2xl">
             <h1 class="text-2xl font-bold text-gray-800">Discover Music Through Art</h1>
@@ -149,20 +194,47 @@
     <script>
         function setupCheckboxGroup(groupName, maxSelections) {
             const checkboxes = document.querySelectorAll(`input[name="${groupName}"]`);
-            const warningElement = document.getElementById(`${groupName.replace('_', '-')}-warning`);
-    
+            const modalId = groupName === 'moods' ? 'mood-modal' : 'art-style-modal';
+            const modal = document.getElementById(modalId);
+            const closeButton = document.getElementById(`close-${modalId}`);
+            const backdrop = modal.querySelector('.bg-black');
+            
+            function showModal() {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function hideModal() {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+            
             checkboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', () => {
                     const checkedBoxes = document.querySelectorAll(`input[name="${groupName}"]:checked`);
                     
                     if (checkedBoxes.length > maxSelections) {
                         checkbox.checked = false;
-                        warningElement.style.display = 'block';
-                        setTimeout(() => {
-                            warningElement.style.display = 'none';
-                        }, 2000);
+                        showModal();
                     }
                 });
+            });
+        
+            // Close modal when "Okay" button is clicked
+            closeButton.addEventListener('click', hideModal);
+        
+            // Close modal when clicking backdrop
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal || event.target === backdrop) {
+                    hideModal();
+                }
+            });
+        
+            // Close modal on escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    hideModal();
+                }
             });
         }
     
