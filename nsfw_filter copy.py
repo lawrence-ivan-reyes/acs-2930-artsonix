@@ -175,7 +175,7 @@ async def google_cloud_nsfw_check(image_url: str) -> bool:
         annotations = response.safe_search_annotation
 
         # ✅ Define Stricter Risk Levels
-        high_risk_levels = {"LIKELY", "VERY_LIKELY"}
+        high_risk_levels = {"VERY_LIKELY"}
         unknown_risk_levels = {"UNKNOWN"}
 
         if (
