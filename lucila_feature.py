@@ -1,14 +1,14 @@
+
 from flask import Flask, render_template, request, jsonify
 import requests
-from dotenv import load_dotenv
 import random
-
-load_dotenv()
+import logging
 
 app = Flask(__name__)
+
 BASE_URL = "https://collectionapi.metmuseum.org/public/collection/v1"
 
-# Dictionary mapping moods to relevant keywords for searching artworks
+# Moods dictionary - focusing on emotional or psychological states
 mood_keywords = {
     "Inspired": ["inspiration", "creativity", "genius"],
     "Creative": ["creativity", "innovation", "imagination"],
@@ -28,27 +28,31 @@ mood_keywords = {
     "Epic": ["heroic", "epic", "legend"],
     "Quirky": ["quirky", "eccentric", "whimsical"],
     "Emotional": ["emotion", "feeling", "expression"],
-    "Open": ["inspired", "creative", "calm", "energetic", "adventurous", "happy", "sad", "romantic", "focused", "upbeat", "rebellious", "dark", "nostalgic", "trippy", "party", "epic", "quirky", "emotiona"]
+    "Open": ["inspired", "creative", "calm", "energetic", "adventurous", "happy", "sad", "romantic", "focused", "upbeat", "rebellious", "dark", "nostalgic", "trippy", "party", "epic", "quirky", "emotional"]
 }
 
-# Dictionary defining date ranges for different historical periods
-period_keywords = {
-    "Ancient": {"dateBegin": -10000, "dateEnd": 500},
-    "Medieval & Renaissance": {"dateBegin": 500, "dateEnd": 1500},
-    "Early Modern": {"dateBegin": 1500, "dateEnd": 1800},
-    "Modern": {"dateBegin": 1800, "dateEnd": 1945},
-    "Contemporary": {"dateBegin": 1945, "dateEnd": 2023},
-    "Open": {"ancient", "medieval & renaissance", "early modern", "modern", "contemporary"}
-}
-
-# Dictionary mapping subjects to relevant keywords for searching artworks
+# Subjects dictionary - focusing on artwork topics
 subject_keywords = {
-    "Human Stories": ["portrait", "daily life", "figure"],
-    "Nature & Landscapes": ["landscape", "nature", "scenery"],
+    "Human Stories": ["portrait", "daily life", "figure", "people"],
+    "Nature & Landscapes": ["landscape", "scenery", "garden"],
     "Religious & Mythological": ["religion", "mythology", "spiritual"],
-    "Historical Events": ["history", "event", "historical"],
-    "Abstract & Decorative": ["abstract", "decorative"],
-    "Open": ["human stories", "nature & landscapes", "religious & mythological", "historical events", "abstract & decorative" ]
+    "Historical Events": ["history", "event", "historical", "war"],
+    "Abstract & Decorative": ["abstract", "decorative", "pattern"],
+    "Open": ["human stories", "nature & landscapes", "religious & mythological", "historical events", "abstract & decorative"]
+}
+
+# Art Styles dictionary - focusing on movements and artistic techniques
+art_style_keywords = {
+    "Cubism": ["cubist", "Picasso", "Braque"],
+    "Abstract": ["abstract", "Kandinsky", "color field"],
+    "Impressionism": ["impressionist", "Renoir", "brushstrokes"],
+    "Baroque": ["baroque", "Rubens", "dramatic"],
+    "Romanticism": ["romantic", "Delacroix", "emotion"],
+    "Pre-Raphaelite": ["pre-raphaelite", "Rossetti", "detailed"],
+    "Op Art": ["op art", "Riley", "illusion"],
+    "Futurism": ["futurist", "Boccioni", "movement"],
+    "Tonalism": ["tonalist", "Whistler", "Inness", "mood"],
+    "Open": ["cubism", "abstract", "impressionism", "baroque", "romanticism", "pre-raphaelite", "op art", "futurism", "tonalism"]
 }
 
 @app.route('/')
@@ -58,179 +62,158 @@ def index():
     """
     return render_template('index.html')
 
-@app.route('/process-preferences', methods=['POST'])
-def process_preferences():
+def remove_duplicates(results):
     """
-    Process user preferences and fetch combined results based on moods, art styles, period, and subject.
+    Remove duplicate artworks based on title, artist, and object date.
+
+    This function ensures that no duplicate results are shown and each artwork is unique.
+    """
+    seen_artworks = set()  # Set to track seen artwork IDs
+    unique_results = [] # List to store unique results
+
+    for result in results:
+        title = result.get("title")
+        artist = result.get("artistDisplayName")
+        object_date = result.get("objectDate")
+        artwork_id = (title, artist, object_date)
+
+        if artwork_id not in seen_artworks:
+            unique_results.append(result)
+            seen_artworks.add(artwork_id)
+    return unique_results
+
+def fetch_random_image():
+    """
+    Fetch a random image from the collection.
+
+    This function is used to fetch random artwork to ensure there are at least 9 unique results.
     """
     try:
-        preferences = request.json
-        print("Preferences Received:", preferences)  # Logging
-        # Extract preferences
-        moods = preferences.get('moods', [])
-        art_styles = preferences.get('art_styles', [])
-        period = preferences.get('period')
-        subject = preferences.get('subject')
-
-        # Fetch results
-        mood_results = fetch_results_based_on_moods(moods, limit=3)
-        art_style_results = fetch_results_based_on_art_styles(art_styles, limit=3)
-        period_results = fetch_results_based_on_period(period, limit=1)
-        subject_results = fetch_results_based_on_subject(subject, limit=1)
-
-        # Combine reslts and limit to 9
-        combined_results = mood_results + art_style_results + period_results + subject_results
-        combined_results = combined_results[:9]  # Limit to 9 results
-        print("Combined Results:", combined_results)  # Logging
-        return jsonify(combined_results)
+        response = requests.get(f"{BASE_URL}/search", params={"q": "art"}).json()
+        object_ids = response.get("objectIDs", [])
+        random.shuffle(object_ids) # Shuffle object IDs to get a random selection
+        for obj_id in object_ids[:5]:  
+            obj_response = requests.get(f"{BASE_URL}/objects/{obj_id}").json()
+            if obj_response.get("isPublicDomain") and "primaryImageSmall" in obj_response:
+                return obj_response
     except Exception as e:
-        print("Error Processing Preferences:", str(e))
-        return jsonify({"error": str(e)}), 500
+        logging.error(f"Error fetching random image: {str(e)}")
+    return None
 
 
 def fetch_results_based_on_moods(moods, limit=3):
     """
-    Fetch artworks based on given moods.
+    Fetch artworks based on a list of moods.
 
-    Args:
-        moods (list): List of moods to search for.
-        limit (int): Maximum number of results to return.
-
-    Returns:
-        list: List of fetched artwork results.
+    For each mood, the function retrieves associated artwork using relevant keywords and returns 
+    a list of unique artworks.
     """
     results = []
+    seen_artworks = set()
+
     try:
         for mood in moods:
             keywords = mood_keywords.get(mood, [])
+            random.shuffle(keywords)  # Shuffle the keywords
+
             for keyword in keywords:
                 response = requests.get(f"{BASE_URL}/search", params={"q": keyword}).json()
                 object_ids = response.get("objectIDs", [])
-                for obj_id in object_ids[:10]:
+
+                for obj_id in object_ids[:5]:  # Further increased limit for initial fetch
                     obj_response = requests.get(f"{BASE_URL}/objects/{obj_id}").json()
-                    if obj_response.get("isPublicDomain") and "primaryImageSmall" in obj_response:
+                    title = obj_response.get("title")
+                    artist = obj_response.get("artistDisplayName")
+                    object_date = obj_response.get("objectDate")
+                    artwork_id = (title, artist, object_date)
+
+                    if obj_response.get("isPublicDomain") and "primaryImageSmall" in obj_response and artwork_id not in seen_artworks:
                         results.append(obj_response)
-                    if len(results) >= limit:
-                        break
+                        seen_artworks.add(artwork_id)
+
+                    if len(results) >= limit: 
+                        break 
             if len(results) >= limit:
                 break
     except Exception as e:
-        print("Error Fetching Results Based on Moods:", str(e))
+        logging.error(f"Error fetching results for moods: {str(e)}")
     return results
+
 
 def fetch_results_based_on_art_styles(art_styles, limit=3):
     """
     Fetch artworks based on given art styles.
 
-    Args:
-        art_styles (list): List of art styles to search for.
-        limit (int): Maximum number of results to return.
-
-    Returns:
-        list: List of fetched artwork results.
+    This function fetches artwork based on specific art styles 
+    instead of moods, ensuring a variety of results based on the provided styles.
     """
     results = []
+    seen_artworks = set()
+
     try:
         for style in art_styles:
-            response = requests.get(f"{BASE_URL}/search", params={"q": style}).json()
-            object_ids = response.get("objectIDs", [])
-            for obj_id in object_ids[:10]:
-                obj_response = requests.get(f"{BASE_URL}/objects/{obj_id}").json()
-                if obj_response.get("isPublicDomain") and "primaryImageSmall" in obj_response:
-                    results.append(obj_response)
-                if len(results) >= limit:
-                    break
+            keywords = art_style_keywords.get(style, [])
+            random.shuffle(keywords)  # Shuffle the keywords
+
+            for keyword in keywords:
+                response = requests.get(f"{BASE_URL}/search", params={"q": keyword}).json()
+                object_ids = response.get("objectIDs", [])
+
+                for obj_id in object_ids[:5]:  # Further increased limit for initial fetch
+                    obj_response = requests.get(f"{BASE_URL}/objects/{obj_id}").json()
+                    title = obj_response.get("title")
+                    artist = obj_response.get("artistDisplayName")
+                    object_date = obj_response.get("objectDate")
+                    artwork_id = (title, artist, object_date)
+                    
+                    if obj_response.get("isPublicDomain") and "primaryImageSmall" in obj_response and artwork_id not in seen_artworks:
+                        results.append(obj_response)
+                        seen_artworks.add(artwork_id)
+                    if len(results) >= limit:
+                        break
             if len(results) >= limit:
                 break
     except Exception as e:
-        print("Error Fetching Results Based on Art Styles:", str(e))
+        logging.error(f"Error fetching results for art styles: {str(e)}")
     return results
 
-def fetch_results_based_on_period(period, limit=1):
-    """
-    Fetch artworks based on a given historical period.
 
-    Args:
-        period (str): The historical period to search for.
-        limit (int): Maximum number of results to return.
-
-    Returns:
-        list: List of fetched artwork results.
-    """
-    results = []
-    try:
-        period_range = period_keywords.get(period, {})
-        if period_range:
-            response = requests.get(f"{BASE_URL}/search", params={"dateBegin": period_range["dateBegin"], "dateEnd": period_range["dateEnd"]}).json()
-            object_ids = response.get("objectIDs", [])
-            for obj_id in object_ids[:10]:
-                obj_response = requests.get(f"{BASE_URL}/objects/{obj_id}").json()
-                if obj_response.get("isPublicDomain") and "primaryImageSmall" in obj_response:
-                    results.append(obj_response)
-                if len(results) >= limit:
-                    break
-    except Exception as e:
-        print("Error Fetching Results Based on Period:", str(e))
-    return results
-
-def fetch_results_based_on_subject(subject, limit=1):
+def fetch_results_based_on_subject(subject, limit=3):
     """
     Fetch artworks based on a given subject.
 
-    Args:
-        subject (str): The subject to search for.
-        limit (int): Maximum number of results to return.
-
-    Returns:
-        list: List of fetched artwork results.
+    This function retrieves artwork based on a specific subject provided by the user, 
+    ensuring a variety of results based on the provided subject.
     """
     results = []
+    seen_artworks = set()
+
     try:
         keywords = subject_keywords.get(subject, [])
+        random.shuffle(keywords)  # Shuffle the keywords
+
         for keyword in keywords:
             response = requests.get(f"{BASE_URL}/search", params={"q": keyword}).json()
             object_ids = response.get("objectIDs", [])
-            for obj_id in object_ids[:10]:
+
+            for obj_id in object_ids[:5]:  # Further increased limit for initial fetch
                 obj_response = requests.get(f"{BASE_URL}/objects/{obj_id}").json()
-                if obj_response.get("isPublicDomain") and "primaryImageSmall" in obj_response:
+                title = obj_response.get("title")
+                artist = obj_response.get("artistDisplayName")
+                object_date = obj_response.get("objectDate")
+                artwork_id = (title, artist, object_date)
+
+                if obj_response.get("isPublicDomain") and "primaryImageSmall" in obj_response and artwork_id not in seen_artworks:
                     results.append(obj_response)
+                    seen_artworks.add(artwork_id)
+                    
                 if len(results) >= limit:
                     break
+            if len(results) >= limit:
+                break  
     except Exception as e:
-        print("Error Fetching Results Based on Subject:", str(e))
+        logging.error(f"Error fetching results for subject: {str(e)}")
     return results
-
-@app.route('/surprise-me', methods=['GET'])
-def fetch_surprise_me_results():
-    """
-    Fetch random artwork results based on randomly selected preferences.
-    """
-    try:
-        # Randomly select preferences
-        random_moods = random.sample(list(mood_keywords.keys()), 3)  # Select 3 random moods
-        # List of specific art styles
-        art_styles_list = [
-            "Cubism", "Abstract", "Impressionism", "Modern", "Baroque", 
-            "Romanticism", "Pre-Raphaelite", "Op Art", "Futurism", "Tonalism"
-        ]
-        # Randomly select 3 art styles from the list
-        random_art_styles = random.sample(art_styles_list, 3)
-        random_period = random.choice(list(period_keywords.keys()))  # Randomly pick a period
-        random_subject = random.choice(list(subject_keywords.keys()))  # Randomly pick a subject
-
-        # Fetch results based on random preferences
-        mood_results = fetch_results_based_on_moods(random_moods, limit=3)
-        art_style_results = fetch_results_based_on_art_styles(random_art_styles, limit=3)
-        period_results = fetch_results_based_on_period(random_period, limit=1)
-        subject_results = fetch_results_based_on_subject(random_subject, limit=1)
-
-        combined_results = mood_results + art_style_results + period_results + subject_results
-        combined_results = combined_results[:9]  # Limit to 9 results
-
-        return jsonify(combined_results)
-    except Exception as e:
-        print("Error Fetching Surprise Me Results:", str(e))
-        return jsonify({"error": str(e)}), 500
 
 @app.route('/results')
 def results():
@@ -245,6 +228,83 @@ def error():
     Render the error page.
     """
     return render_template('error.html')
+
+@app.route('/process-preferences', methods=['POST'])
+def process_preferences():
+    """
+    Process user preferences and fetch artwork results.
+
+    This route receives the user's preferences and fetches artwork based on those preferences.
+    """
+    try:
+        preferences = request.json
+        # Extract preferences
+        moods = preferences.get('moods', [])
+        art_styles = preferences.get('art_styles', [])
+        subject = preferences.get('subject')
+
+        # Fetch results using the updated method
+        mood_results = fetch_results_based_on_moods(moods, limit=3) or []
+        art_style_results = fetch_results_based_on_art_styles(art_styles, limit=3) or []
+        subject_results = fetch_results_based_on_subject(subject, limit=1) or []
+
+        # Combine results
+        combined_results = mood_results + art_style_results + subject_results
+        # Remove duplicates
+        unique_results = remove_duplicates(combined_results)
+        
+        # Ensure there are at least 9 unique images
+        if len(unique_results) < 9:
+            while len(unique_results) < 9:
+                random_image = fetch_random_image()
+                if random_image and random_image not in unique_results:
+                    unique_results.append(random_image)
+                else:
+                    logging.warning("Could not fetch a valid random image to add.")
+                    break
+        
+        # Limit to 9 results if there are still more than 9
+        unique_results = unique_results[:9]
+        return jsonify(unique_results)
+    except Exception as e:
+        logging.error(f"Error processing preferences: {str(e)}")
+        return jsonify({"error":  str(e)}), 500
+
+@app.route('/surprise-me', methods=['GET'])
+def fetch_surprise_me_results():
+    """
+    Fetch random artwork results based on randomly selected preferences.
+
+    This function provides random artwork for the user by selecting random moods, 
+    art styles, and a subject, and then fetching relevant artworks.
+    """
+    try:
+        # Randomly select preferences
+        random_moods = random.sample(list(mood_keywords.keys()), 3)  # Select 3 random moods
+
+        # List of specific art styles
+        art_styles_list = [
+            "Cubism", "Abstract", "Impressionism", "Modern", "Baroque",
+            "Romanticism", "Pre-Raphaelite", "Op Art", "Futurism", "Tonalism"
+        ]
+        # Randomly select 3 art styles from the list
+        random_art_styles = random.sample(art_styles_list, 3)
+
+        random_subject = random.choice(list(subject_keywords.keys()))  # Randomly pick a subject
+
+        # Fetch results based on random preferences
+        mood_results = fetch_results_based_on_moods(random_moods, limit=3)
+        art_style_results = fetch_results_based_on_art_styles(random_art_styles, limit=3)
+        subject_results = fetch_results_based_on_subject(random_subject, limit=1)
+
+        combined_results = mood_results + art_style_results + subject_results
+        combined_results = combined_results[:9]  # Limit to 9 results
+
+        return jsonify(combined_results)
+    except Exception as e:
+        logging.error(f"Error fetching results: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=3000)

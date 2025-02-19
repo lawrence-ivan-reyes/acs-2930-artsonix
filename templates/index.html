@@ -121,19 +121,7 @@
                     </div>
                 </div>
 
-                <!-- Q3: Art Period Selection -->
-                <label for="period" class="block mb-2 text-lg font-medium text-gray-800">Do you have a favorite art period?</label>
-                <select id="period" name="period" class="bg-gray-50 border border-gray-300 text-gray-800 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                    <option value="">Choose an art period</option>
-                    <option value="Ancient">Ancient (Before 500 CE)</option>
-                    <option value="Medieval & Renaissance">Medieval & Renaissance (500-1500 CE)</option>
-                    <option value="Early Modern">Early Modern (1500-1800 CE)</option>
-                    <option value="Modern">Modern (1800-1945 CE)</option>
-                    <option value="Contemporary">Contemporary (1945-present CE)</option>
-                    <option value="Open">I'm open to anything</option>
-                </select>
-
-                <!-- Q4: Subject Selection -->
+                <!-- Q3: Subject Selection -->
                 <label for="subject" class="block mb-2 text-lg font-medium text-gray-800 mt-4">What subjects capture your interest?</label>
                 <select id="subject" name="subject" class="bg-gray-50 border border-gray-300 text-gray-800 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                     <option value="">Choose a subject</option>
@@ -192,7 +180,6 @@
             const selectedArtStyles = Array.from(document.querySelectorAll('input[name="art_styles"]:checked'))
                 .map(checkbox => checkbox.value);
     
-            const period = document.getElementById("period").value;
             const subject = document.getElementById("subject").value;
     
             fetch('/process-preferences', {
@@ -203,7 +190,6 @@
                 body: JSON.stringify({ 
                     moods: selectedMoods, 
                     art_styles: selectedArtStyles, 
-                    period: period, 
                     subject: subject 
                 })
             })
@@ -269,4 +255,4 @@
     </script>
 
     </body>
-    {% endblock %}
+{% endblock %}
