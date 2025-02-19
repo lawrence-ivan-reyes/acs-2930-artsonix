@@ -212,9 +212,8 @@ async def openai_nsfw_image_check(image_url: str) -> bool:
             logging.error(f"❌ OpenAI Image Moderation Error: {e}")
             return False  # Assume unsafe if OpenAI API fails
 
-# ✅ **🔹 NSFW Image Check (Google Vision + OpenAI)**
 async def is_safe_image(image_url: str) -> str:
-    """Google acts as primary filter; if Google flags, OpenAI decides. Favor Google if either flags."""
+    """Google acts as the primary filter; if Google flags, block. Otherwise, check OpenAI."""
     if not image_url:
         return "/static/images/censored-image.png"
 
@@ -224,21 +223,21 @@ async def is_safe_image(image_url: str) -> str:
     # ✅ Check Google Vision first
     google_safe = await google_cloud_nsfw_check(image_url)
 
-    # ✅ If Google allows → Safe
-    if google_safe:
-        NSFW_IMAGE_CACHE[image_url] = image_url
-        return image_url
-
-    # ❗ Google flagged → Check OpenAI
-    openai_safe = await openai_nsfw_image_check(image_url)
-
-    # ❌ Block if OpenAI also flags
-    if not openai_safe:
-        logging.warning(f"⚠️ NSFW Image Detected by Both: {image_url}")
+    # ❌ If Google flags → Block immediately
+    if not google_safe:
+        logging.warning(f"⚠️ NSFW Image Blocked by Google: {image_url}")
         NSFW_IMAGE_CACHE[image_url] = "/static/images/censored-image.png"
         return "/static/images/censored-image.png"
 
-    # ✅ Allow if OpenAI allows
-    logging.info(f"✅ Allowed by OpenAI despite Google flag: {image_url}")
+    # ✅ Google allows → Check OpenAI
+    openai_safe = await openai_nsfw_image_check(image_url)
+
+    # ❌ If OpenAI flags → Block
+    if not openai_safe:
+        logging.warning(f"⚠️ NSFW Image Blocked by OpenAI: {image_url}")
+        NSFW_IMAGE_CACHE[image_url] = "/static/images/censored-image.png"
+        return "/static/images/censored-image.png"
+
+    # ✅ Both allow → Allow
     NSFW_IMAGE_CACHE[image_url] = image_url
     return image_url
