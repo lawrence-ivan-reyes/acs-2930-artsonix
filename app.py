@@ -14,6 +14,53 @@ load_dotenv()
 flask_app = FlaskApp(__name__)
 BASE_URL = "https://collectionapi.metmuseum.org/public/collection/v1"
 
+# Moods dictionary - focusing on emotional or psychological states
+mood_keywords = {
+    "Inspired": ["inspiration", "creativity", "genius"],
+    "Creative": ["creativity", "innovation", "imagination"],
+    "Calm": ["serene", "peaceful", "tranquil"],
+    "Energetic": ["dynamic", "vibrant", "lively"],
+    "Adventurous": ["exploration", "adventure", "journey"],
+    "Happy": ["joy", "happiness", "bliss"],
+    "Sad": ["melancholy", "sadness", "sorrow"],
+    "Romantic": ["romance", "love", "passion"],
+    "Focused": ["concentration", "focus", "meditation"],
+    "Upbeat": ["cheerful", "optimistic", "positive"],
+    "Rebellious": ["rebellion", "protest", "revolt"],
+    "Dark": ["darkness", "mystery", "gothic"],
+    "Nostalgic": ["nostalgia", "memory", "reminiscence"],
+    "Trippy": ["psychedelic", "abstract", "surreal"],
+    "Party": ["celebration", "festivity", "party"],
+    "Epic": ["heroic", "epic", "legend"],
+    "Quirky": ["quirky", "eccentric", "whimsical"],
+    "Emotional": ["emotion", "feeling", "expression"],
+    "Open": ["inspired", "creative", "calm", "energetic", "adventurous", "happy", "sad", "romantic", "focused", "upbeat", "rebellious", "dark", "nostalgic", "trippy", "party", "epic", "quirky", "emotional"]
+}
+
+# Subjects dictionary - focusing on artwork topics
+subject_keywords = {
+    "Human Stories": ["portrait", "daily life", "figure", "people"],
+    "Nature & Landscapes": ["landscape", "scenery", "garden"],
+    "Religious & Mythological": ["religion", "mythology", "spiritual"],
+    "Historical Events": ["history", "event", "historical", "war"],
+    "Abstract & Decorative": ["abstract", "decorative", "pattern"],
+    "Open": ["human stories", "nature & landscapes", "religious & mythological", "historical events", "abstract & decorative"]
+}
+
+# Art Styles dictionary - focusing on movements and artistic techniques
+art_style_keywords = {
+    "Cubism": ["cubist", "Picasso", "Braque"],
+    "Abstract": ["abstract", "Kandinsky", "color field"],
+    "Impressionism": ["impressionist", "Renoir", "brushstrokes"],
+    "Baroque": ["baroque", "Rubens", "dramatic"],
+    "Romanticism": ["romantic", "Delacroix", "emotion"],
+    "Pre-Raphaelite": ["pre-raphaelite", "Rossetti", "detailed"],
+    "Op Art": ["op art", "Riley", "illusion"],
+    "Futurism": ["futurist", "Boccioni", "movement"],
+    "Tonalism": ["tonalist", "Whistler", "Inness", "mood"],
+    "Open": ["cubism", "abstract", "impressionism", "baroque", "romanticism", "pre-raphaelite", "op art", "futurism", "tonalism"]
+}
+
 # ✅ Quart (Spotify)
 quart_app = QuartApp(__name__)
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
@@ -21,6 +68,175 @@ SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 SPOTIFY_API_URL = "https://api.spotify.com/v1/search"
 
 TOKEN_CACHE = {"access_token": None, "expires_at": 0}
+RETRY_ATTEMPTS = 3  # Retries if rate-limited
+
+# ✅ Mood-to-Genre Mapping
+MOOD_GENRE_MAP = {
+    "Inspired": ["Orchestral", "Epic Soundtrack", "Power Metal", "Synthwave", "Post-Rock", "Neoclassical", "Chamber Music", "Heroic Fantasy", "Gregorian Chant"],
+    "Creative": ["Lo-fi", "Jazz", "Indie Folk", "Dream Pop", "Experimental", "Math Rock", "Glitch", "Postmodern Classical", "Sound Collage", "Avant-Garde"],
+    "Calm": ["Ambient", "New Age", "Chillout", "Bossa Nova", "Soft Piano", "Downtempo", "Lounge", "Drone", "Smooth Jazz", "Harp Meditation"],
+    "Energetic": ["EDM", "House", "Trance", "Drum & Bass", "Speedcore", "Big Room House", "Melodic Dubstep", "UK Garage", "Future Bounce", "Hardstyle"],
+    "Adventurous": ["Prog Rock", "Folk", "Cyberpunk", "World Music", "Dungeon Synth", "Pirate Metal", "Celtic", "Mongolian Throat Singing", "Medieval Folk", "Viking Metal"],
+    "Happy": ["Pop", "Disco", "Funk", "Kawaii Future Bass", "Afrobeats", "Nu-Disco", "Electro Swing", "Sunshine Pop", "Tropical House", "Bubblegum Dance"],
+    "Sad": ["Indie", "Acoustic", "Slowcore", "Sadcore", "Shoegaze", "Emo", "Depressive Black Metal", "Chamber Pop", "Post-Punk", "Dark Cabaret"],
+    "Romantic": ["R&B", "Soul", "Jazz", "Classical", "City Pop", "Lovers Rock", "Chillhop", "French Chanson", "Flamenco", "Bolero"],
+    "Focused": ["Instrumental", "Classical", "Lo-fi", "Synthwave", "IDM", "Minimal Techno", "Piano Solos", "Study Beats", "Binaural Beats", "Meditation Music"],
+    "Upbeat": ["Dance", "Pop", "Funk", "Ska", "Jersey Club", "Baile Funk", "Boogie", "Eurodance", "Charanga", "Future Funk"],
+    "Rebellious": ["Punk", "Hardcore", "Grunge", "Riot Grrrl", "Cybergrind", "Post-Hardcore", "Industrial Punk", "Anarcho-Punk", "Crust Punk", "Speed Metal"],
+    "Dark": ["Gothic Rock", "Darkwave", "Industrial", "Black Metal", "Witch House", "Horrorcore", "Noir Jazz", "Martial Industrial", "Doom Jazz", "Post-Industrial"],
+    "Nostalgic": ["Classic Rock", "80s Pop", "Mallsoft", "Plunderphonics", "Y2K Pop", "Vaporwave", "Dreampunk", "New Romantic", "Chillwave", "Vintage Jazz"],
+    "Trippy": ["Psytrance", "Trip-Hop", "Neo-Psychedelia", "Space Rock", "Deep Dub", "Freak Folk", "Acid Jazz", "Dub Techno", "Experimental Hip-Hop", "Glitch Hop"],
+    "Party": ["Hip-Hop", "EDM", "Reggaeton", "Moombahton", "Jungle", "Baltimore Club", "Trap", "Twerk", "Dancehall", "Hardbass"],
+    "Epic": ["Orchestral", "Cinematic", "Power Metal", "Film Score", "Trailer Music", "Battle Music", "Neo-Classical Metal", "War Drums", "Epic Choir", "Fantasy Metal"],
+    "Quirky": ["Webcore", "Dariacore", "Hyperpop", "Electro Swing", "8-Bit", "Bitpop", "Toytronica", "Chiptune", "Nintendocore", "Bubblegum Bass"],
+    "Emotional": ["Indie Folk", "Shoegaze", "Post-Rock", "Sadcore", "Ethereal Wave", "Slowcore", "Doom Metal", "Baroque Pop", "Neo-Folk", "Alt-R&B"]
+}
+
+# ✅ Categorize genres into different tiers for weighted randomness
+MAINSTREAM_GENRES = [
+    "Pop", "Rock", "Hip-Hop", "EDM", "R&B", "Jazz", "Classical", "Indie", "Reggaeton"
+]
+
+NICHE_GENRES = [
+    "Dungeon Synth", "Cybergrind", "Witch House", "Plunderphonics", "Dariacore", 
+    "Mallsoft", "Darkwave", "Vaporwave", "Synthwave", "Hardstyle"
+]
+
+# ✅ Async function to get Spotify access token with lock
+async def quart_get_access_token():
+        current_time = time.time()
+        if TOKEN_CACHE["access_token"] and current_time < TOKEN_CACHE["expires_at"]:
+            return TOKEN_CACHE["access_token"]
+
+        url = "https://accounts.spotify.com/api/token"
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        data = {"grant_type": "client_credentials", "client_id": SPOTIFY_CLIENT_ID, "client_secret": SPOTIFY_CLIENT_SECRET}
+
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.post(url, headers=headers, data=data, timeout=5) as response:
+                    response.raise_for_status()
+                    token_data = await response.json()
+                    TOKEN_CACHE["access_token"] = token_data["access_token"]
+                    TOKEN_CACHE["expires_at"] = current_time + token_data.get("expires_in", 3600)
+                    return TOKEN_CACHE["access_token"]
+            except Exception as e:
+                logging.error(f"❌ Token error: {e}")
+                return None
+
+# ✅ Async function to fetch data from Spotify API with improved rate limit handling
+async def quart_fetch_spotify_data(session, url, headers, attempt=1):
+    try:
+        async with session.get(url, headers=headers, timeout=5) as response:
+            if response.status == 401:
+                logging.warning("⚠️ Token expired, refreshing...")
+                headers["Authorization"] = f"Bearer {await quart_get_access_token()}"
+                return await quart_fetch_spotify_data(session, url, headers, attempt + 1)
+
+            if response.status == 429 and attempt < RETRY_ATTEMPTS:
+                retry_after = int(response.headers.get("Retry-After", 2))
+                logging.warning(f"⚠️ Rate limited! Retrying in {retry_after} sec...")
+                await asyncio.sleep(retry_after)
+                return await quart_fetch_spotify_data(session, url, headers, attempt + 1)
+
+            response.raise_for_status()
+            data = await response.json()
+            return data if isinstance(data, dict) else None
+    except Exception as e:
+        logging.error(f"❌ Failed request: {e} (Attempt {attempt})")
+        return None
+
+async def quart_fetch_all_results(query, search_type):
+    """Fetches diverse results while ensuring unique genres in playlist titles."""
+    access_token = await quart_get_access_token()
+    if not access_token:
+        logging.error("❌ Failed to retrieve Spotify Access Token")
+        return []
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+    results = []
+    offset, limit = 0, 50  # Fetch more items at once
+
+    async with aiohttp.ClientSession() as session:
+        while len(results) < 50:  # Increase total fetch count
+            url = f"{SPOTIFY_API_URL}?q={quote_plus(query)}&type={search_type}&limit={limit}&offset={offset}"
+            data = await quart_fetch_spotify_data(session, url, headers)
+            
+            if not data:
+                logging.warning("⚠️ No data received from Spotify API")
+                break  
+
+            items = data.get(search_type + "s", {}).get("items", [])
+            if not isinstance(items, list):  
+                break  
+
+            valid_items = [item for item in items if isinstance(item, dict)]
+            results.extend(valid_items)
+
+            offset += limit  
+            if len(items) < limit:  # Stop if no more results
+                break  
+
+    if len(results) < 20:
+        logging.warning(f"⚠️ Only {len(results)} results available from Spotify")
+
+    # ✅ **Sorting by Followers (Playlists) or Popularity (Albums, Tracks, Artists)**
+    if search_type == "playlist":
+        results.sort(key=lambda x: x.get("followers", {}).get("total", 0) if isinstance(x.get("followers"), dict) else 0, reverse=True)
+    else:
+        results.sort(key=lambda x: x.get("popularity", 0) if isinstance(x, dict) else 0, reverse=True)
+
+    # ✅ Shuffle after sorting to introduce randomness
+    random.shuffle(results)
+
+    return results[:20]
+
+# ✅ Format search results
+def quart_format_results(items, search_type):
+    """Formats Spotify API results into a readable structure with sorting applied."""
+    if not items:
+        return []  
+
+    formatted_results = []
+    for item in items[:20]:
+        if not isinstance(item, dict) or not item.get("name"):
+            continue  
+
+        data = {
+            "name": item.get("name", "Unknown"),
+            "url": item.get("external_urls", {}).get("spotify", "#"),
+            "type": search_type,  
+        }
+
+        # ✅ **Fix for artist image retrieval**
+        if search_type == "artist":
+            images = item.get("images", [])
+            image_url = images[0]["url"] if images else "https://via.placeholder.com/300"
+            data["image"] = image_url
+            data["genres"] = ", ".join(item.get("genres", ["No genres available"]))
+            data["popularity"] = item.get("popularity", "N/A")
+            data["followers"] = item.get("followers", {}).get("total", 0)
+        elif search_type == "playlist":
+            data["image"] = item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
+            data["track_count"] = item.get("tracks", {}).get("total", 0)
+            data["followers"] = item.get("followers", {}).get("total", 0)
+        elif search_type == "album":
+            data["image"] = item.get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
+            data["artist"] = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
+            data["release_date"] = item.get("release_date", "Unknown Date")
+            data["year"] = item.get("release_date", "").split("-")[0] if item.get("release_date") else "Unknown"
+            data["popularity"] = item.get("popularity", 0)
+        elif search_type == "track":
+            data["image"] = item.get("album", {}).get("images", [{}])[0].get("url", "https://via.placeholder.com/300")
+            data["artist"] = ", ".join([artist.get("name", "Unknown Artist") for artist in item.get("artists", [])])
+            data["album"] = item.get("album", {}).get("name", "Unknown Album")
+            data["preview_url"] = item.get("preview_url", None)
+            data["year"] = item.get("album", {}).get("release_date", "").split("-")[0] if item.get("album") else "Unknown"
+            data["popularity"] = item.get("popularity", 0)
+
+        formatted_results.append(data)
+
+    return formatted_results
 
 # ✅ Flask Routes (Met Museum)
 @flask_app.route('/')
@@ -192,26 +408,26 @@ def flask_process_preferences():
     This route receives the user's preferences and fetches artwork based on those preferences.
     """
     try:
-        preferences = request.json
+        preferences = flask_request.json
         # Extract preferences
         moods = preferences.get('moods', [])
         art_styles = preferences.get('art_styles', [])
         subject = preferences.get('subject')
 
         # Fetch results using the updated method
-        mood_results = fetch_results_based_on_moods(moods, limit=3) or []
-        art_style_results = fetch_results_based_on_art_styles(art_styles, limit=3) or []
-        subject_results = fetch_results_based_on_subject(subject, limit=1) or []
+        mood_results = flask_fetch_results_based_on_moods(moods, limit=3) or []
+        art_style_results = flask_fetch_results_based_on_art_styles(art_styles, limit=3) or []
+        subject_results = flask_fetch_results_based_on_subject(subject, limit=1) or []
 
         # Combine results
         combined_results = mood_results + art_style_results + subject_results
         # Remove duplicates
-        unique_results = remove_duplicates(combined_results)
+        unique_results = flask_remove_duplicates(combined_results)
         
         # Ensure there are at least 9 unique images
         if len(unique_results) < 9:
             while len(unique_results) < 9:
-                random_image = fetch_random_image()
+                random_image = flask_fetch_random_image()
                 if random_image and random_image not in unique_results:
                     unique_results.append(random_image)
                 else:
@@ -220,14 +436,45 @@ def flask_process_preferences():
         
         # Limit to 9 results if there are still more than 9
         unique_results = unique_results[:9]
-        return jsonify(unique_results)
+        return flask_jsonify(unique_results)
     except Exception as e:
         logging.error(f"Error processing preferences: {str(e)}")
-        return jsonify({"error":  str(e)}), 500
+        return flask_jsonify({"error":  str(e)}), 500
 
 @flask_app.route('/surprise-me', methods=['GET'])
 def flask_surprise_me():
-    return flask_jsonify({"message": "Surprise me (Met Museum)"})
+    """
+    Fetch random artwork results based on randomly selected preferences.
+
+    This function provides random artwork for the user by selecting random moods, 
+    art styles, and a subject, and then fetching relevant artworks.
+    """
+    try:
+        # Randomly select preferences
+        random_moods = random.sample(list(mood_keywords.keys()), 3)  # Select 3 random moods
+
+        # List of specific art styles
+        art_styles_list = [
+            "Cubism", "Abstract", "Impressionism", "Modern", "Baroque",
+            "Romanticism", "Pre-Raphaelite", "Op Art", "Futurism", "Tonalism"
+        ]
+        # Randomly select 3 art styles from the list
+        random_art_styles = random.sample(art_styles_list, 3)
+
+        random_subject = random.choice(list(subject_keywords.keys()))  # Randomly pick a subject
+
+        # Fetch results based on random preferences
+        mood_results = flask_fetch_results_based_on_moods(random_moods, limit=3)
+        art_style_results = flask_fetch_results_based_on_art_styles(random_art_styles, limit=3)
+        subject_results = flask_fetch_results_based_on_subject(random_subject, limit=3)
+
+        combined_results = mood_results + art_style_results + subject_results
+        combined_results = combined_results[:9]  # Limit to 9 results
+
+        return flask_jsonify(combined_results)
+    except Exception as e:
+        logging.error(f"Error fetching results: {str(e)}")
+        return flask_jsonify({"error": str(e)}), 500
 
 # ✅ Quart Routes (Spotify)
 @quart_app.route('/')
@@ -238,9 +485,9 @@ async def quart_index():
 async def quart_results():
     """Fetches Spotify results based on search query or mood selection."""
 
-    rec_type = request.args.get('rec_type', 'playlist')
-    query = request.args.get('query', '').strip()
-    moods = request.args.getlist('moods')
+    rec_type = quart_request.args.get('rec_type', 'playlist')
+    query = quart_request.args.get('query', '').strip()
+    moods = quart_request.args.getlist('moods')
 
     logging.info(f"🔎 Searching Spotify for: {query} (Rec Type: {rec_type})")
 
@@ -253,25 +500,25 @@ async def quart_results():
     # ✅ Use specific search query directly (From Old Code 1)
     if query:
         search_url = f"{SPOTIFY_API_URL}?q={quote_plus(query)}&type={rec_type}&limit=20"
-        access_token = await get_access_token()
+        access_token = await quart_get_access_token()
 
         if not access_token:
-            return await render_template("error.html", message="Failed to fetch access token"), 500
+            return await quart_render_template("error.html", message="Failed to fetch access token"), 500
 
         headers = {"Authorization": f"Bearer {access_token}"}
 
         async with aiohttp.ClientSession() as session:
             async with session.get(search_url, headers=headers) as response:
                 if response.status != 200:
-                    return await render_template("error.html", message="Failed to fetch data from Spotify"), response.status
+                    return await quart_render_template("error.html", message="Failed to fetch data from Spotify"), response.status
                 data = await response.json()
 
         items = data.get(rec_type + "s", {}).get("items", [])
         if not items:
-            return await render_template("error.html", message="No results found"), 404
+            return await quart_render_template("error.html", message="No results found"), 404
 
         formatted_results = await process_results(items, rec_type)
-        return await render_template("results.html", results=formatted_results)
+        return await quart_render_template("results.html", results=formatted_results)
 
     # ✅ If no query is given, use mood-based search (From Old Code 2)
     selected_genres = [
@@ -285,9 +532,9 @@ async def quart_results():
         query = " OR ".join(query.split(" OR ")[:5])  # Trim excess terms
 
     # ✅ Fetch results using Spotify API (From New Code)
-    access_token = await get_access_token()
+    access_token = await quart_get_access_token()
     if not access_token:
-        return await render_template("error.html", message="Failed to fetch access token"), 500
+        return await quart_render_template("error.html", message="Failed to fetch access token"), 500
 
     headers = {"Authorization": f"Bearer {access_token}"}
     results = []
@@ -298,7 +545,7 @@ async def quart_results():
             url = f"{SPOTIFY_API_URL}?q={quote_plus(query)}&type={rec_type}&limit={limit}&offset={offset}"
             async with session.get(url, headers=headers) as response:
                 if response.status != 200:
-                    return await render_template("error.html", message="Failed to fetch data from Spotify"), response.status
+                    return await quart_render_template("error.html", message="Failed to fetch data from Spotify"), response.status
                 data = await response.json()
 
             items = data.get(rec_type + "s", {}).get("items", [])
@@ -313,12 +560,12 @@ async def quart_results():
     # ✅ Move Filtering BEFORE Randomization (Fixing Old Code 2’s Issue)
     filtered_results = await process_results(results, rec_type)
     if not filtered_results:
-        return await render_template("error.html", message="No safe results found"), 404
+        return await quart_render_template("error.html", message="No safe results found"), 404
 
     # ✅ Select 9 Random Results After Filtering
     final_results = random.sample(filtered_results, min(len(filtered_results), 9))
 
-    return await render_template("results.html", results=final_results)
+    return await quart_render_template("results.html", results=final_results)
 
 # ✅ **Process Results with NSFW Filtering**
 async def process_results(results, rec_type):
@@ -399,9 +646,17 @@ async def process_item(item, rec_type):
         "popularity": popularity
     }
 
-@quart_app.route('/surprise-me', methods=['GET'])
-async def quart_surprise_me():
-    return quart_jsonify({"message": "Surprise me (Spotify)"})
+@quart_app.route('/about')
+async def quart_about():
+    return await quart_render_template('about.html')
+
+@quart_app.route('/error')
+async def quart_error():
+    return await quart_render_template('error.html')
+
+@quart_app.route('/credits')
+async def quart_credits():
+    return await quart_render_template('credits.html')
 
 # ✅ Combined Runner
 if __name__ == '__main__':
