@@ -9,48 +9,31 @@
 
 <div class="px-4 py-8 max-w-7xl mx-auto">
     <div id="results-container">
-        <div id="music-results" class="mb-10">
-            <h3 class="text-2xl font-semibold text-gray-700 mb-4">Spotify Music Recommendations</h3>
-            <ul id="music-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></ul>
-        </div>
-        <div id="art-results">
-            <h3 class="text-2xl font-semibold text-gray-700 mb-4">Met Museum Art Recommendations</h3>
-            <div id="artworks-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
-        </div>
+        <ul id="combined-results" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></ul>
     </div>
 </div>
 
 <script>
-    // Display Spotify Music Results
+    // Combine Spotify and Met Museum results
     const musicResults = JSON.parse(localStorage.getItem('musicResults')) || [];
-    const musicGrid = document.getElementById('music-grid');
-    if (musicResults.length) {
-        musicGrid.innerHTML = musicResults.map(item => `
+    const artworks = JSON.parse(localStorage.getItem('artworks')) || [];
+    const combinedResults = [...musicResults, ...artworks];
+    const resultsGrid = document.getElementById('combined-results');
+
+    if (combinedResults.length) {
+        resultsGrid.innerHTML = combinedResults.map(item => `
             <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
-                <img src="${item.image || '/static/images/censored-image.png'}" alt="${item.name}" class="w-full h-48 object-cover rounded-md mb-4">
-                <h4 class="text-lg font-semibold truncate mb-2 text-center">${item.name}</h4>
-                <p class="text-sm text-gray-600 text-center">${item.type} by ${item.artist || 'Unknown'}</p>
-                <a href="${item.url}" target="_blank" class="block text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 mt-2">View on Spotify</a>
+                <img src="${item.image || item.primaryImageSmall || '/static/images/censored-image.png'}" alt="${item.name || item.title}" class="w-full h-48 object-cover rounded-md mb-4">
+                <h4 class="text-lg font-semibold truncate mb-2 text-center">${item.name || item.title}</h4>
+                <p class="text-sm text-gray-600 text-center">
+                    ${item.type ? `${item.type} by ${item.artist || 'Unknown'}` : `by ${item.artistDisplayName || 'Unknown Artist'}`}
+                </p>
+                <p class="text-sm text-gray-600 text-center">${item.objectDate || item.year || 'Unknown Date'}</p>
+                ${item.url ? `<a href="${item.url}" target="_blank" class="block text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 mt-2">View More</a>` : ''}
             </li>
         `).join('');
     } else {
-        document.getElementById('music-results').innerHTML = '<p class="text-center text-gray-600">No music recommendations found.</p>';
-    }
-
-    // Display Met Museum Art Results
-    const artworks = JSON.parse(localStorage.getItem('artworks')) || [];
-    const artGrid = document.getElementById('artworks-grid');
-    if (artworks.length) {
-        artGrid.innerHTML = artworks.map(artwork => `
-            <div class="artwork-card bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
-                <img src="${artwork.primaryImageSmall || '/static/images/censored-image.png'}" alt="${artwork.title}" class="w-full h-48 object-cover rounded-md mb-4">
-                <h4 class="text-lg font-semibold truncate mb-2 text-center">${artwork.title}</h4>
-                <p class="text-sm text-gray-600 text-center">${artwork.artistDisplayName || 'Unknown Artist'}</p>
-                <p class="text-sm text-gray-600 text-center">${artwork.objectDate || 'Unknown Date'}</p>
-            </div>
-        `).join('');
-    } else {
-        document.getElementById('art-results').innerHTML = '<p class="text-center text-gray-600">No art recommendations found.</p>';
+        resultsGrid.innerHTML = '<p class="text-center text-gray-600">No recommendations found.</p>';
     }
 </script>
 
