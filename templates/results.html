@@ -1,40 +1,73 @@
 {% extends 'base.html' %}
+
 {% block content %}
 <header class="text-center py-10">
     <h2 class="text-3xl font-bold text-gray-800">Your Personalized Recommendations</h2>
-    <a href="/" class="inline-block mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
-        Back to Form
-    </a>
 </header>
 
 <div class="px-4 py-8 max-w-7xl mx-auto">
-    <div id="results-container">
-        <ul id="combined-results" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></ul>
+    <div id="results">
+        <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="artworks-grid"></ul>
     </div>
+
+    {% if results %}
+        <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
+            {% for item in results %}
+                <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
+                    <div class="relative w-full flex justify-center">
+                        <img src="{{ item.image if item.image else '/static/images/censored-image.png' }}" 
+                             alt="{{ item.name }}" 
+                             width="200" height="200"
+                             loading="lazy"
+                             class="w-full max-w-[200px] aspect-square object-cover rounded-md mb-4">
+                    </div>
+                    <h3 class="text-lg font-semibold truncate mb-2 text-gray-900 text-center">{{ item.name }}</h3>
+                    <p class="text-sm text-gray-600 mb-2 text-center">
+                        {% if item.type == 'playlist' %}
+                            <span class="text-blue-500 font-medium">Spotify Playlist</span>
+                        {% elif item.type == 'album' %}
+                            <span class="text-blue-500 font-medium">Spotify Album</span>
+                            <br>by {{ item.artist or "Unknown Artist" }} ({{ item.year or "N/A" }})
+                        {% elif item.type == 'artist' %}
+                            <span class="text-blue-500 font-medium">Spotify Artist</span>
+                        {% elif item.type == 'track' %}
+                            <span class="text-blue-500 font-medium">Spotify Track</span>
+                            <br>by {{ item.artist or "Unknown Artist" }} ({{ item.year or "N/A" }})
+                        {% elif item.type == 'artwork' %}
+                            <span class="text-purple-500 font-medium">MET Artwork</span>
+                            <br>by {{ item.artist or "Unknown Artist" }} ({{ item.year or "N/A" }})
+                        {% endif %}
+                    </p>
+                    <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer"
+                       class="block text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">View on Spotify</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="text-center py-10">
+            <p class="text-red-500 text-lg font-semibold">No results found for your search.</p>
+            <p class="text-gray-600 mt-2">Try using a different keyword or selecting another mood.</p>
+            <a href="/" class="mt-4 inline-block bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">Go Back & Search Again</a>
+        </div>
+    {% endif %}
 </div>
 
 <script>
-    // Combine Spotify and Met Museum results
-    const musicResults = JSON.parse(localStorage.getItem('musicResults')) || [];
-    const artworks = JSON.parse(localStorage.getItem('artworks')) || [];
-    const combinedResults = [...musicResults, ...artworks];
-    const resultsGrid = document.getElementById('combined-results');
-
-    if (combinedResults.length) {
-        resultsGrid.innerHTML = combinedResults.map(item => `
-            <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
-                <img src="${item.image || item.primaryImageSmall || '/static/images/censored-image.png'}" alt="${item.name || item.title}" class="w-full h-48 object-cover rounded-md mb-4">
-                <h4 class="text-lg font-semibold truncate mb-2 text-center">${item.name || item.title}</h4>
-                <p class="text-sm text-gray-600 text-center">
-                    ${item.type ? `${item.type} by ${item.artist || 'Unknown'}` : `by ${item.artistDisplayName || 'Unknown Artist'}`}
-                </p>
-                <p class="text-sm text-gray-600 text-center">${item.objectDate || item.year || 'Unknown Date'}</p>
-                ${item.url ? `<a href="${item.url}" target="_blank" class="block text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 mt-2">View More</a>` : ''}
-            </li>
-        `).join('');
-    } else {
-        resultsGrid.innerHTML = '<p class="text-center text-gray-600">No recommendations found.</p>';
-    }
+    document.addEventListener("DOMContentLoaded", function() {
+        const artworks = JSON.parse(localStorage.getItem('artworks'));
+        if (artworks && artworks.length) {
+            document.getElementById('artworks-grid').innerHTML = artworks.map(artwork => `
+                <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
+                    <img src="${artwork.primaryImageSmall}" alt="${artwork.title}" class="w-full max-w-[200px] aspect-square object-cover rounded-md mb-4">
+                    <h4 class="text-lg font-semibold text-center">${artwork.title}</h4>
+                    <p class="text-sm text-gray-600 text-center">Artist: ${artwork.artistDisplayName || 'Unknown'}</p>
+                    <p class="text-sm text-gray-600 text-center">Date: ${artwork.objectDate || 'Unknown'}</p>
+                    <p class="text-sm text-gray-600 text-center">Medium: ${artwork.medium || 'Unknown'}</p>
+                </li>
+            `).join('');
+        } else {
+            document.getElementById('results').innerHTML = `<p class="text-center text-gray-600">No results found. Please try different preferences.</p>`;
+        }
+    });
 </script>
-
 {% endblock %}
