@@ -25,4 +25,4 @@ gunicorn==23.0.0
 uvicorn==0.34.0
 cachetools==5.5.2
 propcache==0.3.0
-quart==0.20.0
+Quart==0.20.0
