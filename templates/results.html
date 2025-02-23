@@ -6,68 +6,92 @@
 </header>
 
 <div class="px-4 py-8 max-w-7xl mx-auto">
-    <div id="results">
-        <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="artworks-grid"></ul>
-    </div>
-
-    {% if results %}
-        <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
-            {% for item in results %}
-                <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
-                    <div class="relative w-full flex justify-center">
-                        <img src="{{ item.image if item.image else '/static/images/censored-image.png' }}" 
-                             alt="{{ item.name }}" 
-                             width="200" height="200"
-                             loading="lazy"
-                             class="w-full max-w-[200px] aspect-square object-cover rounded-md mb-4">
-                    </div>
-                    <h3 class="text-lg font-semibold truncate mb-2 text-gray-900 text-center">{{ item.name }}</h3>
-                    <p class="text-sm text-gray-600 mb-2 text-center">
-                        {% if item.type == 'playlist' %}
-                            <span class="text-blue-500 font-medium">Spotify Playlist</span>
-                        {% elif item.type == 'album' %}
-                            <span class="text-blue-500 font-medium">Spotify Album</span>
-                            <br>by {{ item.artist or "Unknown Artist" }} ({{ item.year or "N/A" }})
-                        {% elif item.type == 'artist' %}
-                            <span class="text-blue-500 font-medium">Spotify Artist</span>
-                        {% elif item.type == 'track' %}
-                            <span class="text-blue-500 font-medium">Spotify Track</span>
-                            <br>by {{ item.artist or "Unknown Artist" }} ({{ item.year or "N/A" }})
-                        {% elif item.type == 'artwork' %}
-                            <span class="text-purple-500 font-medium">MET Artwork</span>
-                            <br>by {{ item.artist or "Unknown Artist" }} ({{ item.year or "N/A" }})
-                        {% endif %}
-                    </p>
-                    <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer"
-                       class="block text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">View on Spotify</a>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <div class="text-center py-10">
-            <p class="text-red-500 text-lg font-semibold">No results found for your search.</p>
-            <p class="text-gray-600 mt-2">Try using a different keyword or selecting another mood.</p>
-            <a href="/" class="mt-4 inline-block bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">Go Back & Search Again</a>
+    <!-- Art Section -->
+    <section class="mb-12">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Art Matches</h3>
+        <div id="artworks-container">
+            <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6" id="artworks-grid"></ul>
         </div>
-    {% endif %}
+    </section>
+
+    <!-- Music Section -->
+    <section>
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Music Matches</h3>
+        <div id="spotify-container">
+            <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6" id="spotify-grid"></ul>
+        </div>
+    </section>
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const artworks = JSON.parse(localStorage.getItem('artworks'));
-        if (artworks && artworks.length) {
-            document.getElementById('artworks-grid').innerHTML = artworks.map(artwork => `
-                <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
-                    <img src="${artwork.primaryImageSmall}" alt="${artwork.title}" class="w-full max-w-[200px] aspect-square object-cover rounded-md mb-4">
-                    <h4 class="text-lg font-semibold text-center">${artwork.title}</h4>
-                    <p class="text-sm text-gray-600 text-center">Artist: ${artwork.artistDisplayName || 'Unknown'}</p>
-                    <p class="text-sm text-gray-600 text-center">Date: ${artwork.objectDate || 'Unknown'}</p>
-                    <p class="text-sm text-gray-600 text-center">Medium: ${artwork.medium || 'Unknown'}</p>
-                </li>
-            `).join('');
-        } else {
-            document.getElementById('results').innerHTML = `<p class="text-center text-gray-600">No results found. Please try different preferences.</p>`;
-        }
-    });
+document.addEventListener("DOMContentLoaded", function() {
+    // Load both Met and Spotify results from localStorage
+    const artworks = JSON.parse(localStorage.getItem('artworks') || '[]');
+    const spotifyResults = JSON.parse(localStorage.getItem('spotify_results') || '[]');
+    
+    // Display Met artworks
+    const artworksGrid = document.getElementById('artworks-grid');
+    if (artworks && artworks.length) {
+        artworksGrid.innerHTML = artworks.map(artwork => `
+            <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
+                <div class="relative w-full flex justify-center">
+                    <img src="${artwork.primaryImageSmall}" 
+                         alt="${artwork.title}" 
+                         class="w-full max-w-[200px] aspect-square object-cover rounded-md mb-4">
+                </div>
+                <h4 class="text-lg font-semibold text-center">${artwork.title}</h4>
+                <p class="text-sm text-gray-600 text-center">Artist: ${artwork.artistDisplayName || 'Unknown'}</p>
+                <p class="text-sm text-gray-600 text-center">Date: ${artwork.objectDate || 'Unknown'}</p>
+                <p class="text-sm text-gray-600 text-center">Medium: ${artwork.medium || 'Unknown'}</p>
+                <a href="https://www.metmuseum.org/art/collection/search/${artwork.objectID}" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="block mt-4 text-center bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600">
+                    View at The Met
+                </a>
+            </li>
+        `).join('');
+    } else {
+        artworksGrid.innerHTML = `<p class="text-center text-gray-600 col-span-3">No art matches found. Try different preferences.</p>`;
+    }
+    
+    // Display Spotify results
+    const spotifyGrid = document.getElementById('spotify-grid');
+    if (spotifyResults && spotifyResults.length) {
+        spotifyGrid.innerHTML = spotifyResults.map(item => `
+            <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
+                <div class="relative w-full flex justify-center">
+                    <img src="${item.image || '/static/images/censored-image.png'}" 
+                         alt="${item.name}" 
+                         class="w-full max-w-[200px] aspect-square object-cover rounded-md mb-4">
+                </div>
+                <h4 class="text-lg font-semibold text-center truncate">${item.name}</h4>
+                ${item.artist ? `<p class="text-sm text-gray-600 text-center">By: ${item.artist}</p>` : ''}
+                ${item.type ? `<p class="text-sm text-blue-500 font-medium text-center">${item.type.charAt(0).toUpperCase() + item.type.slice(1)}</p>` : ''}
+                <a href="${item.url}" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="block mt-4 text-center bg-green-500 text-white py-2 rounded-lg hover:bg-green-600">
+                    Listen on Spotify
+                </a>
+            </li>
+        `).join('');
+    } else {
+        spotifyGrid.innerHTML = `<p class="text-center text-gray-600 col-span-3">No music matches found. Try different preferences.</p>`;
+    }
+
+    // If both sections are empty, show a return button
+    if (!artworks.length && !spotifyResults.length) {
+        document.querySelector('.max-w-7xl').innerHTML += `
+            <div class="text-center py-10">
+                <p class="text-red-500 text-lg font-semibold">No matches found for your preferences.</p>
+                <p class="text-gray-600 mt-2">Try selecting different options.</p>
+                <a href="/" class="mt-4 inline-block bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+                    Try Again
+                </a>
+            </div>
+        `;
+    }
+});
 </script>
 {% endblock %}

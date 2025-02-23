@@ -658,6 +658,115 @@ async def quart_error():
 async def quart_credits():
     return await quart_render_template('credits.html')
 
+@flask_app.route('/combined-results', methods=['POST'])
+def combined_results():  
+    try:
+        # Get form data
+        form_data = flask_request.form
+        
+        # Process Met data (synchronous)
+        moods = form_data.getlist('moods')
+        art_styles = form_data.getlist('art_styles')
+        subject = form_data.get('subject')
+        
+        # Get Met results using synchronous functions
+        mood_results = flask_fetch_results_based_on_moods(moods, limit=3)
+        art_style_results = flask_fetch_results_based_on_art_styles(art_styles, limit=3)
+        subject_results = flask_fetch_results_based_on_subject(subject, limit=3)
+        
+        # Combine and deduplicate Met results
+        met_results = flask_remove_duplicates(mood_results + art_style_results + subject_results)
+        
+        # Process Spotify data (synchronous version)
+        rec_type = form_data.get('rec_type', 'playlist')
+        query = form_data.get('query', '').strip()
+        
+        # Create search query from moods if no direct query
+        if not query and moods:
+            selected_genres = []
+            for mood in moods:
+                if mood in MOOD_GENRE_MAP:
+                    selected_genres.extend(MOOD_GENRE_MAP[mood])
+            query = " OR ".join(selected_genres[:5])  # Limit to 5 genres
+        
+        # Make synchronous request to Spotify
+        spotify_results = []
+        try:
+            spotify_token_url = "https://accounts.spotify.com/api/token"
+            token_response = requests.post(
+                spotify_token_url,
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": SPOTIFY_CLIENT_ID,
+                    "client_secret": SPOTIFY_CLIENT_SECRET,
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            token_data = token_response.json()
+            access_token = token_data.get("access_token")
+            
+            if access_token:
+                search_url = f"{SPOTIFY_API_URL}?q={quote_plus(query)}&type={rec_type}&limit=9"
+                search_response = requests.get(
+                    search_url,
+                    headers={"Authorization": f"Bearer {access_token}"}
+                )
+                search_data = search_response.json()
+                
+                items = search_data.get(f"{rec_type}s", {}).get("items", [])
+                spotify_results = quart_format_results(items, rec_type)
+        except Exception as e:
+            logging.error(f"Spotify API error: {str(e)}")
+            spotify_results = []
+        
+        # Combine results
+        combined_results = {
+            'met_results': met_results,
+            'spotify_results': spotify_results
+        }
+        
+        return flask_jsonify(combined_results)
+    except Exception as e:
+        logging.error(f"Error processing combined results: {str(e)}")
+        return flask_jsonify({"error": str(e)}), 500
+
+async def process_met_data(form_data):
+    """Process Met API data and return results."""
+    try:
+        # Extract relevant data for Met API
+        moods = form_data.getlist('moods')
+        art_styles = form_data.getlist('art_styles')
+        subject = form_data.get('subject')
+        
+        # Use your existing Met API functions
+        mood_results = flask_fetch_results_based_on_moods(moods, limit=3)
+        art_style_results = flask_fetch_results_based_on_art_styles(art_styles, limit=3)
+        subject_results = flask_fetch_results_based_on_subject(subject, limit=3)
+        
+        return flask_remove_duplicates(mood_results + art_style_results + subject_results)
+    except Exception as e:
+        logging.error(f"Error processing Met data: {str(e)}")
+        return []
+
+async def process_spotify_data(form_data):
+    """Process Spotify API data and return results."""
+    try:
+        # Extract relevant data for Spotify API
+        rec_type = form_data.get('rec_type', 'playlist')
+        query = form_data.get('query', '').strip()
+        moods = form_data.getlist('moods')
+        
+        # Use your existing Spotify API functions
+        access_token = await quart_get_access_token()
+        if not access_token:
+            return []
+        
+        results = await quart_fetch_all_results(query or ' '.join(moods), rec_type)
+        return await process_results(results, rec_type)
+    except Exception as e:
+        logging.error(f"Error processing Spotify data: {str(e)}")
+        return []
+
 # ✅ Combined Runner
 if __name__ == '__main__':
     import threading

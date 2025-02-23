@@ -5,7 +5,7 @@
 </header>
 <div class="flex items-center justify-center py-10">
     <div class="max-w-4xl w-full mx-auto p-6 bg-white shadow-lg rounded-2xl">
-        <form id="combined-form" class="mt-4" action="/results" method="get">
+        <form id="combined-form" class="mt-4" action="/combined-results" method="post">
             <fieldset class="border border-gray-300 p-4 rounded-lg">
                 <legend class="text-lg font-bold text-gray-800">Find Your Music and Art Match</legend>
 
@@ -99,9 +99,43 @@
         document.getElementById('mood-modal').classList.add('hidden');
     });
 
-    document.getElementById('combined-form').addEventListener('submit', function () {
-        document.getElementById('loading-screen').classList.remove('hidden');
-    });
+    document.getElementById('combined-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Show loading screen
+    document.getElementById('loading-screen').classList.remove('hidden');
+    
+    try {
+        // Get form data
+        const formData = new FormData(this);
+        
+        // Send POST request
+        const response = await fetch('/combined-results', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        // Get the results and update the page
+        const results = await response.json();
+        
+        // Store both Met and Spotify results in localStorage
+        localStorage.setItem('artworks', JSON.stringify(results.met_results));
+        localStorage.setItem('spotify_results', JSON.stringify(results.spotify_results));
+        
+        // Redirect to results page
+        window.location.href = '/results';
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while processing your request.');
+    } finally {
+        document.getElementById('loading-screen').classList.add('hidden');
+    }
+});
 
     document.getElementById('surpriseBtn').addEventListener('click', function () {
         document.getElementById('loading-screen').classList.remove('hidden');
