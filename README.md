@@ -56,8 +56,8 @@ This repository contains a combined Flask and Quart application that integrates 
 
 1. Fork the repository.
 2. Create a new branch. Example:(`git checkout -b feature-branch`).
-3. Commit your changes. Example: (`git commit -am 'Add new feature'`).
-4. Pubash to the branch. Example: (`git pubash origin feature-branch`).
+3. Commit your changes. Example: (`git commit -m 'Add new feature'`).
+4. Push to the branch. Example: (`git push origin feature-branch`).
 5. Create a new Pull Request.
 
 ## **Disclaimer**
