@@ -11,7 +11,7 @@ This repository contains a combined Flask and Quart application that integrates 
 ## Installation
 
 1. Clone the repository:
-    ```sh
+    ```bash
     git clone https://github.com/(yourusername)/combined_flask_quart_app.git
     cd combined_flask_quart_app
     ```
@@ -19,18 +19,18 @@ This repository contains a combined Flask and Quart application that integrates 
     **Replace *yourusername* with your actual username**
 
 2. Create a virtual environment and activate it:
-    ```sh
+    ```bash
     python3 -m venv venv
     source venv/bin/activate
     ```
 
 3. Install the required dependencies:
-    ```sh
+    ```bash
     pip install -r requirements.txt
     ```
 
 4. Set up environment variables:
-    ```sh
+    ```bash
     cp .env.example .env
     # Edit .env to include your Spotify API credentials
     ```
@@ -38,7 +38,7 @@ This repository contains a combined Flask and Quart application that integrates 
 ## Running the Application
 
 1. Start the Flask and Quart servers:
-    ```sh
+    ```bash
     python app.py
     ```
 
@@ -57,7 +57,7 @@ This repository contains a combined Flask and Quart application that integrates 
 1. Fork the repository.
 2. Create a new branch. Example:(`git checkout -b feature-branch`).
 3. Commit your changes. Example: (`git commit -am 'Add new feature'`).
-4. Push to the branch. Example: (`git push origin feature-branch`).
+4. Pubash to the branch. Example: (`git pubash origin feature-branch`).
 5. Create a new Pull Request.
 
 ## License
