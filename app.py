@@ -417,7 +417,7 @@ def flask_process_preferences():
         # Fetch results using the updated method
         mood_results = flask_fetch_results_based_on_moods(moods, limit=3) or []
         art_style_results = flask_fetch_results_based_on_art_styles(art_styles, limit=3) or []
-        subject_results = flask_fetch_results_based_on_subject(subject, limit=1) or []
+        subject_results = flask_fetch_results_based_on_subject(subject, limit=3) or []
 
         # Combine results
         combined_results = mood_results + art_style_results + subject_results
@@ -487,7 +487,7 @@ def flask_surprise_me():
         for mood in spotify_moods:
             if mood in MOOD_GENRE_MAP:
                 # Select a few random genres from each mood
-                mood_genres = random.sample(MOOD_GENRE_MAP[mood], min(2, len(MOOD_GENRE_MAP[mood])))
+                mood_genres = random.sample(MOOD_GENRE_MAP[mood], min(3, len(MOOD_GENRE_MAP[mood])))
                 selected_genres.extend(mood_genres)
         
         # If we somehow don't have enough genres, add some mainstream ones
@@ -770,6 +770,44 @@ def combined_results():
         # Combine and deduplicate Met results
         met_results = flask_remove_duplicates(mood_results + art_style_results + subject_results)
         
+        # Strictly limit to 9 results
+        met_results = met_results[:9]
+        
+        # Only add random images if we have fewer than 9 results
+        if len(met_results) < 9:
+            needed_count = 9 - len(met_results)
+            added_count = 0
+            
+            # Set to track artworks we've already seen to avoid duplicates
+            seen_artworks = set()
+            for result in met_results:
+                title = result.get("title")
+                artist = result.get("artistDisplayName")
+                object_date = result.get("objectDate")
+                artwork_id = (title, artist, object_date)
+                seen_artworks.add(artwork_id)
+            
+            # Add random images up to the needed count
+            while added_count < needed_count:
+                random_image = flask_fetch_random_image()
+                if random_image:
+                    title = random_image.get("title")
+                    artist = random_image.get("artistDisplayName")
+                    object_date = random_image.get("objectDate")
+                    artwork_id = (title, artist, object_date)
+                    
+                    # Only add if it's not a duplicate
+                    if artwork_id not in seen_artworks:
+                        met_results.append(random_image)
+                        seen_artworks.add(artwork_id)
+                        added_count += 1
+                else:
+                    # If we can't get more random images, just break
+                    break
+        
+        # Final safety check - limit strictly to 9
+        met_results = met_results[:9]
+        
         # Process Spotify data (synchronous version)
         rec_type = form_data.get('rec_type', 'playlist')
         query = form_data.get('query', '').strip()
@@ -808,6 +846,9 @@ def combined_results():
                 
                 items = search_data.get(f"{rec_type}s", {}).get("items", [])
                 spotify_results = quart_format_results(items, rec_type)
+                
+                # Strictly limit to 9 results
+                spotify_results = spotify_results[:9]
         except Exception as e:
             logging.error(f"Spotify API error: {str(e)}")
             spotify_results = []
@@ -822,7 +863,7 @@ def combined_results():
     except Exception as e:
         logging.error(f"Error processing combined results: {str(e)}")
         return flask_jsonify({"error": str(e)}), 500
-
+    
 async def process_met_data(form_data):
     """Process Met API data and return results."""
     try:
