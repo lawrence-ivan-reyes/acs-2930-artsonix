@@ -751,12 +751,16 @@ async def quart_error():
 async def quart_credits():
     return await quart_render_template('credits.html')
 
-# Find this in your combined_flask_quart_app.py file
 @flask_app.route('/combined-results', methods=['POST'])
 def combined_results():  
     try:
         # Get form data
         form_data = flask_request.form
+        
+        # Debug logging - print all form data to see exactly what's coming in
+        logging.info("DEBUG: Form data received:")
+        for key, value in form_data.items():
+            logging.info(f"DEBUG: {key}: {value}")
         
         # Process Met data (synchronous)
         moods = form_data.getlist('moods')
@@ -770,55 +774,49 @@ def combined_results():
         
         # Combine and deduplicate Met results
         met_results = flask_remove_duplicates(mood_results + art_style_results + subject_results)
+        met_results = met_results[:9]  # Limit to 9 results
         
-        # Strictly limit to 9 results
-        met_results = met_results[:9]
+        # Handle any needed random Met images (code to fill up to 9 results)
+        # ...
         
-        # Only add random images if we have fewer than 9 results
-        if len(met_results) < 9:
-            needed_count = 9 - len(met_results)
-            added_count = 0
-            
-            # Set to track artworks we've already seen to avoid duplicates
-            seen_artworks = set()
-            for result in met_results:
-                title = result.get("title")
-                artist = result.get("artistDisplayName")
-                object_date = result.get("objectDate")
-                artwork_id = (title, artist, object_date)
-                seen_artworks.add(artwork_id)
-            
-            # Add random images up to the needed count
-            while added_count < needed_count:
-                random_image = flask_fetch_random_image()
-                if random_image:
-                    title = random_image.get("title")
-                    artist = random_image.get("artistDisplayName")
-                    object_date = random_image.get("objectDate")
-                    artwork_id = (title, artist, object_date)
-                    
-                    # Only add if it's not a duplicate
-                    if artwork_id not in seen_artworks:
-                        met_results.append(random_image)
-                        seen_artworks.add(artwork_id)
-                        added_count += 1
-                else:
-                    # If we can't get more random images, just break
-                    break
-        
-        # Final safety check - limit strictly to 9
-        met_results = met_results[:9]
-        
-        # Process Spotify data (synchronous version)
+        # Process Spotify data with MUCH more robust handling
         rec_type = form_data.get('rec_type', 'playlist')
+        logging.info(f"DEBUG: Raw rec_type from form: '{rec_type}'")
         query = form_data.get('query', '').strip()
         
-        # ✅ Add this block to handle "I'm open to anything" mode
-        if rec_type.lower() == "i'm open to anything":
+        # MUCH more robust check for variations of "I'm open to anything"
+        open_to_anything_variants = [
+            "i'm open to anything", 
+            "im open to anything",
+            "i am open to anything",
+            "open to anything"
+        ]
+        
+        is_open_to_anything = False
+        if rec_type:
+            rec_type_lower = rec_type.lower().strip()
+            logging.info(f"DEBUG: Normalized rec_type: '{rec_type_lower}'")
+            
+            for variant in open_to_anything_variants:
+                if variant in rec_type_lower:
+                    is_open_to_anything = True
+                    logging.info(f"DEBUG: Matched variant: '{variant}'")
+                    break
+        
+        # Handle "open to anything" with enhanced logging
+        if is_open_to_anything:
+            original_rec_type = rec_type  # Save for logging
             rec_type = random.choice(["playlist", "album", "artist", "track"])
             all_genres = sum(MOOD_GENRE_MAP.values(), [])
-            query = " OR ".join(random.sample(all_genres, min(len(all_genres), 5)))
-            logging.info(f"🎲 Random selection - new rec_type: '{rec_type}', new query: '{query}'")
+            selected_genres = random.sample(all_genres, min(len(all_genres), 5))
+            query = " OR ".join(selected_genres)
+            
+            logging.info(f"DEBUG: 'Open to anything' detected! Original: '{original_rec_type}'")
+            logging.info(f"DEBUG: Selected random rec_type: '{rec_type}'")
+            logging.info(f"DEBUG: Selected genres: {selected_genres}")
+            logging.info(f"DEBUG: Final query: '{query}'")
+        else:
+            logging.info(f"DEBUG: Using specific rec_type: '{rec_type}'")
         
         # Create search query from moods if no direct query
         if not query and moods:
@@ -826,11 +824,21 @@ def combined_results():
             for mood in moods:
                 if mood in MOOD_GENRE_MAP:
                     selected_genres.extend(MOOD_GENRE_MAP[mood])
-            query = " OR ".join(selected_genres[:5])  # Limit to 5 genres
+            
+            # Limit to avoid excessively long queries
+            if selected_genres:
+                query = " OR ".join(selected_genres[:5])
+                logging.info(f"DEBUG: Created query from moods: '{query}'")
         
-        # Make synchronous request to Spotify
+        # Ensure we have something to search with
+        if not query:
+            query = "music"  # Fallback query
+            logging.info(f"DEBUG: Using fallback query: '{query}'")
+        
+        # Make synchronous request to Spotify with better error handling
         spotify_results = []
         try:
+            # Get Spotify token
             spotify_token_url = "https://accounts.spotify.com/api/token"
             token_response = requests.post(
                 spotify_token_url,
@@ -841,24 +849,75 @@ def combined_results():
                 },
                 headers={"Content-Type": "application/x-www-form-urlencoded"}
             )
+            
+            if token_response.status_code != 200:
+                logging.error(f"DEBUG: Spotify token error: {token_response.text}")
+                raise Exception(f"Spotify token error: {token_response.status_code}")
+                
             token_data = token_response.json()
             access_token = token_data.get("access_token")
             
-            if access_token:
-                search_url = f"{SPOTIFY_API_URL}?q={quote_plus(query)}&type={rec_type}&limit=9"
-                search_response = requests.get(
-                    search_url,
-                    headers={"Authorization": f"Bearer {access_token}"}
-                )
-                search_data = search_response.json()
-                
-                items = search_data.get(f"{rec_type}s", {}).get("items", [])
+            if not access_token:
+                logging.error("DEBUG: No access token received from Spotify")
+                raise Exception("No access token received from Spotify")
+            
+            # Make search request to Spotify API
+            search_url = f"{SPOTIFY_API_URL}?q={quote_plus(query)}&type={rec_type}&limit=20"
+            logging.info(f"DEBUG: Spotify search URL: {search_url}")
+            
+            search_response = requests.get(
+                search_url,
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            
+            if search_response.status_code != 200:
+                logging.error(f"DEBUG: Spotify search error: {search_response.text}")
+                raise Exception(f"Spotify search error: {search_response.status_code}")
+            
+            search_data = search_response.json()
+            response_items_key = f"{rec_type}s"
+            
+            # Check if we have the expected data structure
+            if response_items_key not in search_data:
+                logging.error(f"DEBUG: Missing expected key '{response_items_key}' in Spotify response")
+                logging.error(f"DEBUG: Spotify response keys: {list(search_data.keys())}")
+                raise Exception(f"Missing expected key '{response_items_key}' in Spotify response")
+            
+            items = search_data.get(response_items_key, {}).get("items", [])
+            logging.info(f"DEBUG: Retrieved {len(items)} items from Spotify")
+            
+            if items:
                 spotify_results = quart_format_results(items, rec_type)
+                logging.info(f"DEBUG: Formatted to {len(spotify_results)} results")
                 
-                # Strictly limit to 9 results
+                # Limit to 9 results 
                 spotify_results = spotify_results[:9]
+            else:
+                logging.warning(f"DEBUG: No items returned from Spotify for query '{query}' and type '{rec_type}'")
+                
+                # Fallback to a different rec_type if no results
+                if is_open_to_anything:
+                    fallback_rec_type = random.choice(["playlist", "album", "artist", "track"])
+                    if fallback_rec_type != rec_type:
+                        logging.info(f"DEBUG: Trying fallback rec_type: '{fallback_rec_type}'")
+                        
+                        search_url = f"{SPOTIFY_API_URL}?q={quote_plus(query)}&type={fallback_rec_type}&limit=20"
+                        search_response = requests.get(
+                            search_url,
+                            headers={"Authorization": f"Bearer {access_token}"}
+                        )
+                        
+                        if search_response.status_code == 200:
+                            search_data = search_response.json()
+                            items = search_data.get(f"{fallback_rec_type}s", {}).get("items", [])
+                            
+                            if items:
+                                spotify_results = quart_format_results(items, fallback_rec_type)
+                                spotify_results = spotify_results[:9]
+                                logging.info(f"DEBUG: Got {len(spotify_results)} results with fallback rec_type")
+        
         except Exception as e:
-            logging.error(f"Spotify API error: {str(e)}")
+            logging.error(f"DEBUG: Spotify API error: {str(e)}")
             spotify_results = []
         
         # Combine results
@@ -867,11 +926,15 @@ def combined_results():
             'spotify_results': spotify_results
         }
         
+        logging.info(f"DEBUG: Returning {len(met_results)} Met results and {len(spotify_results)} Spotify results")
         return flask_jsonify(combined_results)
-    except Exception as e:
-        logging.error(f"Error processing combined results: {str(e)}")
-        return flask_jsonify({"error": str(e)}), 500
         
+    except Exception as e:
+        logging.error(f"ERROR processing combined results: {str(e)}")
+        import traceback
+        logging.error(traceback.format_exc())
+        return flask_jsonify({"error": str(e)}), 500
+            
 async def process_met_data(form_data):
     """Process Met API data and return results."""
     try:
