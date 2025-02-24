@@ -16,7 +16,7 @@ This repository contains a combined Flask and Quart application that integrates 
     cd combined_flask_quart_app
     ```
 
-    *Replace "yourusername with your actual username"*
+    **Replace "yourusername with your actual username"**
 
 2. Create a virtual environment and activate it:
     ```sh
