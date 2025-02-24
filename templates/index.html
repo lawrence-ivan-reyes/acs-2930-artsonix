@@ -137,10 +137,36 @@
     }
 });
 
-    document.getElementById('surpriseBtn').addEventListener('click', function () {
-        document.getElementById('loading-screen').classList.remove('hidden');
-        window.location.href = '/surprise-me';
-    });
+document.getElementById('surpriseBtn').addEventListener('click', async function(e) {
+    e.preventDefault();
+    
+    // Show loading screen
+    document.getElementById('loading-screen').classList.remove('hidden');
+    
+    try {
+        // Make request to the surprise-me endpoint
+        const response = await fetch('/surprise-me');
+        
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        // Parse the response
+        const combinedResults = await response.json();
+        
+        // Store both Met and Spotify results in localStorage
+        localStorage.setItem('artworks', JSON.stringify(combinedResults.met_results || []));
+        localStorage.setItem('spotify_results', JSON.stringify(combinedResults.spotify_results || []));
+        
+        // Redirect to results page
+        window.location.href = '/results';
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while generating surprise recommendations.');
+        document.getElementById('loading-screen').classList.add('hidden');
+    }
+});
 
     limitSelections('.mood-checkbox');
     limitSelections('.art-style-checkbox');

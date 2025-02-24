@@ -441,18 +441,21 @@ def flask_process_preferences():
         logging.error(f"Error processing preferences: {str(e)}")
         return flask_jsonify({"error":  str(e)}), 500
 
+# Add this route to the combined_flask_quart_app.py file
+
 @flask_app.route('/surprise-me', methods=['GET'])
 def flask_surprise_me():
     """
-    Fetch random artwork results based on randomly selected preferences.
-
-    This function provides random artwork for the user by selecting random moods, 
-    art styles, and a subject, and then fetching relevant artworks.
+    Generate random art and music recommendations.
+    
+    This function randomly selects preferences for both Met and Spotify,
+    fetches results, and returns them for display on the results page.
     """
     try:
+        # --- MET RANDOM SELECTIONS (existing code) ---
         # Randomly select preferences
         random_moods = random.sample(list(mood_keywords.keys()), 3)  # Select 3 random moods
-
+        
         # List of specific art styles
         art_styles_list = [
             "Cubism", "Abstract", "Impressionism", "Modern", "Baroque",
@@ -460,20 +463,110 @@ def flask_surprise_me():
         ]
         # Randomly select 3 art styles from the list
         random_art_styles = random.sample(art_styles_list, 3)
-
+        
         random_subject = random.choice(list(subject_keywords.keys()))  # Randomly pick a subject
-
-        # Fetch results based on random preferences
+        
+        # Fetch results based on random preferences for Met
         mood_results = flask_fetch_results_based_on_moods(random_moods, limit=3)
         art_style_results = flask_fetch_results_based_on_art_styles(random_art_styles, limit=3)
         subject_results = flask_fetch_results_based_on_subject(random_subject, limit=3)
-
-        combined_results = mood_results + art_style_results + subject_results
-        combined_results = combined_results[:9]  # Limit to 9 results
-
+        
+        met_results = flask_remove_duplicates(mood_results + art_style_results + subject_results)
+        met_results = met_results[:9]  # Limit to 9 results
+        
+        # --- SPOTIFY RANDOM SELECTIONS (new code) ---
+        # Randomly select a recommendation type
+        rec_types = ["playlist", "album", "artist", "track"]
+        random_rec_type = random.choice(rec_types)
+        
+        # Create a random query based on random moods
+        spotify_moods = random.sample(list(MOOD_GENRE_MAP.keys()), min(3, len(MOOD_GENRE_MAP)))
+        selected_genres = []
+        
+        # Get genres from selected moods
+        for mood in spotify_moods:
+            if mood in MOOD_GENRE_MAP:
+                # Select a few random genres from each mood
+                mood_genres = random.sample(MOOD_GENRE_MAP[mood], min(2, len(MOOD_GENRE_MAP[mood])))
+                selected_genres.extend(mood_genres)
+        
+        # If we somehow don't have enough genres, add some mainstream ones
+        if len(selected_genres) < 3:
+            selected_genres.extend(random.sample(MAINSTREAM_GENRES, min(3, len(MAINSTREAM_GENRES))))
+        
+        # Create the query string
+        query = " OR ".join(selected_genres[:5])  # Limit to 5 terms for query length
+        
+        # Get Spotify token synchronously (for Flask route)
+        spotify_results = []
+        try:
+            # Get Spotify API token
+            spotify_token_url = "https://accounts.spotify.com/api/token"
+            token_response = requests.post(
+                spotify_token_url,
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": SPOTIFY_CLIENT_ID,
+                    "client_secret": SPOTIFY_CLIENT_SECRET,
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            token_data = token_response.json()
+            access_token = token_data.get("access_token")
+            
+            if access_token:
+                # Make Spotify API request
+                search_url = f"{SPOTIFY_API_URL}?q={quote_plus(query)}&type={random_rec_type}&limit=20"
+                search_response = requests.get(
+                    search_url,
+                    headers={"Authorization": f"Bearer {access_token}"}
+                )
+                search_data = search_response.json()
+                
+                # Extract items
+                items = search_data.get(f"{random_rec_type}s", {}).get("items", [])
+                
+                # Remove any invalid items and format the results
+                valid_items = [item for item in items if isinstance(item, dict) and "name" in item]
+                
+                # Apply some randomness to the results
+                if valid_items:
+                    random.shuffle(valid_items)
+                    # Format the items properly
+                    spotify_results = quart_format_results(valid_items[:9], random_rec_type)
+                
+                # If somehow we don't have enough results, try a different approach
+                if len(spotify_results) < 3:
+                    # Try with a broader search term
+                    broader_query = " OR ".join(random.sample(MAINSTREAM_GENRES, min(3, len(MAINSTREAM_GENRES))))
+                    search_url = f"{SPOTIFY_API_URL}?q={quote_plus(broader_query)}&type={random_rec_type}&limit=20"
+                    search_response = requests.get(
+                        search_url,
+                        headers={"Authorization": f"Bearer {access_token}"}
+                    )
+                    search_data = search_response.json()
+                    items = search_data.get(f"{random_rec_type}s", {}).get("items", [])
+                    valid_items = [item for item in items if isinstance(item, dict) and "name" in item]
+                    
+                    if valid_items:
+                        random.shuffle(valid_items)
+                        spotify_results = quart_format_results(valid_items[:9], random_rec_type)
+        
+        except Exception as e:
+            logging.error(f"Error in Spotify random recommendation: {str(e)}")
+            spotify_results = []
+        
+        # Combine both Met and Spotify results
+        combined_results = {
+            'met_results': met_results,
+            'spotify_results': spotify_results
+        }
+        
+        # Return the combined results as JSON
         return flask_jsonify(combined_results)
+        
     except Exception as e:
-        logging.error(f"Error fetching results: {str(e)}")
+        logging.error(f"Error in surprise-me route: {str(e)}")
         return flask_jsonify({"error": str(e)}), 500
 
 # ✅ Quart Routes (Spotify)
@@ -666,7 +759,7 @@ def combined_results():
         
         # Process Met data (synchronous)
         moods = form_data.getlist('moods')
-        art_styles = form_data.getlist('art_styles')
+        art_styles = form_data.getlist('art_styles') 
         subject = form_data.get('subject')
         
         # Get Met results using synchronous functions
