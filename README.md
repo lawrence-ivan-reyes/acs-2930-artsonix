@@ -82,7 +82,7 @@ For a full list of restrictions and guidelines, please refer to the [Spotify Dev
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the [MIT License](LICENSE).
 
 ## Acknowledgements
 
