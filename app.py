@@ -751,6 +751,7 @@ async def quart_error():
 async def quart_credits():
     return await quart_render_template('credits.html')
 
+# Find this in your combined_flask_quart_app.py file
 @flask_app.route('/combined-results', methods=['POST'])
 def combined_results():  
     try:
@@ -812,6 +813,13 @@ def combined_results():
         rec_type = form_data.get('rec_type', 'playlist')
         query = form_data.get('query', '').strip()
         
+        # ✅ Add this block to handle "I'm open to anything" mode
+        if rec_type.lower() == "i'm open to anything":
+            rec_type = random.choice(["playlist", "album", "artist", "track"])
+            all_genres = sum(MOOD_GENRE_MAP.values(), [])
+            query = " OR ".join(random.sample(all_genres, min(len(all_genres), 5)))
+            logging.info(f"🎲 Random selection - new rec_type: '{rec_type}', new query: '{query}'")
+        
         # Create search query from moods if no direct query
         if not query and moods:
             selected_genres = []
@@ -863,7 +871,7 @@ def combined_results():
     except Exception as e:
         logging.error(f"Error processing combined results: {str(e)}")
         return flask_jsonify({"error": str(e)}), 500
-    
+        
 async def process_met_data(form_data):
     """Process Met API data and return results."""
     try:
