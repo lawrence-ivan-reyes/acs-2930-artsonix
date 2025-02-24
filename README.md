@@ -1,4 +1,4 @@
-# Combined Flask and Quart App
+# ArtSonix Spotify and Met API App
 
 This repository contains a combined Flask and Quart application that integrates the Met Museum API and Spotify API to provide a unique experience based on user preferences for moods, art styles, and subjects.
 
