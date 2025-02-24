@@ -39,7 +39,7 @@ This repository contains a combined Flask and Quart application that integrates 
 
 1. Start the Flask and Quart servers:
     ```sh
-    python combined_flask_quart_app.py
+    python app.py
     ```
 
 2. Access the application:
