@@ -243,6 +243,14 @@ def quart_format_results(items, search_type):
 def flask_index():
     return flask_render_template('index.html')
 
+@flask_app.route('/about')
+def flask_about():
+    return flask_render_template('about.html')
+
+@flask_app.route('/credits')
+def flask_credits():
+    return flask_render_template('credits.html')
+
 def flask_remove_duplicates(results):
     """
     Remove duplicate artworks based on title, artist, and object date.
