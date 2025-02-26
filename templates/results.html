@@ -1,97 +1,129 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<header class="text-center py-10">
-    <h2 class="text-3xl font-bold text-gray-800">Your Personalized Recommendations</h2>
+<header class="header-section">
+    <h2 class="text-3xl font-bold">Your Art & Music Recommendations</h2>
+    <p class="text-lg mt-3">Enjoy this curated selection of artwork and music based on your preferences</p>
 </header>
 
-<div class="px-4 py-8 max-w-7xl mx-auto">
+<div class="container mx-auto px-4">
     <!-- Art Section -->
     <section class="mb-12">
-        <h3 class="text-2xl font-bold text-gray-800 mb-6">Art Matches</h3>
-        <div id="artworks-container">
-            <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6" id="artworks-grid"></ul>
+        <h3 class="text-2xl font-bold mb-6 text-center text-blue-700">Artwork Recommendations</h3>
+        <div id="artworkContainer" class="results-grid">
+            <!-- Artwork cards will be dynamically inserted here -->
         </div>
     </section>
 
     <!-- Music Section -->
-    <section>
-        <h3 class="text-2xl font-bold text-gray-800 mb-6">Music Matches</h3>
-        <div id="spotify-container">
-            <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6" id="spotify-grid"></ul>
+    <section class="mb-12">
+        <h3 class="text-2xl font-bold mb-6 text-center text-blue-700">Music Recommendations</h3>
+        <div id="musicContainer" class="results-grid">
+            <!-- Music cards will be dynamically inserted here -->
         </div>
     </section>
+
+    <!-- Return Button -->
+    <div class="text-center mt-8 mb-12">
+        <a href="/" class="btn-primary inline-block max-w-xs">Create New Recommendations</a>
+    </div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Load both Met and Spotify results from localStorage
-    const artworks = JSON.parse(localStorage.getItem('artworks') || '[]');
-    const spotifyResults = JSON.parse(localStorage.getItem('spotify_results') || '[]');
-    
-    // Display Met artworks
-    const artworksGrid = document.getElementById('artworks-grid');
-    if (artworks && artworks.length) {
-        artworksGrid.innerHTML = artworks.map(artwork => `
-            <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
-                <div class="relative w-full flex justify-center">
-                    <img src="${artwork.primaryImageSmall}" 
-                         alt="${artwork.title}" 
-                         class="w-full max-w-[200px] aspect-square object-cover rounded-md mb-4">
-                </div>
-                <h4 class="text-lg font-semibold text-center">${artwork.title}</h4>
-                <p class="text-sm text-gray-600 text-center">Artist: ${artwork.artistDisplayName || 'Unknown'}</p>
-                <p class="text-sm text-gray-600 text-center">Date: ${artwork.objectDate || 'Unknown'}</p>
-                <p class="text-sm text-gray-600 text-center">Medium: ${artwork.medium || 'Unknown'}</p>
-                <a href="https://www.metmuseum.org/art/collection/search/${artwork.objectID}" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   class="block mt-4 text-center bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600">
-                    View at The Met
-                </a>
-            </li>
-        `).join('');
-    } else {
-        artworksGrid.innerHTML = `<p class="text-center text-gray-600 col-span-3">No art matches found. Try different preferences.</p>`;
-    }
-    
-    // Display Spotify results
-    const spotifyGrid = document.getElementById('spotify-grid');
-    if (spotifyResults && spotifyResults.length) {
-        spotifyGrid.innerHTML = spotifyResults.map(item => `
-            <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
-                <div class="relative w-full flex justify-center">
-                    <img src="${item.image || '/static/images/censored-image.png'}" 
-                         alt="${item.name}" 
-                         class="w-full max-w-[200px] aspect-square object-cover rounded-md mb-4">
-                </div>
-                <h4 class="text-lg font-semibold text-center truncate">${item.name}</h4>
-                ${item.artist ? `<p class="text-sm text-gray-600 text-center">By: ${item.artist}</p>` : ''}
-                ${item.type ? `<p class="text-sm text-blue-500 font-medium text-center">${item.type.charAt(0).toUpperCase() + item.type.slice(1)}</p>` : ''}
-                <a href="${item.url}" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   class="block mt-4 text-center bg-green-500 text-white py-2 rounded-lg hover:bg-green-600">
-                    Listen on Spotify
-                </a>
-            </li>
-        `).join('');
-    } else {
-        spotifyGrid.innerHTML = `<p class="text-center text-gray-600 col-span-3">No music matches found. Try different preferences.</p>`;
-    }
-
-    // If both sections are empty, show a return button
-    if (!artworks.length && !spotifyResults.length) {
-        document.querySelector('.max-w-7xl').innerHTML += `
-            <div class="text-center py-10">
-                <p class="text-red-500 text-lg font-semibold">No matches found for your preferences.</p>
-                <p class="text-gray-600 mt-2">Try selecting different options.</p>
-                <a href="/" class="mt-4 inline-block bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
-                    Try Again
-                </a>
-            </div>
-        `;
-    }
-});
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get stored results from localStorage
+        const artworks = JSON.parse(localStorage.getItem('artworks') || '[]');
+        const spotify_results = JSON.parse(localStorage.getItem('spotify_results') || '[]');
+        
+        // Function to create artwork cards
+        function createArtworkCards() {
+            const artworkContainer = document.getElementById('artworkContainer');
+            
+            if (artworks.length === 0) {
+                artworkContainer.innerHTML = '<p class="text-center text-gray-500">No artwork recommendations available.</p>';
+                return;
+            }
+            
+            artworkContainer.innerHTML = '';
+            
+            artworks.forEach(artwork => {
+                const card = document.createElement('div');
+                card.className = 'artwork-card';
+                
+                let artistInfo = artwork.artistDisplayName ? 
+                    `<p class="card-subtitle">${artwork.artistDisplayName}</p>` : '';
+                
+                let objectDate = artwork.objectDate ? 
+                    `<p class="card-text">Date: ${artwork.objectDate}</p>` : '';
+                
+                card.innerHTML = `
+                    <img src="${artwork.primaryImage || artwork.primaryImageSmall}" 
+                        alt="${artwork.title}" class="artwork-image">
+                    <div class="card-content">
+                        <h4 class="card-title">${artwork.title}</h4>
+                        ${artistInfo}
+                        ${objectDate}
+                        <p class="card-text">${artwork.objectName || ''}</p>
+                        <a href="${artwork.objectURL}" target="_blank" class="card-link">
+                            View at The Met
+                        </a>
+                    </div>
+                `;
+                
+                artworkContainer.appendChild(card);
+            });
+        }
+        
+        // Function to create music cards
+        function createMusicCards() {
+            const musicContainer = document.getElementById('musicContainer');
+            
+            if (spotify_results.length === 0) {
+                musicContainer.innerHTML = '<p class="text-center text-gray-500">No music recommendations available.</p>';
+                return;
+            }
+            
+            musicContainer.innerHTML = '';
+            
+            spotify_results.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'music-card';
+                
+                let creatorInfo = item.creator ? 
+                    `<p class="card-subtitle">${item.creator}</p>` : 
+                    (item.artist ? `<p class="card-subtitle">${item.artist}</p>` : '');
+                
+                let description = item.description ? 
+                    `<p class="card-text">${item.description}</p>` : '';
+                
+                let additionalInfo = '';
+                if (item.type === 'playlist' && item.track_count) {
+                    additionalInfo = `<p class="card-text">${item.track_count} tracks</p>`;
+                } else if (item.type === 'album' && item.release_date) {
+                    additionalInfo = `<p class="card-text">Released: ${item.release_date}</p>`;
+                } else if (item.type === 'artist' && item.genres) {
+                    additionalInfo = `<p class="card-text">Genres: ${item.genres}</p>`;
+                }
+                
+                card.innerHTML = `
+                    <img src="${item.image}" alt="${item.name}" class="music-image">
+                    <div class="card-content">
+                        <h4 class="card-title">${item.name}</h4>
+                        ${creatorInfo}
+                        ${description}
+                        ${additionalInfo}
+                        <a href="${item.url}" target="_blank" class="card-link">
+                            Listen on Spotify
+                        </a>
+                    </div>
+                `;
+                
+                musicContainer.appendChild(card);
+            });
+        }
+        
+        // Call the functions to create cards
+        createArtworkCards();
+        createMusicCards();
+    });
 </script>
 {% endblock %}

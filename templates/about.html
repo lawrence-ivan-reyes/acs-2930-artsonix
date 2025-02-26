@@ -1,58 +1,76 @@
 {% extends 'base.html' %}
-
 {% block content %}
-    <!-- Header -->
-    <header class="text-center py-10">
-        <h2 class="text-3xl font-bold text-gray-800">About ArtSonix</h2>
-    </header>
+<header class="header-section">
+    <h2 class="text-3xl font-bold">About ArtSonix</h2>
+    <p class="text-lg mt-3">Discover how we blend art and music to create a unique experience</p>
+</header>
 
-    <!-- About Section -->
-    <div class="flex items-center justify-center min-h-screen">
-        <div class="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-2xl">
-            <h1 class="text-2xl font-bold text-gray-800 text-center">Discover Music Through Art</h1>
-            <p class="mt-4 text-gray-700 text-left">
-                ArtSonix bridges visual art and music, offering a unique way to discover songs through famous artworks.  
-                By integrating The Met API and Spotify API, we curate music inspired by paintings,  
-                allowing users to explore, save, and experience art through sound.
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden mb-10">
+        <div class="p-8">
+            <h3 class="text-2xl font-bold mb-4 text-blue-700">Our Mission</h3>
+            <p class="text-gray-700 mb-6">
+                ArtSonix is designed to bridge the worlds of visual and auditory art, creating a synesthetic experience
+                that enhances appreciation for both mediums. We believe that art and music are intrinsically connected,
+                and when experienced together, they can unlock new dimensions of enjoyment and understanding.
             </p>
-            <br>
-            
-            <h2 class="mt-6 text-xl font-semibold text-blue-500">How It Works</h2>
-            <ul class="mt-3 space-y-3 text-gray-700">
-                <li>📝 <strong>Interactive User Form</strong> – On the landing page, users answer creative questions about their mood, favorite art styles, or music preferences.</li>
-                <li>🎨 <strong>Browse Art</strong> – Discover paintings from The Met Museum that match your responses.</li>
-                <li>🎵 <strong>Get Music Matches</strong> – Based on your answers, ArtSonix fetches albums related to your theme or mood.</li>
-                <li>❤️ <strong>Save & Listen</strong> – Build your personal collection and enjoy your recommendations on Spotify.</li>
-            </ul>
-            <br>
 
-            <h2 class="mt-6 text-xl font-semibold text-blue-500">Why ArtSonix?</h2>
-            <p class="mt-3 text-gray-700">
-                We believe music and art are deeply connected. Whether you're inspired by Renaissance classics or modern digital art,  
-                ArtSonix helps you <strong>experience art through sound</strong>—tailored just for you.
-            </p>
-            <br>
-
-            <!-- New Meet Our Team Section -->
-            <h2 class="mt-6 text-xl font-semibold text-blue-500">Meet Our Team!</h2>
-            <p class="mt-3 text-gray-700">
-                ArtSonix is built by a passionate team of developers, designers, and music lovers.
-                Get to know the people behind the project.
-            </p>
-            <div class="mt-4 text-center">
-                <a href="/credits" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                    Meet Our Team 🚀
-                </a>
+            <h3 class="text-2xl font-bold mb-4 text-blue-700">How It Works</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl font-bold text-blue-700">1</span>
+                    </div>
+                    <h4 class="font-bold mb-2">Select Your Preferences</h4>
+                    <p class="text-gray-600">Choose your moods, art styles, and musical interests to personalize your experience.</p>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl font-bold text-blue-700">2</span>
+                    </div>
+                    <h4 class="font-bold mb-2">We Match</h4>
+                    <p class="text-gray-600">Our algorithm searches The Met Museum's collection and Spotify's vast music library.</p>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl font-bold text-blue-700">3</span>
+                    </div>
+                    <h4 class="font-bold mb-2">Enjoy</h4>
+                    <p class="text-gray-600">Experience your personalized selection of artwork and music that complement each other.</p>
+                </div>
             </div>
-            <br>
 
-            <!-- Call to Action -->
-            <div class="mt-6 text-center">
-                <a href="/" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                    Try It Now 🚀
-                </a>
+            <h3 class="text-2xl font-bold mb-4 text-blue-700">Our Data Sources</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <h4 class="font-bold text-xl mb-2">The Metropolitan Museum of Art</h4>
+                    <p class="text-gray-600 mb-4">
+                        We utilize The Met's open access API to bring you artwork from one of the world's most prestigious 
+                        art collections. With over 5,000 years of art from around the globe, The Met's collection offers 
+                        unprecedented breadth and depth.
+                    </p>
+                    <a href="https://www.metmuseum.org/" target="_blank" class="text-blue-600 hover:underline">Visit The Met's Website</a>
+                </div>
+                
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <h4 class="font-bold text-xl mb-2">Spotify</h4>
+                    <p class="text-gray-600 mb-4">
+                        Spotify's comprehensive music API allows us to recommend music that perfectly complements your 
+                        selected artwork. With millions of tracks across all genres, we can find music that resonates with 
+                        the visual art you're experiencing.
+                    </p>
+                    <a href="https://www.spotify.com/" target="_blank" class="text-blue-600 hover:underline">Visit Spotify's Website</a>
+                </div>
             </div>
+
+            <h3 class="text-2xl font-bold mb-4 text-blue-700">Privacy & Data Use</h3>
+            <p class="text-gray-700 mb-6">
+                At ArtSonix, we respect your privacy. We don't store any personal information or preferences beyond your 
+                current session. Your selections are used only to generate recommendations and are not shared with third parties.
+            </p>
         </div>
     </div>
-</body>
+</div>
 {% endblock %}
