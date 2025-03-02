@@ -16,7 +16,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+
+
     <!-- Scripts -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     
@@ -59,12 +61,6 @@
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ArtSonix">
             <span>ArtSonix</span>
           </a>
-          
-          <button class="menu-toggle" aria-label="Toggle menu">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
           
           <div class="nav-links">
             <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">Home</a>
