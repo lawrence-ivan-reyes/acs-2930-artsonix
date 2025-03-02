@@ -1,20 +1,29 @@
 {% extends 'base.html' %}
 {% block content %}
-<header class="about-page-header">
-    <div class="header-overlay"></div>
-    <div class="header-inner-mat"></div>
-    
-    <div class="header-content">
-        <div class="header-text-wrapper">
-            <h2 class="about-header-title">About ArtSonix</h2>
-            <p class="about-header-subtitle">Bridging the Worlds of Art and Music</p>
-        </div>
-        <div class="header-graphic">
-            <div class="graphic-element music-icon"></div>
-            <div class="graphic-element art-icon"></div>
+<div class="header-graphic">
+    <div class="about-visual-container">
+        <!-- Art frame with painting element -->
+        <div class="art-frame-element"></div>
+        
+        <!-- Music visualization element -->
+        <div class="music-notes-container">
+            <!-- Musical notes floating animation -->
+            <div class="music-note note-1">♪</div>
+            <div class="music-note note-2">♫</div>
+            <div class="music-note note-3">♩</div>
+            <div class="music-note note-4">♬</div>
+            
+            <!-- Mini sound wave visualization -->
+            <div class="sound-wave-mini">
+                <div class="sound-wave-bar-mini"></div>
+                <div class="sound-wave-bar-mini"></div>
+                <div class="sound-wave-bar-mini"></div>
+                <div class="sound-wave-bar-mini"></div>
+                <div class="sound-wave-bar-mini"></div>
+            </div>
         </div>
     </div>
-</header>
+</div>
 
 
 <div class="container mx-auto px-4 py-8">
@@ -55,7 +64,7 @@
             <h3 class="form-legend">Our Data Sources</h3>
             <div class="about-sources-container">
                 <div class="about-source">
-                    <h4>The Metropolitan Museum of Art</h4>
+                    <h4><strong>The Metropolitan Museum of Art</strong></h4>
                     <p>
                         We utilize The Met's open access API to bring you artwork from one of the world's most prestigious 
                         art collections. With over 5,000 years of art from around the globe, The Met's collection offers 
@@ -65,7 +74,7 @@
                 </div>
                 
                 <div class="about-source">
-                    <h4>Spotify</h4>
+                    <h4><strong>Spotify</strong></h4>
                     <p>
                         Spotify's comprehensive music API allows us to recommend music that perfectly complements your 
                         selected artwork. With millions of tracks across all genres, we can find music that resonates with 

@@ -1,32 +1,33 @@
 {% extends 'base.html' %}
 {% block content %}
-<header class="header-section">
-    <h2 class="text-3xl font-bold">Your Art & Music Recommendations</h2>
-    <p class="text-lg mt-3">Enjoy this curated selection of artwork and music based on your preferences</p>
+<header class="page-header">
+    <div class="header-content">
+        <h1 class="page-title">Your Personalized Art & Music Experience</h1>
+        <p class="page-subtitle">Discover the perfect blend of visual and auditory inspiration</p>
+    </div>
 </header>
 
-<div class="container mx-auto px-4">
-    <!-- Art Section -->
-    <section class="mb-12">
-        <h3 class="text-2xl font-bold mb-6 text-center text-blue-700">Artwork Recommendations</h3>
-        <div id="artworkContainer" class="results-grid">
-            <!-- Artwork cards will be dynamically inserted here -->
-        </div>
-    </section>
+<main class="container mx-auto px-4 py-8">
+    <div class="results-container">
+        <section class="results-section">
+            <h2 class="section-title">Artwork Recommendations</h2>
+            <div id="artworkContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Artwork cards will be dynamically inserted here -->
+            </div>
+        </section>
 
-    <!-- Music Section -->
-    <section class="mb-12">
-        <h3 class="text-2xl font-bold mb-6 text-center text-blue-700">Music Recommendations</h3>
-        <div id="musicContainer" class="results-grid">
-            <!-- Music cards will be dynamically inserted here -->
-        </div>
-    </section>
-
-    <!-- Return Button -->
-    <div class="text-center mt-8 mb-12">
-        <a href="/" class="btn-primary inline-block max-w-xs">Create New Recommendations</a>
+        <section class="results-section">
+            <h2 class="section-title">Music Recommendations</h2>
+            <div id="musicContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Music cards will be dynamically inserted here -->
+            </div>
+        </section>
     </div>
-</div>
+
+    <div class="text-center mt-12">
+        <a href="/" class="btn-primary">Create New Recommendations</a>
+    </div>
+</main>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

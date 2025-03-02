@@ -1448,3 +1448,374 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Results Page */
+.page-header {
+    background: linear-gradient(135deg, var(--primary-light), var(--accent-light));
+    padding: 4rem 0;
+    text-align: center;
+    color: white;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.page-subtitle {
+    font-size: 1.25rem;
+    opacity: 0.8;
+}
+
+.results-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.results-section {
+    background-color: var(--gray-100);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+}
+
+.section-title {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: var(--primary-dark);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.artwork-card,
+.music-card {
+    background-color: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.artwork-card:hover,
+.music-card:hover {
+    transform: translateY(-5px);
+}
+
+.artwork-image,
+.music-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.card-content {
+    padding: 1.5rem;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.card-subtitle {
+    font-size: 1rem;
+    color: var(--gray-600);
+    margin-bottom: 1rem;
+}
+
+.card-text {
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    margin-bottom: 1rem;
+}
+
+.card-link {
+    display: inline-block;
+    background-color: var(--primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.card-link:hover {
+    background-color: var(--primary-dark);
+}
+
+@media (max-width: 1024px) {
+    .results-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Enhanced Header Graphic Elements */
+.header-graphic {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+}
+
+/* Interactive Art & Music Visual for About Page */
+.about-visual-container {
+    position: relative;
+    width: 300px;
+    height: 220px;
+}
+
+.art-frame-element {
+    position: absolute;
+    width: 180px;
+    height: 140px;
+    border-radius: var(--radius-md);
+    background: white;
+    box-shadow: var(--shadow-md);
+    border: 8px solid #e8d9b5;
+    overflow: hidden;
+    left: 0;
+    top: 20px;
+    z-index: 1;
+    transition: transform 0.5s ease;
+}
+
+.art-frame-element::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='140' viewBox='0 0 180 140'%3E%3Crect width='180' height='140' fill='%23f0e6d2'/%3E%3Ccircle cx='100' cy='70' r='40' fill='%233a63c9' opacity='0.2'/%3E%3Cpath d='M40 90 L100 40 L160 90 L120 110 Z' fill='%233a63c9' opacity='0.3'/%3E%3C/svg%3E");
+    z-index: 1;
+}
+
+.music-notes-container {
+    position: absolute;
+    width: 180px;
+    height: 140px;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    background: linear-gradient(135deg, rgba(255, 125, 84, 0.1) 0%, rgba(255, 125, 84, 0.3) 100%);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    transition: transform 0.5s ease;
+}
+
+.music-note {
+    position: absolute;
+    font-size: 2rem;
+    color: var(--accent);
+    animation: float-notes 3s infinite ease-in-out;
+}
+
+.note-1 { top: 20%; left: 25%; animation-delay: 0s; }
+.note-2 { top: 50%; left: 65%; animation-delay: 0.5s; }
+.note-3 { top: 70%; left: 30%; animation-delay: 1s; }
+.note-4 { top: 25%; left: 70%; animation-delay: 1.5s; }
+
+@keyframes float-notes {
+    0% { transform: translateY(0) rotate(0); opacity: 0.7; }
+    50% { transform: translateY(-15px) rotate(10deg); opacity: 1; }
+    100% { transform: translateY(0) rotate(0); opacity: 0.7; }
+}
+
+.sound-wave-mini {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 30px;
+}
+
+.sound-wave-bar-mini {
+    width: 3px;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 1px;
+    animation: sound-wave-mini 1.2s infinite ease-in-out;
+}
+
+.sound-wave-bar-mini:nth-child(1) { animation-delay: 0.1s; height: 15px; }
+.sound-wave-bar-mini:nth-child(2) { animation-delay: 0.3s; height: 22px; }
+.sound-wave-bar-mini:nth-child(3) { animation-delay: 0.5s; height: 18px; }
+.sound-wave-bar-mini:nth-child(4) { animation-delay: 0.7s; height: 25px; }
+.sound-wave-bar-mini:nth-child(5) { animation-delay: 0.9s; height: 15px; }
+
+@keyframes sound-wave-mini {
+    0%, 100% { height: 15px; opacity: 0.6; }
+    50% { height: 25px; opacity: 1; }
+}
+
+/* Interactive hover effects */
+.about-visual-container:hover .art-frame-element {
+    transform: translateX(-15px) rotate(-3deg);
+}
+
+.about-visual-container:hover .music-notes-container {
+    transform: translateX(15px) rotate(3deg);
+}
+
+/* Credits Page Team & Tech Visual */
+.credits-visual-container {
+    position: relative;
+    width: 300px;
+    height: 220px;
+}
+
+.team-visual-element {
+    position: absolute;
+    width: 180px;
+    height: 140px;
+    left: 0;
+    top: 20px;
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    z-index: 1;
+    transition: transform 0.5s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 10px;
+    background: linear-gradient(135deg, rgba(58, 99, 201, 0.1) 0%, rgba(58, 99, 201, 0.3) 100%);
+}
+
+.team-member-icon {
+    width: 50px;
+    height: 50px;
+    margin: 5px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    color: var(--primary);
+    transition: transform 0.3s ease;
+}
+
+.team-member-icon:hover {
+    transform: scale(1.1);
+}
+
+.tech-visual-element {
+    position: absolute;
+    width: 180px;
+    height: 140px;
+    right: 0;
+    bottom: 0;
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    z-index: 2;
+    transition: transform 0.5s ease;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(255, 125, 84, 0.1) 0%, rgba(255, 125, 84, 0.3) 100%);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 10px;
+    padding: 15px;
+}
+
+.tech-icon-mini {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    color: var(--gray-700);
+    transition: transform 0.3s ease;
+    position: relative;
+}
+
+.tech-icon-mini:hover {
+    transform: scale(1.1);
+}
+
+/* Interactive hover effects for credits */
+.credits-visual-container:hover .team-visual-element {
+    transform: translateX(-15px) rotate(-3deg);
+}
+
+.credits-visual-container:hover .tech-visual-element {
+    transform: translateX(15px) rotate(3deg);
+}
+
+/* Animation for tech icons - coding effect */
+@keyframes blink-cursor {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+.tech-visual-element::after {
+    content: "|";
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--gray-900);
+    animation: blink-cursor 1s infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .about-visual-container,
+    .credits-visual-container {
+        width: 260px;
+        height: 180px;
+    }
+    
+    .art-frame-element,
+    .music-notes-container,
+    .team-visual-element,
+    .tech-visual-element {
+        width: 150px;
+        height: 120px;
+    }
+    
+    .team-member-icon,
+    .tech-icon-mini {
+        width: 35px;
+        height: 35px;
+        font-size: 1.2rem;
+        margin: 3px;
+    }
+}
+
+@media (max-width: 480px) {
+    .about-visual-container,
+    .credits-visual-container {
+        width: 220px;
+        height: 160px;
+    }
+    
+    .art-frame-element,
+    .music-notes-container,
+    .team-visual-element,
+    .tech-visual-element {
+        width: 130px;
+        height: 100px;
+    }
+}
