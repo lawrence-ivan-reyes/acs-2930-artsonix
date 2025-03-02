@@ -15,6 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Scripts -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
@@ -48,56 +49,38 @@
             z-index: 9999;
             pointer-events: none;
         }
-        /* Custom Navbar Styles */
-        .custom-navbar {
-            background: linear-gradient(to right, rgba(45, 83, 111, 0.8), rgba(78, 125, 162, 0.8));
-            border-radius: 1.25rem;
-            padding: 0.75rem 2rem;
-            margin: 1rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(1rem);
-            position: sticky;
-            top: 0;
-            z-index: 1050;
-            opacity: 0.95;
-        }
-        
-        .navbar-brand img {
-            width: 6rem;
-            height: auto;
-            filter: brightness(1.2);
-        }
-        
-        .nav-link {
-            font-weight: 500;
-            font-size: 1rem;
-            transition: color 0.3s ease-in-out, transform 0.3s ease;
-            padding: 0.5rem 1rem;
-            color: white;
-        }
-        
-        .nav-link:hover {
-            transform: translateY(-0.1rem);
-            color: #FFD400;
-        }
     </style>
 </head>
 <body class="bg-gray-100">
     <!-- Navbar -->
     <nav class="custom-navbar">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="/" class="navbar-brand flex items-center">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ArtSonix Logo">
-                <span class="text-white text-xl font-bold ml-2">ArtSonix</span>
+        <div class="nav-container">
+          <a href="/" class="navbar-brand">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="ArtSonix">
+            <span>ArtSonix</span>
+          </a>
+          
+          <button class="menu-toggle" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          
+          <div class="nav-links">
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">Home</a>
+            <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}">About</a>
+            <a href="/credits" class="nav-link {% if request.path == '/credits' %}active{% endif %}">Credits</a>
+            
+            <a href="/" class="nav-cta">
+              Get Started
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
             </a>
-            <ul class="flex space-x-4">
-                <li><a href="/" class="nav-link">Home</a></li>
-                <li><a href="/about" class="nav-link">About</a></li>
-                <li><a href="/credits" class="nav-link">Credits</a></li>
-            </ul>
+          </div>
         </div>
-    </nav>
-    
+      </nav>
+          
     <!-- Main Content -->
     <div class="container mx-auto py-8">
         {% block content %}
@@ -123,5 +106,35 @@
             <p>&copy; 2024 ArtSonix. All Rights Reserved.</p>
         </div>
     </footer>
+
+
+    <script>
+        // Scroll effect for navbar
+        window.addEventListener('scroll', function() {
+        const navbar = document.querySelector('.custom-navbar');
+        if (window.scrollY > 10) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+        });
+
+        // Theme toggle functionality
+        const themeToggle = document.querySelector('.theme-toggle');
+        if (themeToggle) {
+        themeToggle.addEventListener('click', function() {
+            // Just toggle the icon for now
+            const icon = themeToggle.querySelector('svg');
+            
+            // Switch between sun and moon icons
+            if (icon.innerHTML.includes('moon')) {
+            icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />`;
+            } else {
+            icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />`;
+            }
+        });
+        }
+      </script>
+
 </body>
 </html>

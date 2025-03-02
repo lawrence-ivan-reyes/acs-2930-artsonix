@@ -1,65 +1,97 @@
 {% extends 'base.html' %}
 {% block content %}
 <header class="header-section">
-    <h2 class="text-3xl font-bold">Welcome to ArtSonix! Discover Music Through Art</h2>
-    <p class="text-lg mt-3">Experience the perfect blend of visual and auditory art tailored to your preferences</p>
+  <!-- Background pattern -->
+  <div class="art-gallery-bg"></div>
+  
+  <!-- Decorative art frames -->
+  <div class="art-frame art-frame-1"></div>
+  <div class="art-frame art-frame-2"></div>
+  <div class="art-frame art-frame-3"></div>
+  
+  <!-- Musical notes -->
+  <div class="music-note note-1">♪</div>
+  <div class="music-note note-2">♫</div>
+  <div class="music-note note-3">♩</div>
+  <div class="music-note note-4">♬</div>
+  
+  <!-- Content -->
+  <div class="header-content">
+    <h2>Discover Your Perfect Art & Music Pairing</h2>
+    <p>ArtSonix connects your personal taste to curated art from The Met and personalized playlists</p>
+    
+    <!-- Sound wave animation -->
+    <div class="sound-wave">
+      <div class="sound-wave-bar"></div>
+      <div class="sound-wave-bar"></div>
+      <div class="sound-wave-bar"></div>
+      <div class="sound-wave-bar"></div>
+      <div class="sound-wave-bar"></div>
+      <div class="sound-wave-bar"></div>
+      <div class="sound-wave-bar"></div>
+    </div>
+  </div>
 </header>
 
-<div class="flex items-center justify-center py-6">
-    <div class="max-w-4xl w-full mx-auto">
+<div class="flex items-center justify-center py-8">
+    <div class="max-w-5xl w-full mx-auto px-4">
         <div class="form-container">
-            <form id="combined-form" class="mt-4" action="/combined-results" method="post">
-                <fieldset class="border border-gray-300 p-4 rounded-lg mb-6">
-                    <legend class="form-legend px-2">Find Your Music and Art Match</legend>
-
-                    <!-- Mood Selection -->
-                    <div class="mb-6">
-                        <p class="form-label">Select up to 3 moods:</p>
-                        <div class="checkbox-container">
-                            {% for mood in ["Inspired", "Creative", "Calm", "Energetic", "Adventurous", "Happy", "Sad", "Romantic", "Focused", "Upbeat", "Rebellious", "Dark", "Nostalgic", "Trippy", "Party", "Epic", "Quirky", "Emotional"] %}
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="moods" value="{{ mood }}" class="mood-checkbox mr-2">
-                                    <span>{{ mood }}</span>
-                                </label>
-                            {% endfor %}
-                        </div>
+            <form id="combined-form" action="/combined-results" method="post">
+                <!-- Mood Selection Section -->
+                <div class="form-section">
+                    <h3 class="form-legend">What mood are you in today?</h3>
+                    <p class="form-label">Select up to 3 moods that resonate with you</p>
+                    
+                    <div class="checkbox-container">
+                        {% for mood in ["Inspired", "Creative", "Calm", "Energetic", "Adventurous", "Happy", "Sad", "Romantic", "Focused", "Upbeat", "Rebellious", "Dark", "Nostalgic", "Trippy", "Party", "Epic", "Quirky", "Emotional"] %}
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="moods" value="{{ mood }}" class="mood-checkbox">
+                                <span>{{ mood }}</span>
+                            </label>
+                        {% endfor %}
                     </div>
-
-                    <!-- Media Type Selection -->
+                </div>
+                
+                <!-- Media & Search Section -->
+                <div class="form-section">
+                    <h3 class="form-legend">Find Your Sound</h3>
+                    
                     <div class="mb-6">
-                        <p class="form-label">Choose what you want to search for:</p>
+                        <p class="form-label">What type of music are you looking for?</p>
                         <div class="radio-container">
                             {% for media in ["Playlist", "Album", "Artist", "Track", "I'm open to anything"] %}
                                 <label class="radio-label">
-                                    <input type="radio" name="rec_type" value="{{ media.lower() }}" class="mr-2" {% if loop.first %}checked{% endif %}>
+                                    <input type="radio" name="rec_type" value="{{ media.lower() }}" {% if loop.first %}checked{% endif %}>
                                     <span>{{ media }}</span>
                                 </label>
                             {% endfor %}
                         </div>
                     </div>
 
-                    <!-- Search Query -->
-                    <div class="mb-6">
-                        <p class="form-label">Or enter a specific search query:</p>
-                        <input type="text" id="search-query" name="query" class="form-control" placeholder="Enter artist, album, playlist, or song (optional)">
+                    <div class="mb-0">
+                        <p class="form-label">Have something specific in mind?</p>
+                        <input type="text" id="search-query" name="query" class="form-control" placeholder="Enter artist, genre, mood, or anything that inspires you">
                     </div>
-
-                    <!-- Art Style Selection -->
+                </div>
+                
+                <!-- Art Preferences Section -->
+                <div class="form-section">
+                    <h3 class="form-legend">Your Art Preferences</h3>
+                    
                     <div class="mb-6">
-                        <p class="form-label">Select your favorite art styles (up to 3):</p>
+                        <p class="form-label">Select your favorite art styles (up to 3)</p>
                         <div class="checkbox-container">
                             {% for art_style in ["Cubism", "Abstract", "Contemporary art", "Modern", "Impressionism", "Baroque", "Romanticism", "Pre-Raphaelite", "Op Art", "Futurism", "Tonalism", "I'm open to anything"] %}
                                 <label class="checkbox-label">
-                                    <input type="checkbox" name="art_styles" value="{{ art_style }}" class="art-style-checkbox mr-2">
+                                    <input type="checkbox" name="art_styles" value="{{ art_style }}" class="art-style-checkbox">
                                     <span>{{ art_style }}</span>
                                 </label>
                             {% endfor %}
                         </div>
                     </div>
 
-                    <!-- Subject Selection -->
-                    <div class="mb-4">
-                        <label for="subject" class="form-label">Choose a subject that captures your interest:</label>
+                    <div class="mb-0">
+                        <label for="subject" class="form-label">What subjects interest you the most?</label>
                         <select id="subject" name="subject" class="form-control">
                             <option value="">Choose a subject</option>
                             <option value="Human Stories">Human Stories (portraits, daily life)</option>
@@ -70,29 +102,38 @@
                             <option value="Open">I'm open to anything</option>
                         </select>
                     </div>
-                </fieldset>
-
-                <!-- Submit Buttons -->
-                <button type="submit" class="btn-primary">Find Music & Art</button>
-                <button type="button" id="surpriseBtn" class="btn-surprise">Surprise Me!</button>
+                </div>
+                
+                <!-- Submit Buttons Section -->
+                <div class="form-section">
+                    <div class="buttons-container">
+                        <button type="submit" class="btn-primary">
+                            <span>Find My Perfect Match</span>
+                        </button>
+                        <button type="button" id="surpriseBtn" class="btn-surprise">
+                            <span>Surprise Me!</span>
+                        </button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
 </div>
 
 <!-- Modal for Too Many Selections -->
-<div id="mood-modal" class="modal hidden">
+<div id="mood-modal" class="modal">
     <div class="modal-content">
-        <h3 class="modal-title">Too Many Selections</h3>
-        <p class="text-gray-600 mb-4">You can only select up to 3 items. Please deselect one before adding another.</p>
-        <button id="close-modal" class="modal-btn">Okay</button>
+        <h3 class="modal-title">Maximum Selections Reached</h3>
+        <p>You can only select up to 3 items. Please deselect one before adding another.</p>
+        <button id="close-modal" class="modal-btn">Got it</button>
     </div>
 </div>
 
 <!-- Loading Screen -->
 <div id="loading-screen" class="loading-screen hidden">
     <div class="loading-container">
-        <span class="text-xl font-bold">Loading<span id="loading-dots" class="loading-dots"></span></span>
+        <div class="loading-spinner"></div>
+        <span class="loading-text">Creating your personalized experience...</span>
     </div>
 </div>
 
@@ -104,7 +145,7 @@
                 let checkedBoxes = document.querySelectorAll(`${className}:checked`);
                 if (checkedBoxes.length > 3) {
                     this.checked = false;
-                    document.getElementById('mood-modal').classList.remove('hidden');
+                    document.getElementById('mood-modal').classList.add('is-visible');
                 }
             });
         });
@@ -112,7 +153,7 @@
 
     // Close modal
     document.getElementById('close-modal').addEventListener('click', function () {
-        document.getElementById('mood-modal').classList.add('hidden');
+        document.getElementById('mood-modal').classList.remove('is-visible');
     });
 
     // Form submit handler
@@ -190,13 +231,12 @@
     // Initialize checkbox limitation
     limitSelections('.mood-checkbox');
     limitSelections('.art-style-checkbox');
-
-    // Loading dots animation
-    const dotsElement = document.getElementById('loading-dots');
-    let dots = 1;
-    setInterval(() => {
-        dotsElement.textContent = '.'.repeat(dots);
-        dots = dots < 3 ? dots + 1 : 1;
-    }, 500);
+    
+    // Update modal class names
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal')) {
+            e.target.classList.remove('is-visible');
+        }
+    });
 </script>
 {% endblock %}
