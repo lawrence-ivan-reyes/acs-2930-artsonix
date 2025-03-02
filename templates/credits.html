@@ -1,134 +1,141 @@
 {% extends 'base.html' %}
 {% block content %}
-<header class="header-section">
-    <h2 class="text-3xl font-bold">Meet the Team</h2>
-    <p class="text-lg mt-3">The people behind ArtSonix</p>
+<header class="about-page-header">
+    <div class="header-overlay"></div>
+    <div class="header-inner-mat"></div>
+    
+    <div class="header-content">
+        <div class="header-text-wrapper">
+            <h2 class="about-header-title">Credits</h2>
+            <p class="about-header-subtitle">The People and Technologies Behind ArtSonix</p>
+        </div>
+        <div class="header-graphic">
+            <div class="graphic-element team-icon"></div>
+            <div class="graphic-element tech-icon"></div>
+        </div>
+    </div>
 </header>
 
 <div class="container mx-auto px-4 py-8">
-    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden mb-10">
-        <div class="p-8">
-            <h3 class="text-2xl font-bold mb-6 text-blue-700">The People Behind ArtSonix</h3>
-            <p class="text-gray-700 mb-6">
-                ArtSonix is brought to life by a team of passionate designers, developers, and music lovers.
-                Each member contributes their expertise to blend <strong>art and music</strong> into a unique discovery experience.
-            </p>
-            
-            <h3 class="text-2xl font-bold mb-4 text-blue-700">Our Team</h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                <div class="border p-6 rounded-lg shadow-sm bg-gray-50">
-                    <div class="flex items-center mb-3">
-                        <span class="text-3xl mr-3">👨🏻‍💻 </span>
-                        <h4 class="text-xl font-bold">Joshua Kakinuki</h4>
-                    </div>
-                    <p class="text-gray-700">Fullstack Developer and UI/UX Designer</p>
+    <div class="form-container about-container">
+        <div class="form-section">
+            <h3 class="form-legend">Our Team</h3>
+            <div class="grid grid-cols-4 gap-4">
+                <div class="about-step">
+                    <div class="about-step-number">👨🏻‍💻</div>
+                    <h4>Joshua Kakinuki</h4>
+                    <p>Fullstack Developer and UI/UX Designer</p>
                 </div>
                 
-                <div class="border p-6 rounded-lg shadow-sm bg-gray-50">
-                    <div class="flex items-center mb-3">
-                        <span class="text-3xl mr-3">👨🏻‍💻 </span>
-                        <h4 class="text-xl font-bold">Ivan Reyes</h4>
-                    </div>
-                    <p class="text-gray-700">GitMaster and Backend Developer</p>
+                <div class="about-step">
+                    <div class="about-step-number">👨🏻‍💻</div>
+                    <h4>Ivan Reyes</h4>
+                    <p>GitMaster and Front-End Developer</p>
                 </div>
                 
-                <div class="border p-6 rounded-lg shadow-sm bg-gray-50">
-                    <div class="flex items-center mb-3">
-                        <span class="text-3xl mr-3">👩🏻‍💻 </span>
-                        <h4 class="text-xl font-bold">Lucila Hernandez Del Carmen</h4>
-                    </div>
-                    <p class="text-gray-700">Project Manager and Backend Lead Developer</p>
+                <div class="about-step">
+                    <div class="about-step-number">👩🏻‍💻</div>
+                    <h4>Lucila Hernandez Del Carmen</h4>
+                    <p>Project Manager and Lead Backend Developer</p>
                 </div>
                 
-                <div class="border p-6 rounded-lg shadow-sm bg-gray-50">
-                    <div class="flex items-center mb-3">
-                        <span class="text-3xl mr-3">🧑🏾‍💻 </span>
-                        <h4 class="text-xl font-bold">Juanzel Staton</h4>
-                    </div>
-                    <p class="text-gray-700">Backend Developer</p>
+                <div class="about-step">
+                    <div class="about-step-number">🧑🏾‍💻</div>
+                    <h4>Juanzel Staton</h4>
+                    <p>Backend Developer</p>
                 </div>
             </div>
-            
-            <h3 class="text-2xl font-bold mb-4 text-blue-700">Special Thanks</h3>
-            <p class="text-gray-700 mb-6">
-                A huge thank you to our community of artists, musicians, and users
-                who continue to inspire us every day. Your love for art and music keeps ArtSonix evolving!
-            </p>
-            
-            <h3 class="text-2xl font-bold mb-6 text-blue-700">API Partners</h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                <div class="border p-6 rounded-lg shadow-sm">
+        </div>
+
+        <div class="form-section">
+            <h3 class="form-legend">API Partners</h3>
+            <div class="about-sources-container">
+                <div class="about-source">
                     <div class="flex items-center mb-4">
-                        <img src="https://www.metmuseum.org/-/media/images/visit/met-fifth-ave/fifthave_teaser.jpg" alt="The Met Museum" class="w-16 h-16 object-cover rounded-lg mr-4">
-                        <h4 class="text-xl font-bold">The Metropolitan Museum of Art</h4>
+                        <img src="{{ url_for('static', filename='images/met.png') }}" 
+                             alt="The Met Museum" 
+                             class="w-10 h-10 object-contain rounded-lg mr-4">
                     </div>
-                    <p class="text-gray-700 mb-4">
-                        We're grateful to The Metropolitan Museum of Art for providing their 
-                        Open Access API which allows us to access their incredible collection 
-                        of artworks from around the world and throughout history.
+                    <p>
+                        Our art recommendations are powered by The Met's comprehensive API, 
+                        providing access to an extensive collection of artworks from around 
+                        the world, spanning various cultures, periods, and artistic styles.
                     </p>
-                    <a href="https://metmuseum.github.io/" target="_blank" class="text-blue-600 hover:underline">The Met API Documentation</a>
+                    <a href="https://metmuseum.github.io/" target="_blank" class="source-link">Met Museum API Documentation</a>
                 </div>
                 
-                <div class="border p-6 rounded-lg shadow-sm">
+                <div class="about-source">
                     <div class="flex items-center mb-4">
-                        <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_Green.png" alt="Spotify" class="w-16 h-16 object-contain rounded-lg mr-4">
-                        <h4 class="text-xl font-bold">Spotify</h4>
+                        <img src="{{ url_for('static', filename='images/spotify.png') }}" 
+                             alt="Spotify" 
+                             class="w-10 h-10 object-contain rounded-lg mr-4">
                     </div>
-                    <p class="text-gray-700 mb-4">
+                    <p>
                         Our music recommendations are powered by Spotify's API, providing 
                         access to one of the world's largest music streaming platforms with 
                         millions of tracks across all genres.
                     </p>
-                    <a href="https://developer.spotify.com/documentation/web-api/" target="_blank" class="text-blue-600 hover:underline">Spotify API Documentation</a>
+                    <a href="https://developer.spotify.com/documentation/web-api/" target="_blank" class="source-link">Spotify API Documentation</a>
                 </div>
             </div>
-            
-            <h3 class="text-2xl font-bold mb-6 text-blue-700">Technologies Used</h3>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-10">
-                <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1869px-Python-logo-notext.svg.png" alt="Python" class="w-16 h-16 object-contain mx-auto mb-2">
-                    <h5 class="font-bold">Python</h5>
-                    <p class="text-sm text-gray-600">Core backend language</p>
+        </div>
+
+        <div class="form-section">
+            <h3 class="form-legend">Technologies Used</h3>
+            <div class="about-steps-container">
+                <div class="about-step">
+                    <div class="about-step-number">
+                        <img src="{{ url_for('static', filename='images/python.png') }}" alt="Python" class="technology-logo">
+                    </div>
+                    <h4>Python</h4>
+                    <p>Core backend language</p>
                 </div>
                 
-                <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <img src="https://flask.palletsprojects.com/en/2.0.x/_images/flask-logo.png" alt="Flask" class="w-16 h-16 object-contain mx-auto mb-2">
-                    <h5 class="font-bold">Flask</h5>
-                    <p class="text-sm text-gray-600">Web framework</p>
+                <div class="about-step">
+                    <div class="about-step-number">
+                        <img src="{{ url_for('static', filename='images/flask.png') }}" alt="Flask" class="technology-logo">
+                    </div>
+                    <h4>Flask</h4>
+                    <p>Web framework</p>
                 </div>
                 
-                <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <img src="https://pgjones.gitlab.io/quart/logo.png" alt="Quart" class="w-16 h-16 object-contain mx-auto mb-2">
-                    <h5 class="font-bold">Quart</h5>
-                    <p class="text-sm text-gray-600">Asynchronous web framework</p>
+                <div class="about-step">
+                    <div class="about-step-number">
+                        <img src="{{ url_for('static', filename='images/quart.png') }}" alt="Quart" class="technology-logo">
+                    </div>
+                    <h4>Quart</h4>
+                    <p>Asynchronous web framework</p>
                 </div>
                 
-                <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Tailwind_CSS_Logo.svg/2048px-Tailwind_CSS_Logo.svg.png" alt="Tailwind CSS" class="w-16 h-16 object-contain mx-auto mb-2">
-                    <h5 class="font-bold">Tailwind CSS</h5>
-                    <p class="text-sm text-gray-600">CSS framework</p>
+                <div class="about-step">
+                    <div class="about-step-number">
+                        <img src="{{ url_for('static', filename='images/tailwind.png') }}" alt="Tailwind CSS" class="technology-logo">
+                    </div>
+                    <h4>Tailwind CSS</h4>
+                    <p>CSS framework</p>
                 </div>
                 
-                <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <img src="https://cdn.iconscout.com/icon/free/png-256/free-javascript-2038874-1720087.png" alt="JavaScript" class="w-16 h-16 object-contain mx-auto mb-2">
-                    <h5 class="font-bold">JavaScript</h5>
-                    <p class="text-sm text-gray-600">Frontend interactivity</p>
+                <div class="about-step">
+                    <div class="about-step-number">
+                        <img src="{{ url_for('static', filename='images/javascript.png') }}" alt="JavaScript" class="technology-logo">
+                    </div>
+                    <h4>JavaScript</h4>
+                    <p>Frontend interactivity</p>
                 </div>
                 
-                <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <img src="https://jinja.palletsprojects.com/en/3.0.x/_images/jinja-logo.png" alt="Jinja" class="w-16 h-16 object-contain mx-auto mb-2">
-                    <h5 class="font-bold">Jinja</h5>
-                    <p class="text-sm text-gray-600">Template engine</p>
+                <div class="about-step">
+                    <div class="about-step-number">
+                        <img src="{{ url_for('static', filename='images/jinja.png') }}" alt="Jinja" class="technology-logo">
+                    </div>
+                    <h4>Jinja</h4>
+                    <p>Template engine</p>
                 </div>
             </div>
-            
-            <!-- Call to Action -->
+        </div>
+
+        <div class="form-section">
             <div class="text-center mt-8">
-                <a href="/" class="btn-primary inline-block max-w-xs">Back to Home 🏠</a>
+                <a href="/" class="btn-primary inline-block max-w-xs">Get Started</a>
             </div>
         </div>
     </div>

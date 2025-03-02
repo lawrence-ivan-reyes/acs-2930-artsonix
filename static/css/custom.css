@@ -1179,7 +1179,7 @@
 }
 
 .about-header-subtitle {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     color: var(--gray-600);
     line-height: 1.6;
     max-width: 600px;
@@ -1325,6 +1325,126 @@
 @media (max-width: 768px) {
     .about-steps-container,
     .about-sources-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Credits Page */
+.credits-page .header-section {
+    border-image: linear-gradient(
+        to right, 
+        var(--primary-light), 
+        var(--accent-light)
+    ) 1;
+}
+
+.credits-page .header-section h2 {
+    font-size: 3.5rem;
+    background: linear-gradient(135deg, var(--gray-900) 0%, var(--primary) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.credits-page .team-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.credits-page .team-card {
+    background-color: var(--gray-100);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    transition: all var(--transition);
+    box-shadow: var(--shadow-sm);
+}
+
+.credits-page .team-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    background-color: var(--light);
+}
+
+.credits-page .team-member-icon {
+    font-size: 2.5rem;
+    margin-right: 1rem;
+    opacity: 0.8;
+}
+
+.credits-page .team-member-details {
+    flex-grow: 1;
+}
+
+.credits-page .team-member-name {
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 0.25rem;
+}
+
+.credits-page .team-member-role {
+    color: var(--gray-600);
+    font-size: 0.95rem;
+}
+
+.credits-page .api-partners-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.credits-page .api-partner-card {
+    background-color: var(--gray-100);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    transition: all var(--transition);
+}
+
+.credits-page .api-partner-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    background-color: var(--light);
+}
+
+.credits-page .technologies-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.credits-page .technology-card {
+    background-color: var(--gray-100);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all var(--transition);
+}
+
+.credits-page .technology-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    background-color: var(--light);
+}
+
+.credits-page .technology-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .credits-page .team-grid,
+    .credits-page .api-partners-grid,
+    .credits-page .technologies-grid {
         grid-template-columns: 1fr;
     }
 }
