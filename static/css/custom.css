@@ -900,30 +900,139 @@
   }
   
   .btn-surprise {
-    background: white;
-    color: var(--primary);
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 1rem 1.5rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--primary-light);
+    position: relative;
+    background: linear-gradient(135deg, #ff9e74, #ff7d54, #5a7dd9, #3a63c9);
+    background-size: 300% 300%;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 1.2rem 2rem;
+    border-radius: 50px;
+    border: none;
     cursor: pointer;
-    transition: all var(--transition);
     text-align: center;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
+    box-shadow: 
+      0 6px 20px rgba(58, 99, 201, 0.25),
+      0 2px 5px rgba(0, 0, 0, 0.1),
+      inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+    animation: gradientShift 8s ease infinite, pulse 2s infinite;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10;
+  }
+
+  .btn-surprise::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    background: conic-gradient(
+      from 0deg,
+      rgba(255, 125, 84, 0),
+      rgba(255, 125, 84, 1),
+      rgba(255, 125, 84, 1),
+      rgba(58, 99, 201, 1),
+      rgba(58, 99, 201, 1), 
+      rgba(58, 99, 201, 0)
+    );
+    border-radius: 52px;
+    animation: rotate 4s linear infinite;
+    z-index: -1;
+  }
+
+  .btn-surprise::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50px;
+    background: linear-gradient(
+      45deg,
+      transparent 25%,
+      rgba(255, 255, 255, 0.4) 25%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 50%,
+      transparent 75%,
+      rgba(255, 255, 255, 0.4) 75%
+    );
+    background-size: 25px 25px;
+    opacity: 0.3;
+    mix-blend-mode: soft-light;
+    z-index: 1;
+    animation: shimmer 2s linear infinite;
+    pointer-events: none;
+  }
+
+  .surprise-text-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    z-index: 2;
+  }
+
+  .sparkle {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0);
+    z-index: 3;
+    pointer-events: none;
+  }
+
+    .sparkle:nth-child(1) { top: -10px; left: 10%; animation: sparkle 2s ease infinite 0.1s; }
+    .sparkle:nth-child(2) { top: 50%; right: -5px; animation: sparkle 2s ease infinite 0.4s; }
+    .sparkle:nth-child(3) { bottom: -8px; left: 25%; animation: sparkle 2s ease infinite 0.7s; }
+    .sparkle:nth-child(4) { top: 30%; left: -5px; animation: sparkle 2s ease infinite 1s; }
+    .sparkle:nth-child(5) { bottom: 30%; right: 10%; animation: sparkle 2s ease infinite 1.3s; }
+
+  .surprise-icon {
+    display: inline-block;
+    font-size: 1.2rem;
+    animation: bounce 2s ease infinite;
   }
   
+  
   .btn-surprise:hover {
-    background-color: var(--gray-100);
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 
+      0 15px 25px rgba(58, 99, 201, 0.3),
+      0 5px 10px rgba(0, 0, 0, 0.1),
+      inset 0 0 0 3px rgba(255, 255, 255, 0.5);
+    background-size: 200% 200%;
   }
   
   .btn-surprise:active {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 5px 15px rgba(58, 99, 201, 0.2);
+  }
+
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: 0 0; }
+    100% { background-position: 50px 0; }
+  }
+  
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(-3px) rotate(20deg); }
+  }
+  
+  @keyframes sparkle {
+    0% { transform: scale(0); opacity: 0; }
+    20% { transform: scale(1); opacity: 0.8; }
+    40% { transform: scale(0.2); opacity: 0.5; }
+    60% { transform: scale(1.2); opacity: 0.9; }
+    80% { transform: scale(0.5); opacity: 0.3; }
+    100% { transform: scale(0); opacity: 0; }
   }
   
   /* Modal Styling */

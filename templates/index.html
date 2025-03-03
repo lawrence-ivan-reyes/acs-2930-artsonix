@@ -12,7 +12,7 @@
     <div class="art-frame art-frame-3"></div>
     
     <!-- Gallery nameplate -->
-    <div class="gallery-nameplate">Featured Exhibition</div>
+    <div class="gallery-nameplate">Curated For You</div>
     
     <div class="music-note note-1">♪</div>
     <div class="music-note note-2">♫</div>
@@ -46,8 +46,8 @@
                     <p class="form-label">Select up to 3 moods that resonate with you</p>
                     
                     <div class="checkbox-container">
-                        {% for mood in ["Inspired", "Creative", "Calm", "Energetic", "Adventurous", "Happy", "Sad", "Romantic", "Focused", "Upbeat", "Rebellious", "Dark", "Nostalgic", "Trippy", "Party", "Epic", "Quirky", "Emotional"] %}
-                            <label class="checkbox-label">
+                        {% for mood in ["Adventurous", "Calm", "Creative", "Dark", "Emotional", "Epic", "Focused", "Happy", "Inspired", "Nostalgic", "Party", "Quirky", "Rebellious", "Romantic", "Sad", "Hopeful", "Trippy", "Upbeat"] %}
+                        <label class="checkbox-label">
                                 <input type="checkbox" name="moods" value="{{ mood }}" class="mood-checkbox">
                                 <span>{{ mood }}</span>
                             </label>
@@ -62,7 +62,7 @@
                     <div class="mb-6">
                         <p class="form-label">What type of music are you looking for?</p>
                         <div class="radio-container">
-                            {% for media in ["Playlist", "Album", "Artist", "Track", "I'm open to anything"] %}
+                            {% for media in ["Album", "Artist", "Playlist", "Track", "I'm open to anything"] %}
                                 <label class="radio-label">
                                     <input type="radio" name="rec_type" value="{{ media.lower() }}" {% if loop.first %}checked{% endif %}>
                                     <span>{{ media }}</span>
@@ -84,8 +84,8 @@
                     <div class="mb-6">
                         <p class="form-label">Select your favorite art styles (up to 3)</p>
                         <div class="checkbox-container">
-                            {% for art_style in ["Cubism", "Abstract", "Contemporary art", "Modern", "Impressionism", "Baroque", "Romanticism", "Pre-Raphaelite", "Op Art", "Futurism", "Tonalism", "I'm open to anything"] %}
-                                <label class="checkbox-label">
+                            {% for art_style in ["Abstract", "Baroque", "Contemporary art", "Cubism", "Futurism", "Impressionism", "Modern", "Op Art", "Pre-Raphaelite", "Romanticism", "Tonalism", "I'm open to anything"] %}
+                            <label class="checkbox-label">
                                     <input type="checkbox" name="art_styles" value="{{ art_style }}" class="art-style-checkbox">
                                     <span>{{ art_style }}</span>
                                 </label>
@@ -111,10 +111,21 @@
                 <div class="form-section">
                     <div class="buttons-container">
                         <button type="submit" class="btn-primary">
-                            <span>Find My Perfect Match</span>
+                            <span>Create My Curated Experience</span>
                         </button>
                         <button type="button" id="surpriseBtn" class="btn-surprise">
-                            <span>Surprise Me!</span>
+                            <!-- Sparkle elements -->
+                            <div class="sparkle" style="width:8px; height:8px;"></div>
+                            <div class="sparkle" style="width:6px; height:6px;"></div>
+                            <div class="sparkle" style="width:10px; height:10px;"></div>
+                            <div class="sparkle" style="width:7px; height:7px;"></div>
+                            <div class="sparkle" style="width:9px; height:9px;"></div>
+                            
+                            <div class="surprise-text-container">
+                                <span class="surprise-icon">✨</span>
+                                <span>Surprise Me!</span>
+                                <span class="surprise-icon">🪄</span>
+                            </div>
                         </button>
                     </div>
                 </div>
