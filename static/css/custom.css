@@ -2170,6 +2170,8 @@
   .play-button {
     width: 50px;
     height: 50px;
+    position: relative;
+    left: 2px;
     background-color: white;
     color: var(--primary-dark);
     border-radius: 50%;
@@ -2351,6 +2353,35 @@
   .hidden {
     display: none !important;
   }
+
+  .draggable-btn {
+    background-color: var(--accent) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(255, 125, 84, 0.25);
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: fit-content;
+    margin: 1rem auto !important;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.draggable-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 125, 84, 0.35);
+}
+
+.draggable-btn svg {
+    width: 16px;
+    height: 16px;
+}
   
   /* Responsive adjustments */
   @media (max-width: 1024px) {

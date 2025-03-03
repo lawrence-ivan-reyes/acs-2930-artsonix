@@ -1,12 +1,5 @@
 {% extends 'base.html' %}
 {% block content %}
-<header class="page-header">
-    <div class="header-content">
-        <h1 class="page-title">Your Personalized Art & Music Experience</h1>
-        <p class="page-subtitle">Discover the perfect blend of visual and auditory inspiration</p>
-    </div>
-</header>
-
 <main class="container mx-auto px-4 py-8">
     <div class="results-container">
         <!-- Art gallery section -->
@@ -206,6 +199,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 nextButton.click();
             }
         });
+
+        const createNewBtn = document.querySelector('.text-center a.btn-primary');
+        if (createNewBtn) {
+            // Create container
+            const container = document.createElement('div');
+            container.className = 'nav-cta-container';
+            container.style.display = 'inline-block';
+            container.style.position = 'relative';
+            container.style.margin = '0 auto';
+            
+            // Insert container
+            createNewBtn.parentNode.insertBefore(container, createNewBtn);
+            createNewBtn.parentNode.removeChild(createNewBtn);
+            container.appendChild(createNewBtn);
+            
+            // Add glow effect
+            const glow = document.createElement('div');
+            glow.className = 'cta-glow';
+            container.appendChild(glow);
+            
+            // Update button styling
+            createNewBtn.className = 'nav-cta';
+            
+            // Wrap content
+            const text = createNewBtn.textContent.trim();
+            createNewBtn.innerHTML = `
+                <span class="nav-cta-text">${text}</span>
+                <span class="nav-cta-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                </span>
+            `;
+        }
     }
     
     // Function to update the featured artwork display
@@ -376,11 +404,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const toggle = document.getElementById('spotifyPlayerToggle');
         let isDraggable = false;
         
-        // Add button to make player draggable
         const draggableBtn = document.createElement('button');
-        draggableBtn.textContent = 'Make Draggable';
-        draggableBtn.className = 'btn-primary text-sm mt-2 mb-2 mx-auto block';
-        draggableBtn.style.fontSize = '0.8rem';
+        draggableBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 9l-3 3 3 3"></path>
+                <path d="M9 5l3-3 3 3"></path>
+                <path d="M15 19l3-3 3 3"></path>
+                <path d="M19 9l3 3-3 3"></path>
+                <path d="M2 12h20"></path>
+                <path d="M12 2v20"></path>
+            </svg>
+            Make Player Draggable
+        `;
+draggableBtn.className = 'draggable-btn';
         draggableBtn.addEventListener('click', function() {
             makePlayerDraggable();
         });
@@ -472,67 +508,74 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function setupDraggableEvents(draggableElement, handleElement) {
-        let isDragging = false;
-        let offsetX, offsetY;
-        let lastMouseX, lastMouseY;
+    let isDragging = false;
+    let offsetX, offsetY;
+    let lastMouseX, lastMouseY;
+    
+    const sensitivity = 1.8; // Adjust this value to control speed
+    
+    draggableElement.style.position = 'fixed';
+    draggableElement.style.cursor = 'move'; 
+    
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const elementWidth = 700; // Approximate width
+    const elementHeight = 500; // Approximate height
+    
+    draggableElement.style.top = `${(viewportHeight - elementHeight) / 2}px`;
+    draggableElement.style.left = `${(viewportWidth - elementWidth) / 2}px`;
+    
+    // Apply the mousedown event to the entire draggable element instead of just the handle
+    draggableElement.addEventListener('mousedown', function(e) {
+        // Don't initiate drag if clicking on interactive elements
+        if (e.target.closest('button, a, .track-item, input, .player-close')) {
+            return;
+        }
         
-        const sensitivity = 1.8; // Adjust this value to control speed
+        isDragging = true;
         
-        draggableElement.style.position = 'fixed';
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
         
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const elementWidth = 700; // Approximate width
-        const elementHeight = 500; // Approximate height
+        const rect = draggableElement.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
         
-        draggableElement.style.top = `${(viewportHeight - elementHeight) / 2}px`;
-        draggableElement.style.left = `${(viewportWidth - elementWidth) / 2}px`;
+        draggableElement.classList.add('is-dragging');
         
-        handleElement.addEventListener('mousedown', function(e) {
-            isDragging = true;
-            
-            lastMouseX = e.clientX;
-            lastMouseY = e.clientY;
-            
-            const rect = draggableElement.getBoundingClientRect();
-            offsetX = e.clientX - rect.left;
-            offsetY = e.clientY - rect.top;
-            
-            draggableElement.classList.add('is-dragging');
-            
-            e.preventDefault();
-        });
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
         
-        document.addEventListener('mousemove', function(e) {
-            if (!isDragging) return;
-            
-            const deltaX = (e.clientX - lastMouseX) * sensitivity;
-            const deltaY = (e.clientY - lastMouseY) * sensitivity;
-            
-            const currentLeft = parseInt(draggableElement.style.left) || 0;
-            const currentTop = parseInt(draggableElement.style.top) || 0;
-            
-            draggableElement.style.left = `${currentLeft + deltaX}px`;
-            draggableElement.style.top = `${currentTop + deltaY}px`;
-            
-            lastMouseX = e.clientX;
-            lastMouseY = e.clientY;
-        });
+        const deltaX = (e.clientX - lastMouseX) * sensitivity;
+        const deltaY = (e.clientY - lastMouseY) * sensitivity;
         
-        document.addEventListener('mouseup', function() {
-            if (isDragging) {
-                isDragging = false;
-                draggableElement.classList.remove('is-dragging');
-            }
-        });
+        const currentLeft = parseInt(draggableElement.style.left) || 0;
+        const currentTop = parseInt(draggableElement.style.top) || 0;
         
-        document.addEventListener('mouseleave', function() {
-            if (isDragging) {
-                isDragging = false;
-                draggableElement.classList.remove('is-dragging');
-            }
-        });
-    }
+        draggableElement.style.left = `${currentLeft + deltaX}px`;
+        draggableElement.style.top = `${currentTop + deltaY}px`;
+        
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    });
+    
+    document.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            draggableElement.classList.remove('is-dragging');
+        }
+    });
+    
+    document.addEventListener('mouseleave', function() {
+        if (isDragging) {
+            isDragging = false;
+            draggableElement.classList.remove('is-dragging');
+        }
+    });
+}
     
     // Initialize the page
     createArtGallery();
