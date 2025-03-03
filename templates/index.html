@@ -1,181 +1,467 @@
 {% extends 'base.html' %}
 {% block content %}
-<header class="text-center py-10">
-    <h2 class="text-3xl font-bold text-gray-800">Welcome to ArtSonix! Discover Music Through Art</h2>
-</header>
-<div class="flex items-center justify-center py-10">
-    <div class="max-w-4xl w-full mx-auto p-6 bg-white shadow-lg rounded-2xl">
-        <form id="combined-form" class="mt-4" action="/combined-results" method="post">
-            <fieldset class="border border-gray-300 p-4 rounded-lg">
-                <legend class="text-lg font-bold text-gray-800">Find Your Music and Art Match</legend>
+<header class="header-section">
+    <!-- Background pattern and texture -->
+    <div class="art-gallery-bg"></div>
+    <div class="header-inner-mat"></div>
+    <div class="gallery-lighting"></div>
+    
+    <!-- Decorative art frames -->
+    <div class="art-frame art-frame-1"></div>
+    <div class="art-frame art-frame-2"></div>
+    <div class="art-frame art-frame-3"></div>
+    
+    <!-- Gallery nameplate -->
+    <div class="gallery-nameplate">Curated For You</div>
+    
+    <div class="music-note note-1">♪</div>
+    <div class="music-note note-2">♫</div>
+    <div class="music-note note-3">♩</div>
+    <div class="music-note note-4">♬</div>
+    
+    <!-- Content -->
+    <div class="header-content">
+      <h2>Discover Your Perfect Art &<br>Music Pairing</h2>
+      <p>ArtSonix connects your personal taste to curated art from The Met and<br>personalized music from Spotify</p>
+      
+      <div class="sound-wave">
+        <div class="sound-wave-bar"></div>
+        <div class="sound-wave-bar"></div>
+        <div class="sound-wave-bar"></div>
+        <div class="sound-wave-bar"></div>
+        <div class="sound-wave-bar"></div>
+        <div class="sound-wave-bar"></div>
+        <div class="sound-wave-bar"></div>
+      </div>
+    </div>
+  </header>
 
-                <!-- Mood Selection -->
-                <p class="block text-gray-600 mt-2">Select up to 3 moods:</p>
-                <div class="grid grid-cols-2 gap-2 mt-2">
-                    {% for mood in ["Inspired", "Creative", "Calm", "Energetic", "Adventurous", "Happy", "Sad", "Romantic", "Focused", "Upbeat", "Rebellious", "Dark", "Nostalgic", "Trippy", "Party", "Epic", "Quirky", "Emotional"] %}
-                        <label class="flex items-center">
-                            <input type="checkbox" name="moods" value="{{ mood }}" class="mood-checkbox">
-                            <span class="ml-2">{{ mood }}</span>
-                        </label>
-                    {% endfor %}
+<div class="flex items-center justify-center py-8">
+    <div class="max-w-5xl w-full mx-auto px-4">
+        <div class="form-container">
+            <form id="combined-form" action="/combined-results" method="post">
+                <!-- Mood Selection Section -->
+                <div class="form-section">
+                    <h3 class="form-legend">What mood are you in today?</h3>
+                    <p class="form-label">Select up to 3 moods that resonate with you</p>
+                    
+                    <div class="checkbox-container">
+                        {% for mood in ["Adventurous", "Calm", "Creative", "Dark", "Emotional", "Epic", "Focused", "Happy", "Inspired", "Nostalgic", "Party", "Quirky", "Rebellious", "Romantic", "Sad", "Hopeful", "Trippy", "Upbeat"] %}
+                        <label class="checkbox-label">
+                                <input type="checkbox" name="moods" value="{{ mood }}" class="mood-checkbox">
+                                <span>{{ mood }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
                 </div>
+                
+                <!-- Media & Search Section -->
+                <div class="form-section">
+                    <h3 class="form-legend">Find Your Sound</h3>
+                    
+                    <div class="mb-6">
+                        <p class="form-label">Select the type of music you are looking for</p>
+                        <div class="radio-container">
+                            {% for media in ["Album", "Artist", "Playlist", "Track", "I'm open to anything"] %}
+                                <label class="radio-label">
+                                    <input type="radio" name="rec_type" value="{{ media.lower() }}" {% if loop.first %}checked{% endif %}>
+                                    <span>{{ media }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
 
-                <!-- Search Query -->
-                <p class="block text-gray-600 mt-4">Or enter a specific search query:</p>
-                <input type="text" id="search-query" name="query" class="w-full p-2 border rounded-lg mt-2" placeholder="Enter artist, album, playlist, or song (optional)">
-
-                <!-- Media Type Selection -->
-                <p class="block text-gray-600 mt-4">Choose what you want to search for:</p>
-                <div class="grid grid-cols-2 gap-2 mt-2">
-                    {% for media in ["Playlist", "Album", "Artist", "Track", "I’m open to anything"] %}
-                        <label class="flex items-center">
-                            <input type="radio" name="rec_type" value="{{ media.lower() }}" required>
-                            <span class="ml-2">{{ media }}</span>
-                        </label>
-                    {% endfor %}
+                    <div class="mb-0">
+                        <p class="form-label">Have something specific in mind?</p>
+                        <input type="text" id="search-query" name="query" class="form-control" placeholder="Enter artist, genre, mood, or anything that inspires you">
+                    </div>
                 </div>
+                
+                <!-- Art Preferences Section -->
+                <div class="form-section">
+                    <h3 class="form-legend">Your Art Preferences</h3>
+                    
+                    <div class="mb-6">
+                        <p class="form-label">Select your favorite art styles (up to 3)</p>
+                        <div class="checkbox-container">
+                            {% for art_style in ["Abstract", "Baroque", "Contemporary art", "Cubism", "Futurism", "Impressionism", "Modern", "Op Art", "Pre-Raphaelite", "Romanticism", "Tonalism", "I'm open to anything"] %}
+                            <label class="checkbox-label">
+                                    <input type="checkbox" name="art_styles" value="{{ art_style }}" class="art-style-checkbox">
+                                    <span>{{ art_style }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
 
-                <!-- Art Style Selection -->
-                <p class="block text-gray-600 mt-4">Select your favorite art styles (up to 3):</p>
-                <div class="grid grid-cols-2 gap-2 mt-2">
-                    {% for art_style in ["Cubism", "Abstract", "Contemporary art", "Modern", "Impressionism", "Baroque", "Romanticism", "Pre-Raphaelite", "Op Art", "Futurism", "Tonalism", "I'm open to anything"] %}
-                        <label class="flex items-center">
-                            <input type="checkbox" name="art_styles" value="{{ art_style }}" class="art-style-checkbox">
-                            <span class="ml-2">{{ art_style }}</span>
-                        </label>
-                    {% endfor %}
+                    <div class="mb-0">
+                        <label for="subject" class="form-label">What subjects interest you the most?</label>
+                        <select id="subject" name="subject" class="form-control">
+                            <option value="">Choose a subject</option>
+                            <option value="Human Stories">Human Stories (portraits, daily life)</option>
+                            <option value="Nature & Landscapes">Nature & Landscapes</option>
+                            <option value="Religious & Mythological">Religious & Mythological</option>
+                            <option value="Historical Events">Historical Events</option>
+                            <option value="Abstract & Decorative">Abstract & Decorative</option>
+                            <option value="Open">I'm open to anything</option>
+                        </select>
+                    </div>
                 </div>
-
-                <!-- Subject Selection -->
-                <label for="subject" class="block text-gray-600 mt-4">Choose a subject that captures your interest:</label>
-                <select id="subject" name="subject" class="w-full p-2 border rounded-lg mt-2">
-                    <option value="">Choose a subject</option>
-                    <option value="Human Stories">Human Stories (portraits, daily life)</option>
-                    <option value="Nature & Landscapes">Nature & Landscapes</option>
-                    <option value="Religious & Mythological">Religious & Mythological</option>
-                    <option value="Historical Events">Historical Events</option>
-                    <option value="Abstract & Decorative">Abstract & Decorative</option>
-                    <option value="Open">I'm open to anything</option>
-                </select>
-            </fieldset>
-
-            <!-- Submit Buttons -->
-            <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 w-full">Find Music & Art</button>
-            <button type="button" id="surpriseBtn" class="mt-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 w-full">Surprise Me!</button>
-        </form>
+                
+                <!-- Submit Buttons Section -->
+                <div class="form-section">
+                    <div class="buttons-container">
+                        <button type="submit" class="btn-primary">
+                            <span>Create My Curated Experience</span>
+                        </button>
+                        <button type="button" id="surpriseBtn" class="btn-surprise">
+                            <!-- Sparkle elements -->
+                            <div class="sparkle" style="width:8px; height:8px;"></div>
+                            <div class="sparkle" style="width:6px; height:6px;"></div>
+                            <div class="sparkle" style="width:10px; height:10px;"></div>
+                            <div class="sparkle" style="width:7px; height:7px;"></div>
+                            <div class="sparkle" style="width:9px; height:9px;"></div>
+                            
+                            <div class="surprise-text-container">
+                                <span>Surprise Me!</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
 <!-- Modal for Too Many Selections -->
-<div id="mood-modal" class="fixed inset-0 hidden bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg w-96 p-4 text-center">
-        <h3 class="text-lg font-semibold">Too Many Selections</h3>
-        <p class="text-sm text-gray-600 mt-2">You can only select up to 3 items. Please deselect one before adding another.</p>
-        <button id="close-modal" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Okay</button>
+<div id="mood-modal" class="modal">
+    <div class="modal-content">
+        <h3 class="modal-title">Maximum Selections Reached</h3>
+        <p>You can only select up to 3 items. Please deselect one before adding another.</p>
+        <button id="close-modal" class="modal-btn">Got it</button>
     </div>
 </div>
 
 <!-- Loading Screen -->
-<div id="loading-screen" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
-    <div class="text-center text-black p-8 bg-white rounded-lg shadow-lg">
-        <span class="text-xl font-bold">Loading<span id="loading-dots">.</span></span>
+<div id="loading-screen" class="loading-screen hidden">
+    <div class="loading-container">
+        <!-- Simplified Art and Music Elements -->
+        <div class="loading-content">
+            <!-- Art Frame Element -->
+            <div class="loading-art-frame">
+                <div class="loading-art-canvas">
+                    <div class="loading-art-element"></div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="loading-progress-bar">
+                <div class="loading-progress" id="loading-progress"></div>
+            </div>
+            
+            <!-- Text -->
+            <h3 class="loading-title">Creating Your Experience</h3>
+            <div class="loading-message" id="loading-message">
+                Curating personalized art and music just for you...
+            </div>
+            
+            <!-- Sound Wave -->
+            <div class="sound-wave loading-wave">
+                <div class="sound-wave-bar"></div>
+                <div class="sound-wave-bar"></div>
+                <div class="sound-wave-bar"></div>
+                <div class="sound-wave-bar"></div>
+                <div class="sound-wave-bar"></div>
+            </div>
+        </div>
+        
+        <!-- Floating Notes -->
+        <div class="loading-note note-1">♪</div>
+        <div class="loading-note note-2">♫</div>
+        <div class="loading-note note-3">♩</div>
+        <div class="loading-note note-4">♬</div>
     </div>
 </div>
 
 <script>
+    // Limit selections to 3
     const limitSelections = (className) => {
         document.querySelectorAll(className).forEach(checkbox => {
             checkbox.addEventListener('change', function () {
                 let checkedBoxes = document.querySelectorAll(`${className}:checked`);
                 if (checkedBoxes.length > 3) {
                     this.checked = false;
-                    document.getElementById('mood-modal').classList.remove('hidden');
+                    document.getElementById('mood-modal').classList.add('is-visible');
                 }
             });
         });
     };
 
+    // Close modal
     document.getElementById('close-modal').addEventListener('click', function () {
-        document.getElementById('mood-modal').classList.add('hidden');
+        document.getElementById('mood-modal').classList.remove('is-visible');
     });
 
+    // Form submit handler
     document.getElementById('combined-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    // Show loading screen
-    document.getElementById('loading-screen').classList.remove('hidden');
-    
-    try {
-        // Get form data
-        const formData = new FormData(this);
+        e.preventDefault();
         
-        // Send POST request
-        const response = await fetch('/combined-results', {
-            method: 'POST',
-            body: formData
-        });
+        // Show loading screen
+        document.getElementById('loading-screen').classList.remove('hidden');
         
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
+        try {
+            // Get form data
+            const formData = new FormData(this);
+            
+            // Send POST request
+            const response = await fetch('/combined-results', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            
+            // Get the results and update the page
+            const results = await response.json();
+            
+            // Store both Met and Spotify results in localStorage
+            localStorage.setItem('artworks', JSON.stringify(results.met_results));
+            localStorage.setItem('spotify_results', JSON.stringify(results.spotify_results));
+            
+            // Redirect to results page
+            window.location.href = '/results';
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while processing your request.');
+        } finally {
+            document.getElementById('loading-screen').classList.add('hidden');
         }
-        
-        // Get the results and update the page
-        const results = await response.json();
-        
-        // Store both Met and Spotify results in localStorage
-        localStorage.setItem('artworks', JSON.stringify(results.met_results));
-        localStorage.setItem('spotify_results', JSON.stringify(results.spotify_results));
-        
-        // Redirect to results page
-        window.location.href = '/results';
+    });
 
-    } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred while processing your request.');
-    } finally {
-        document.getElementById('loading-screen').classList.add('hidden');
-    }
-});
-
-document.getElementById('surpriseBtn').addEventListener('click', async function(e) {
-    e.preventDefault();
-    
-    // Show loading screen
-    document.getElementById('loading-screen').classList.remove('hidden');
-    
-    try {
-        // Make request to the surprise-me endpoint
-        const response = await fetch('/surprise-me');
+    // Surprise button handler
+    document.getElementById('surpriseBtn').addEventListener('click', async function(e) {
+        e.preventDefault();
         
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
+        // Show loading screen
+        document.getElementById('loading-screen').classList.remove('hidden');
+        
+        try {
+            // Make request to the surprise-me endpoint
+            const response = await fetch('/surprise-me');
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            
+            // Parse the response
+            const combinedResults = await response.json();
+            
+            // Store both Met and Spotify results in localStorage
+            localStorage.setItem('artworks', JSON.stringify(combinedResults.met_results || []));
+            localStorage.setItem('spotify_results', JSON.stringify(combinedResults.spotify_results || []));
+            
+            // Redirect to results page
+            window.location.href = '/results';
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while generating surprise recommendations.');
+        } finally {
+            document.getElementById('loading-screen').classList.add('hidden');
         }
-        
-        // Parse the response
-        const combinedResults = await response.json();
-        
-        // Store both Met and Spotify results in localStorage
-        localStorage.setItem('artworks', JSON.stringify(combinedResults.met_results || []));
-        localStorage.setItem('spotify_results', JSON.stringify(combinedResults.spotify_results || []));
-        
-        // Redirect to results page
-        window.location.href = '/results';
-        
-    } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred while generating surprise recommendations.');
-        document.getElementById('loading-screen').classList.add('hidden');
-    }
-});
+    });
 
+    // Initialize checkbox limitation
     limitSelections('.mood-checkbox');
     limitSelections('.art-style-checkbox');
+    
+    // Update modal class names
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal')) {
+            e.target.classList.remove('is-visible');
+        }
+    });
 
-    const dotsElement = document.getElementById('loading-dots');
-    let dots = 1;
-    setInterval(() => {
-        dotsElement.textContent = '.'.repeat(dots);
-        dots = dots < 3 ? dots + 1 : 1;
-    }, 500);
+    // Simplified Loading Screen Animation
+document.addEventListener('DOMContentLoaded', function() {
+    // Loading messages to cycle through
+    const loadingMessages = [
+        "Curating personalized art and music...",
+        "Searching The Met's collection...",
+        "Exploring Spotify...",
+        "Analyzing artistic connections...",
+        "Creating harmony between visual art and music..."
+    ];
+    
+    // Function to simulate loading progress
+    function animateLoading() {
+        const messageElement = document.getElementById('loading-message');
+        const progressElement = document.getElementById('loading-progress');
+        
+        let progress = 0;
+        let messageIndex = 0;
+        
+        // Initial message
+        messageElement.textContent = loadingMessages[0];
+        
+        // Update loading state periodically
+        const interval = setInterval(() => {
+            // Update progress
+            progress += Math.random() * 3 + 1; // Random increment between 1-4%
+            
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(interval);
+            }
+            
+            // Update progress bar
+            progressElement.style.width = `${Math.min(progress, 100)}%`;
+            
+            // Cycle through messages (every ~3 seconds)
+            if (Math.random() > 0.95) {
+                messageIndex = (messageIndex + 1) % loadingMessages.length;
+                messageElement.style.opacity = 0;
+                
+                setTimeout(() => {
+                    messageElement.textContent = loadingMessages[messageIndex];
+                    messageElement.style.opacity = 1;
+                }, 300);
+            }
+        }, 200);
+        
+        return interval;
+    }
+    
+    // Original form submit handler - stored as a reference
+    const originalFormSubmit = async function(e) {
+        e.preventDefault();
+        
+        // Show loading screen
+        document.getElementById('loading-screen').classList.remove('hidden');
+        
+        try {
+            // Get form data
+            const formData = new FormData(this);
+            
+            // Send POST request
+            const response = await fetch('/combined-results', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            
+            // Get the results and update the page
+            const results = await response.json();
+            
+            // Store both Met and Spotify results in localStorage
+            localStorage.setItem('artworks', JSON.stringify(results.met_results));
+            localStorage.setItem('spotify_results', JSON.stringify(results.spotify_results));
+            
+            // Redirect to results page
+            window.location.href = '/results';
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while processing your request.');
+            document.getElementById('loading-screen').classList.add('hidden');
+        }
+    };
+    
+    // Function to initialize loading handling
+    function setupLoadingHandlers() {
+        const loadingScreen = document.getElementById('loading-screen');
+        const combinedForm = document.getElementById('combined-form');
+        const surpriseBtn = document.getElementById('surpriseBtn');
+        
+        if (!combinedForm || !surpriseBtn || !loadingScreen) return;
+        
+        // Enhanced form submission
+        combinedForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading screen
+            loadingScreen.classList.remove('hidden');
+            
+            // Start animation
+            const animationInterval = animateLoading();
+            
+            // Get form data
+            const formData = new FormData(this);
+            
+            // Send POST request with a small delay to show animation
+            setTimeout(async () => {
+                try {
+                    const response = await fetch('/combined-results', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    
+                    // Get results and store in localStorage
+                    const results = await response.json();
+                    localStorage.setItem('artworks', JSON.stringify(results.met_results));
+                    localStorage.setItem('spotify_results', JSON.stringify(results.spotify_results));
+                    
+                    // Redirect to results page
+                    window.location.href = '/results';
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while processing your request.');
+                    loadingScreen.classList.add('hidden');
+                    clearInterval(animationInterval);
+                }
+            }, 1500);
+        });
+        
+        // Surprise button - keep the original functionality but add loading
+        surpriseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Show loading screen
+            loadingScreen.classList.remove('hidden');
+            
+            // Start animation
+            const animationInterval = animateLoading();
+            
+            // Make request with a small delay to show animation
+            setTimeout(async () => {
+                try {
+                    // Make request to the surprise-me endpoint
+                    const response = await fetch('/surprise-me');
+                    
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    
+                    // Parse response and store results
+                    const results = await response.json();
+                    localStorage.setItem('artworks', JSON.stringify(results.met_results || []));
+                    localStorage.setItem('spotify_results', JSON.stringify(results.spotify_results || []));
+                    
+                    // Redirect to results page
+                    window.location.href = '/results';
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while generating surprise recommendations.');
+                    loadingScreen.classList.add('hidden');
+                    clearInterval(animationInterval);
+                }
+            }, 1500);
+        });
+    }
+    
+    // Initialize the loading handlers
+    setupLoadingHandlers();
+});
 </script>
 {% endblock %}

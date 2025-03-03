@@ -1,47 +1,145 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<!-- Header -->
-<header class="text-center py-10">
-    <h2 class="text-3xl font-bold text-gray-800">Meet the Team</h2>
-</header>
-
-<!-- Credits Section -->
-<div class="flex items-center justify-center min-h-screen">
-    <div class="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-2xl">
-        <h1 class="text-2xl font-bold text-gray-800 text-center">The People Behind ArtSonix</h1>
-        <p class="mt-4 text-gray-700 text-left">
-            ArtSonix is brought to life by a team of passionate designers, developers, and music lovers.  
-            Each member contributes their expertise to blend **art and music** into a unique discovery experience.
-        </p>
-        <br>
+<div class="header-graphic">
+    <div class="credits-visual-container">
+        <!-- Team visualization element -->
+        <div class="team-visual-element">
+            <!-- Team member icons -->
+            <div class="team-member-icon">👨🏻‍💻</div>
+            <div class="team-member-icon">👨🏻‍💻</div>
+            <div class="team-member-icon">👩🏻‍💻</div>
+            <div class="team-member-icon">🧑🏾‍💻</div>
+        </div>
         
-        <h2 class="mt-6 text-xl font-semibold text-blue-500">Our Team</h2>
-        <ul class="mt-3 space-y-3 text-gray-700">
-            <li>👨‍💻 <strong>Joshua Kakinuki</strong> – Fullstack Developer and UI/UX Designer</li>
-            <li>
-                <img src="/static/images/Git_icon.svg" alt="Git Icon" class="inline-block w-6 h-6 mr-2">
-                <strong>Ivan Reyes</strong> – GitMaster and Backend Developer
-            </li>
-            <li>🖥️ <strong>Lucila Hernandez Del Carmen</strong> – Project Manager and Backend Lead Developer</li>
-            <li>🎵 <strong>Juanzel Staton</strong> – Backend Developer</li>
-        </ul>
-        <br>
+        <!-- Technology visualization element -->
+        <div class="tech-visual-element">
+            <!-- Tech stack icons -->
+            <div class="tech-icon-mini">Py</div>
+            <div class="tech-icon-mini">Js</div>
+            <div class="tech-icon-mini">CSS</div>
+            <div class="tech-icon-mini">API</div>
+            <div class="tech-icon-mini">DB</div>
+            <div class="tech-icon-mini">♫</div>
+        </div>
+    </div>
+</div>
 
-        <h2 class="mt-6 text-xl font-semibold text-blue-500">Special Thanks</h2>
-        <p class="mt-3 text-gray-700">
-            A huge thank you to our community of artists, musicians, and users  
-            who continue to inspire us every day. Your love for art and music keeps ArtSonix evolving!  
-        </p>
-        <br>
+<div class="container mx-auto px-4 py-8">
+    <div class="form-container about-container">
+        <div class="form-section">
+            <h3 class="form-legend">Our Team</h3>
+            <div class="grid grid-cols-4 gap-4">
+                <div class="about-step">
+                    <div class="about-step-number">👨🏻‍💻</div>
+                    <h4>Joshua Kakinuki</h4>
+                    <p>Fullstack Developer and UI/UX Designer</p>
+                </div>
+                
+                <div class="about-step">
+                    <div class="about-step-number">👨🏻‍💻</div>
+                    <h4>Ivan Reyes</h4>
+                    <p>GitMaster and Front-End Developer</p>
+                </div>
+                
+                <div class="about-step">
+                    <div class="about-step-number">👩🏻‍💻</div>
+                    <h4>Lucila Hernandez Del Carmen</h4>
+                    <p>Project Manager and Lead Backend Developer</p>
+                </div>
+                
+                <div class="about-step">
+                    <div class="about-step-number">🧑🏾‍💻</div>
+                    <h4>Juanzel Staton</h4>
+                    <p>Backend Developer</p>
+                </div>
+            </div>
+        </div>
 
-            <!-- Call to Action -->
-            <div class="mt-6 text-center">
-                <a href="/" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                    Back to Home 🏠
-                </a>
+        <div class="form-section">
+            <h3 class="form-legend">API Partners</h3>
+            <div class="about-sources-container">
+                <div class="about-source">
+                    <div class="flex items-center mb-4">
+                        <img src="{{ url_for('static', filename='images/met.png') }}" 
+                             alt="The Met Museum" 
+                             class="w-10 h-10 object-contain rounded-lg mr-4">
+                    </div>
+                    <p>
+                        Our art recommendations are powered by The Met's API, 
+                        providing access to an extensive collection of artworks from around 
+                        the world, spanning various cultures, periods, and artistic styles.
+                    </p>
+                    <a href="https://metmuseum.github.io/" target="_blank" class="nav-link source-link">Met Museum API Documentation</a>
+                </div>
+                
+                <div class="about-source">
+                    <div class="flex items-center mb-4">
+                        <img src="{{ url_for('static', filename='images/spotify.png') }}" 
+                             alt="Spotify" 
+                             class="w-10 h-10 object-contain rounded-lg mr-4">
+                    </div>
+                    <p>
+                        Our music recommendations are powered by Spotify's API, providing 
+                        access to one of the world's largest music streaming platforms with 
+                        countless tracks, playlists, and albums across all genres.
+                    </p>
+                    <a href="https://developer.spotify.com/documentation/web-api/" target="_blank" class="nav-link source-link">Spotify API Documentation</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3 class="form-legend">Technologies Used</h3>
+            <div class="about-steps-container">
+                <div class="about-step">
+                    <div class="about-step-number">
+                        <img src="{{ url_for('static', filename='images/python.png') }}" alt="Python" class="technology-logo">
+                    </div>
+                    <h4>Python</h4>
+                </div>
+                
+                <div class="about-step">
+                    <div class="about-step-number">
+                        <img src="{{ url_for('static', filename='images/flask.png') }}" alt="Flask" class="technology-logo">
+                    </div>
+                    <h4>Flask</h4>
+                </div>
+                
+                <div class="about-step">
+                    <div class="about-step-number">
+                        <img src="{{ url_for('static', filename='images/quart.png') }}" alt="Quart" class="technology-logo">
+                    </div>
+                    <h4>Quart</h4>
+                </div>
+                
+                <div class="about-step">
+                    <div class="about-step-number">
+                        <img src="{{ url_for('static', filename='images/tailwind.png') }}" alt="Tailwind CSS" class="technology-logo">
+                    </div>
+                    <h4>Tailwind CSS</h4>
+                </div>
+                
+                <div class="about-step">
+                    <div class="about-step-number">
+                        <img src="{{ url_for('static', filename='images/javascript.png') }}" alt="JavaScript" class="technology-logo">
+                    </div>
+                    <h4>JavaScript</h4>
+                </div>
+                
+                <div class="about-step">
+                    <div class="about-step-number">
+                        <img src="{{ url_for('static', filename='images/jinja.png') }}" alt="Jinja" class="technology-logo">
+                    </div>
+                    <h4>Jinja</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="text-center mt-8">
+                <a href="/" class="btn-primary inline-block max-w-xs">Get Started</a>
             </div>
         </div>
     </div>
-</body>
+</div>
 {% endblock %}

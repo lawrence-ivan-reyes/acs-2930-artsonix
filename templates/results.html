@@ -1,97 +1,652 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<header class="text-center py-10">
-    <h2 class="text-3xl font-bold text-gray-800">Your Personalized Recommendations</h2>
-</header>
+<main class="container mx-auto px-4 py-8">
+    <div class="results-container">
+        <!-- Art gallery section -->
+        <section class="results-section">
+            <h2 class="section-title">Artwork Recommendations</h2>
+            <div id="artworkContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Artwork gallery will be dynamically inserted here -->
+            </div>
+        </section>
 
-<div class="px-4 py-8 max-w-7xl mx-auto">
-    <!-- Art Section -->
-    <section class="mb-12">
-        <h3 class="text-2xl font-bold text-gray-800 mb-6">Art Matches</h3>
-        <div id="artworks-container">
-            <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6" id="artworks-grid"></ul>
-        </div>
-    </section>
+        <!-- Spotify player section -->
+        <section class="results-section spotify-player" id="spotifyPlayer">
+            <h2 class="section-title">Music Recommendations</h2>
+            
+            <div class="music-player-top">
+                <div class="album-cover-container">
+                    <img id="currentAlbumCover" src="/static/images/default-album.jpg" alt="Album Cover" class="album-cover">
+                </div>
+                
+                <div class="player-info">
+                    <div class="player-meta">
+                        <h3 id="currentTrackName" class="player-title">Select a track</h3>
+                        <p id="currentArtist" class="player-creator">Artist</p>
+                        <p id="currentDescription" class="player-details">Select a track from the list below to see details</p>
+                    </div>
+                    
+                    <a id="spotifyLink" href="#" target="_blank" class="spotify-button">
+                        <svg class="spotify-button-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512">
+                            <path fill="currentColor" d="M248 8C111.1 8 0 119.1 0 256s111.1 248 248 248 248-111.1 248-248S384.9 8 248 8zm100.7 364.9c-4.2 0-6.8-1.3-10.7-3.6-62.4-37.6-135-39.2-206.7-24.5-3.9 1-9 2.6-11.9 2.6-9.7 0-15.8-7.7-15.8-15.8 0-10.3 6.1-15.2 13.6-16.8 81.9-18.1 165.6-16.5 237 30.2 6.1 3.9 9.7 7.4 9.7 16.5s-7.1 15.4-15.2 15.4zm26.9-65.6c-5.2 0-8.7-2.3-12.3-4.2-62.5-37-155.7-51.9-238.6-29.4-4.8 1.3-7.4 2.6-11.9 2.6-10.7 0-19.4-8.7-19.4-19.4s5.2-17.8 15.5-20.7c27.8-7.8 56.2-13.6 97.8-13.6 64.9 0 127.6 16.1 177 45.5 8.1 4.8 11.3 11 11.3 19.7-.1 10.8-8.5 19.5-19.4 19.5zm31-76.2c-5.2 0-8.4-1.3-12.9-3.9-71.2-42.5-198.5-52.7-280.9-29.7-3.6 1-8.1 2.6-12.9 2.6-13.2 0-23.3-10.3-23.3-23.6 0-13.6 8.4-21.3 17.4-23.9 35.2-10.3 74.6-15.2 117.5-15.2 73 0 149.5 15.2 205.4 47.8 7.8 4.5 12.9 10.7 12.9 22.6 0 13.6-11 23.3-23.2 23.3z"/>
+                        </svg>
+                        Listen on Spotify
+                    </a>
+                </div>
+            </div>
+            
+            <div class="player-controls">
+                <button class="control-button" id="prevButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                        <line x1="5" y1="19" x2="5" y2="5"></line>
+                    </svg>
+                </button>
+                
+                <button class="control-button play-button" id="playButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                </button>
+                
+                <button class="control-button" id="nextButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                        <line x1="19" y1="5" x2="19" y2="19"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="track-list-container">
+                <ul id="trackList" class="track-list">
+                    <!-- Track items will be dynamically inserted here -->
+                </ul>
+            </div>
+        </section>
+        
+        <!-- Toggle button for draggable player (initially hidden) -->
+        <button id="spotifyPlayerToggle" class="spotify-player-toggle hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+            </svg>
+        </button>
+    </div>
 
-    <!-- Music Section -->
-    <section>
-        <h3 class="text-2xl font-bold text-gray-800 mb-6">Music Matches</h3>
-        <div id="spotify-container">
-            <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6" id="spotify-grid"></ul>
-        </div>
-    </section>
-</div>
+    <div class="text-center mt-12 mb-8">
+        <a href="/" class="btn-primary">Create a New Experience</a>
+    </div>
+</main>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Load both Met and Spotify results from localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    // Get stored results from localStorage
     const artworks = JSON.parse(localStorage.getItem('artworks') || '[]');
-    const spotifyResults = JSON.parse(localStorage.getItem('spotify_results') || '[]');
+    const spotify_results = JSON.parse(localStorage.getItem('spotify_results') || '[]');
     
-    // Display Met artworks
-    const artworksGrid = document.getElementById('artworks-grid');
-    if (artworks && artworks.length) {
-        artworksGrid.innerHTML = artworks.map(artwork => `
-            <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
-                <div class="relative w-full flex justify-center">
-                    <img src="${artwork.primaryImageSmall}" 
-                         alt="${artwork.title}" 
-                         class="w-full max-w-[200px] aspect-square object-cover rounded-md mb-4">
-                </div>
-                <h4 class="text-lg font-semibold text-center">${artwork.title}</h4>
-                <p class="text-sm text-gray-600 text-center">Artist: ${artwork.artistDisplayName || 'Unknown'}</p>
-                <p class="text-sm text-gray-600 text-center">Date: ${artwork.objectDate || 'Unknown'}</p>
-                <p class="text-sm text-gray-600 text-center">Medium: ${artwork.medium || 'Unknown'}</p>
-                <a href="https://www.metmuseum.org/art/collection/search/${artwork.objectID}" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   class="block mt-4 text-center bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600">
+    // Function to create enhanced art gallery
+    function createArtGallery() {
+        const artworkContainer = document.getElementById('artworkContainer');
+        const resultsSection = document.querySelector('.results-section:first-child');
+        
+        if (artworks.length === 0) {
+            artworkContainer.innerHTML = '<p class="text-center text-gray-500">No artwork recommendations available.</p>';
+            return;
+        }
+        
+        // Update the container classes
+        resultsSection.classList.add('art-gallery-section');
+        resultsSection.classList.remove('results-section');
+        artworkContainer.className = 'art-gallery-container';
+        
+        // Clear the container
+        artworkContainer.innerHTML = '';
+        
+        // Add gallery header with museum-inspired design
+        const galleryHeader = document.createElement('div');
+        galleryHeader.className = 'gallery-header';
+        galleryHeader.innerHTML = `
+            <h2 class="gallery-title">The Met Gallery Experience</h2>
+            <p class="gallery-subtitle">Explore curated artwork from The Metropolitan Museum of Art</p>
+        `;
+        artworkContainer.appendChild(galleryHeader);
+        
+        // Create featured artwork display
+        const featuredArtwork = document.createElement('div');
+        featuredArtwork.className = 'featured-artwork';
+        
+        // Create navigation arrows
+        featuredArtwork.innerHTML = `
+            <div class="gallery-nav gallery-nav-prev">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </div>
+            <div class="gallery-nav gallery-nav-next">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </div>
+            <div class="featured-artwork-frame">
+                <img src="${artworks[0].primaryImage || artworks[0].primaryImageSmall}" 
+                    alt="${artworks[0].title}" class="featured-image" id="featuredImage">
+            </div>
+            <div class="museum-plaque">
+                <p class="plaque-title">Now Viewing:</p>
+                <p class="plaque-text">Artwork 1 of ${artworks.length}</p>
+            </div>
+            <div class="featured-info">
+                <h3 class="featured-title" id="featuredTitle">${artworks[0].title}</h3>
+                <p class="featured-artist" id="featuredArtist">${artworks[0].artistDisplayName || 'Unknown Artist'}</p>
+                <p class="featured-details" id="featuredDetails">
+                    ${artworks[0].objectDate ? `Created: ${artworks[0].objectDate}<br>` : ''}
+                    ${artworks[0].objectName || ''}
+                </p>
+                <a href="${artworks[0].objectURL}" target="_blank" id="featuredLink" class="featured-link">
                     View at The Met
-                </a>
-            </li>
-        `).join('');
-    } else {
-        artworksGrid.innerHTML = `<p class="text-center text-gray-600 col-span-3">No art matches found. Try different preferences.</p>`;
-    }
-    
-    // Display Spotify results
-    const spotifyGrid = document.getElementById('spotify-grid');
-    if (spotifyResults && spotifyResults.length) {
-        spotifyGrid.innerHTML = spotifyResults.map(item => `
-            <li class="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-transform transform hover:scale-105">
-                <div class="relative w-full flex justify-center">
-                    <img src="${item.image || '/static/images/censored-image.png'}" 
-                         alt="${item.name}" 
-                         class="w-full max-w-[200px] aspect-square object-cover rounded-md mb-4">
-                </div>
-                <h4 class="text-lg font-semibold text-center truncate">${item.name}</h4>
-                ${item.artist ? `<p class="text-sm text-gray-600 text-center">By: ${item.artist}</p>` : ''}
-                ${item.type ? `<p class="text-sm text-blue-500 font-medium text-center">${item.type.charAt(0).toUpperCase() + item.type.slice(1)}</p>` : ''}
-                <a href="${item.url}" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   class="block mt-4 text-center bg-green-500 text-white py-2 rounded-lg hover:bg-green-600">
-                    Listen on Spotify
-                </a>
-            </li>
-        `).join('');
-    } else {
-        spotifyGrid.innerHTML = `<p class="text-center text-gray-600 col-span-3">No music matches found. Try different preferences.</p>`;
-    }
-
-    // If both sections are empty, show a return button
-    if (!artworks.length && !spotifyResults.length) {
-        document.querySelector('.max-w-7xl').innerHTML += `
-            <div class="text-center py-10">
-                <p class="text-red-500 text-lg font-semibold">No matches found for your preferences.</p>
-                <p class="text-gray-600 mt-2">Try selecting different options.</p>
-                <a href="/" class="mt-4 inline-block bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
-                    Try Again
                 </a>
             </div>
         `;
+        artworkContainer.appendChild(featuredArtwork);
+        
+        // Create thumbnail gallery
+        const thumbnailGallery = document.createElement('div');
+        thumbnailGallery.className = 'thumbnail-gallery';
+        
+        artworks.forEach((artwork, index) => {
+            const thumbnail = document.createElement('div');
+            thumbnail.className = `artwork-thumbnail ${index === 0 ? 'active' : ''}`;
+            thumbnail.dataset.index = index;
+            
+            thumbnail.innerHTML = `
+                <img src="${artwork.primaryImageSmall || artwork.primaryImage}" 
+                    alt="${artwork.title}" class="thumbnail-img">
+                <div class="thumbnail-number">${index + 1}</div>
+            `;
+            
+            thumbnail.addEventListener('click', function() {
+                updateFeaturedArtwork(index);
+            });
+            
+            thumbnailGallery.appendChild(thumbnail);
+        });
+        
+        artworkContainer.appendChild(thumbnailGallery);
+        
+        // Add navigation functionality
+        const prevButton = document.querySelector('.gallery-nav-prev');
+        const nextButton = document.querySelector('.gallery-nav-next');
+        
+        prevButton.addEventListener('click', function() {
+            const activeThumbnail = document.querySelector('.artwork-thumbnail.active');
+            const currentIndex = parseInt(activeThumbnail.dataset.index);
+            const newIndex = (currentIndex - 1 + artworks.length) % artworks.length;
+            updateFeaturedArtwork(newIndex);
+        });
+        
+        nextButton.addEventListener('click', function() {
+            const activeThumbnail = document.querySelector('.artwork-thumbnail.active');
+            const currentIndex = parseInt(activeThumbnail.dataset.index);
+            const newIndex = (currentIndex + 1) % artworks.length;
+            updateFeaturedArtwork(newIndex);
+        });
+        
+        // Add keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') {
+                prevButton.click();
+            } else if (e.key === 'ArrowRight') {
+                nextButton.click();
+            }
+        });
+
+        const createNewBtn = document.querySelector('.text-center a.btn-primary');
+        if (createNewBtn) {
+            // Create container
+            const container = document.createElement('div');
+            container.className = 'nav-cta-container';
+            container.style.display = 'inline-block';
+            container.style.position = 'relative';
+            container.style.margin = '0 auto';
+            
+            // Insert container
+            createNewBtn.parentNode.insertBefore(container, createNewBtn);
+            createNewBtn.parentNode.removeChild(createNewBtn);
+            container.appendChild(createNewBtn);
+            
+            // Add glow effect
+            const glow = document.createElement('div');
+            glow.className = 'cta-glow';
+            container.appendChild(glow);
+            
+            // Update button styling
+            createNewBtn.className = 'nav-cta';
+            
+            // Wrap content
+            const text = createNewBtn.textContent.trim();
+            createNewBtn.innerHTML = `
+                <span class="nav-cta-text">${text}</span>
+                <span class="nav-cta-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                </span>
+            `;
+        }
     }
+    
+    // Function to update the featured artwork display
+    function updateFeaturedArtwork(index) {
+        const artwork = artworks[index];
+        
+        // Update active thumbnail
+        document.querySelectorAll('.artwork-thumbnail').forEach(thumb => {
+            thumb.classList.remove('active');
+        });
+        document.querySelector(`.artwork-thumbnail[data-index="${index}"]`).classList.add('active');
+        
+        // Update museum plaque
+        document.querySelector('.plaque-text').textContent = `Artwork ${index + 1} of ${artworks.length}`;
+        
+        // Update featured artwork with smooth transition
+        const featuredImage = document.getElementById('featuredImage');
+        const featuredTitle = document.getElementById('featuredTitle');
+        const featuredArtist = document.getElementById('featuredArtist');
+        const featuredDetails = document.getElementById('featuredDetails');
+        const featuredLink = document.getElementById('featuredLink');
+        
+        // Add fade-out effect
+        featuredImage.style.opacity = '0';
+        setTimeout(() => {
+            // Update content
+            featuredImage.src = artwork.primaryImage || artwork.primaryImageSmall;
+            featuredTitle.textContent = artwork.title;
+            featuredArtist.textContent = artwork.artistDisplayName || 'Unknown Artist';
+            
+            featuredDetails.innerHTML = `
+                ${artwork.objectDate ? `Created: ${artwork.objectDate}<br>` : ''}
+                ${artwork.objectName || ''}
+            `;
+            
+            featuredLink.href = artwork.objectURL;
+            
+            // Fade back in
+            featuredImage.style.opacity = '1';
+        }, 300);
+        
+        // Scroll thumbnail into view if needed
+        const activeThumbnail = document.querySelector(`.artwork-thumbnail[data-index="${index}"]`);
+        activeThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+    
+    // Function to create the Spotify-inspired player
+    function createSpotifyPlayer() {
+        const trackList = document.getElementById('trackList');
+        
+        if (spotify_results.length === 0) {
+            trackList.innerHTML = '<li class="track-item"><div class="track-details"><p class="track-name">No music recommendations available.</p></div></li>';
+            return;
+        }
+        
+        trackList.innerHTML = '';
+        
+        // Add each track to the list
+        spotify_results.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.className = 'track-item';
+            li.dataset.index = index;
+            
+            if (index === 0) {
+                li.classList.add('active');
+            }
+            
+            li.innerHTML = `
+                <div class="track-number">${index + 1}</div>
+                <div class="track-details">
+                    <p class="track-name">${item.name}</p>
+                    <p class="track-artist">${item.creator || item.artist || ''}</p>
+                </div>
+            `;
+            
+            li.addEventListener('click', function() {
+                // Remove active class from all tracks
+                document.querySelectorAll('.track-item').forEach(track => {
+                    track.classList.remove('active');
+                });
+                
+                // Add active class to clicked track
+                this.classList.add('active');
+                
+                // Update the player display
+                updatePlayerDisplay(index);
+            });
+            
+            trackList.appendChild(li);
+        });
+        
+        // Initialize the player with the first track
+        updatePlayerDisplay(0);
+        
+        // Add event listeners for player controls
+        document.getElementById('prevButton').addEventListener('click', function() {
+            const activeTrack = document.querySelector('.track-item.active');
+            const activeIndex = parseInt(activeTrack.dataset.index);
+            const newIndex = (activeIndex - 1 + spotify_results.length) % spotify_results.length;
+            
+            // Click the previous track
+            document.querySelector(`.track-item[data-index="${newIndex}"]`).click();
+        });
+        
+        document.getElementById('nextButton').addEventListener('click', function() {
+            const activeTrack = document.querySelector('.track-item.active');
+            const activeIndex = parseInt(activeTrack.dataset.index);
+            const newIndex = (activeIndex + 1) % spotify_results.length;
+            
+            // Click the next track
+            document.querySelector(`.track-item[data-index="${newIndex}"]`).click();
+        });
+        
+        // Add draggable functionality (optional feature)
+        setupDraggablePlayer();
+    }
+    
+    // Function to update the player display with the selected track
+    function updatePlayerDisplay(index) {
+        const item = spotify_results[index];
+        
+        // Update player elements
+        document.getElementById('currentAlbumCover').src = item.image || '/static/images/default-album.jpg';
+        document.getElementById('currentTrackName').textContent = item.name || 'Unknown Track';
+        document.getElementById('currentArtist').textContent = item.creator || item.artist || 'Unknown Artist';
+        
+        // Create description text
+        let description = item.description || '';
+        
+        if (item.type === 'playlist' && item.track_count) {
+            description += (description ? ' • ' : '') + `${item.track_count} tracks`;
+        } else if (item.type === 'album' && item.release_date) {
+            description += (description ? ' • ' : '') + `Released: ${item.release_date}`;
+        } else if (item.type === 'artist' && item.genres) {
+            description += (description ? ' • ' : '') + `Genres: ${item.genres}`;
+        }
+        
+        document.getElementById('currentDescription').textContent = description || 'No additional information available';
+        document.getElementById('spotifyLink').href = item.url || '#';
+    }
+    
+    // Function to update the draggable player display
+    function updateDraggablePlayerDisplay(index, draggablePlayer) {
+        const item = spotify_results[index];
+        
+        // Update player elements in the draggable player
+        draggablePlayer.querySelector('#currentAlbumCover').src = item.image || '/static/images/default-album.jpg';
+        draggablePlayer.querySelector('#currentTrackName').textContent = item.name || 'Unknown Track';
+        draggablePlayer.querySelector('#currentArtist').textContent = item.creator || item.artist || 'Unknown Artist';
+        
+        // Create description text
+        let description = item.description || '';
+        
+        if (item.type === 'playlist' && item.track_count) {
+            description += (description ? ' • ' : '') + `${item.track_count} tracks`;
+        } else if (item.type === 'album' && item.release_date) {
+            description += (description ? ' • ' : '') + `Released: ${item.release_date}`;
+        } else if (item.type === 'artist' && item.genres) {
+            description += (description ? ' • ' : '') + `Genres: ${item.genres}`;
+        }
+        
+        draggablePlayer.querySelector('#currentDescription').textContent = description || 'No additional information available';
+        draggablePlayer.querySelector('#spotifyLink').href = item.url || '#';
+    }
+    
+    function setupDraggablePlayer() {
+        const player = document.getElementById('spotifyPlayer');
+        const toggle = document.getElementById('spotifyPlayerToggle');
+        let isDraggable = false;
+        
+        const draggableBtn = document.createElement('button');
+        draggableBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 9l-3 3 3 3"></path>
+                <path d="M9 5l3-3 3 3"></path>
+                <path d="M15 19l3-3 3 3"></path>
+                <path d="M19 9l3 3-3 3"></path>
+                <path d="M2 12h20"></path>
+                <path d="M12 2v20"></path>
+            </svg>
+            Make Player Draggable
+        `;
+        draggableBtn.className = 'draggable-btn';
+        draggableBtn.addEventListener('click', function() {
+            makePlayerDraggable();
+        });
+        
+        player.appendChild(draggableBtn);
+        
+        function makePlayerDraggable() {
+            isDraggable = true;
+            
+            // Create draggable version of player
+            const draggablePlayer = player.cloneNode(true);
+            draggablePlayer.classList.add('draggable');
+            
+            // Reset any existing positioning
+            draggablePlayer.style.top = '';
+            draggablePlayer.style.left = '';
+            draggablePlayer.style.bottom = '';
+            draggablePlayer.style.right = '';
+            
+            // Add handle for dragging
+            const handle = document.createElement('div');
+            handle.className = 'player-handle';
+            handle.innerHTML = `
+                <span class="player-handle-text">Spotify Player • Drag to move</span>
+                <button class="player-close">×</button>
+            `;
+            draggablePlayer.insertBefore(handle, draggablePlayer.firstChild);
+            
+            // Remove unnecessary elements
+            const sectionTitle = draggablePlayer.querySelector('.section-title');
+            if (sectionTitle) sectionTitle.remove();
+            
+            const makeBtn = draggablePlayer.querySelector('button.btn-primary');
+            if (makeBtn) makeBtn.remove();
+            
+            // Add to body
+            document.body.appendChild(draggablePlayer);
+            
+            // Position initially in the center of the viewport
+            const rect = draggablePlayer.getBoundingClientRect();
+            draggablePlayer.style.top = `calc(50vh - ${rect.height / 2}px)`;
+            draggablePlayer.style.left = `calc(50vw - ${rect.width / 2}px)`;
+            
+            // Hide original player and show toggle
+            player.style.display = 'none';
+            toggle.classList.remove('hidden');
+            
+            // Setup event listeners for the draggable player
+            setupDraggableEvents(draggablePlayer, handle);
+            
+            // Close button event
+            draggablePlayer.querySelector('.player-close').addEventListener('click', function() {
+                draggablePlayer.remove();
+                player.style.display = 'block';
+                toggle.classList.add('hidden');
+                isDraggable = false;
+            });
+            
+            // Toggle button event
+            toggle.addEventListener('click', function() {
+                draggablePlayer.classList.toggle('hidden');
+            });
+            
+            // Update track functionality in draggable player
+            const trackItems = draggablePlayer.querySelectorAll('.track-item');
+            trackItems.forEach((track, index) => {
+                track.addEventListener('click', function() {
+                    document.querySelectorAll('.track-item').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll(`.track-item[data-index="${index}"]`).forEach(t => t.classList.add('active'));
+                    
+                    updatePlayerDisplay(index);
+                    updateDraggablePlayerDisplay(index, draggablePlayer);
+                });
+            });
+            
+            // Update player controls in draggable player
+            draggablePlayer.querySelector('#prevButton').addEventListener('click', function() {
+                document.getElementById('prevButton').click();
+            });
+            
+            draggablePlayer.querySelector('#nextButton').addEventListener('click', function() {
+                document.getElementById('nextButton').click();
+            });
+            
+            // Initialize draggable player display
+            const activeIndex = parseInt(document.querySelector('.track-item.active')?.dataset.index || 0);
+            updateDraggablePlayerDisplay(activeIndex, draggablePlayer);
+        }
+    }
+    
+    function setupDraggableEvents(draggableElement, handleElement) {
+    let isDragging = false;
+    let offsetX, offsetY;
+    let lastMouseX, lastMouseY;
+    
+    const sensitivity = 1.8; // Adjust this value to control speed
+    
+    draggableElement.style.position = 'fixed';
+    draggableElement.style.cursor = 'move'; 
+    
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const elementWidth = 700; // Approximate width
+    const elementHeight = 500; // Approximate height
+    
+    draggableElement.style.top = `${(viewportHeight - elementHeight) / 2}px`;
+    draggableElement.style.left = `${(viewportWidth - elementWidth) / 2}px`;
+    
+    // Apply the mousedown event to the entire draggable element instead of just the handle
+    draggableElement.addEventListener('mousedown', function(e) {
+        // Don't initiate drag if clicking on interactive elements
+        if (e.target.closest('button, a, .track-item, input, .player-close')) {
+            return;
+        }
+        
+        isDragging = true;
+        
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        
+        const rect = draggableElement.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        
+        draggableElement.classList.add('is-dragging');
+        
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        
+        const deltaX = (e.clientX - lastMouseX) * sensitivity;
+        const deltaY = (e.clientY - lastMouseY) * sensitivity;
+        
+        const currentLeft = parseInt(draggableElement.style.left) || 0;
+        const currentTop = parseInt(draggableElement.style.top) || 0;
+        
+        draggableElement.style.left = `${currentLeft + deltaX}px`;
+        draggableElement.style.top = `${currentTop + deltaY}px`;
+        
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    });
+    
+    document.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            draggableElement.classList.remove('is-dragging');
+        }
+    });
+    
+    document.addEventListener('mouseleave', function() {
+        if (isDragging) {
+            isDragging = false;
+            draggableElement.classList.remove('is-dragging');
+        }
+    });
+}
+
+function setupExpandableGallery() {
+  const resultsContainer = document.querySelector('.results-container');
+  const gallerySection = document.querySelector('.art-gallery-section');
+  const spotifySection = document.getElementById('spotifyPlayer');
+  
+  if (!gallerySection || !spotifySection) return;
+  
+  // Create toggle button for gallery
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'toggle-layout-btn';
+  toggleBtn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 3 21 3 21 9"></polyline>
+      <polyline points="9 21 3 21 3 15"></polyline>
+      <line x1="21" y1="3" x2="14" y2="10"></line>
+      <line x1="3" y1="21" x2="10" y2="14"></line>
+    </svg>
+    Expand
+  `;
+  
+  gallerySection.appendChild(toggleBtn);
+  
+  let isExpanded = false;
+  
+  // Toggle button click handler
+  toggleBtn.addEventListener('click', function() {
+    isExpanded = !isExpanded;
+    
+    if (isExpanded) {
+      // Expand gallery to full width
+      resultsContainer.classList.add('full-width');
+      spotifySection.style.display = 'none';
+      toggleBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 14 10 14 10 20"></polyline>
+          <polyline points="20 10 14 10 14 4"></polyline>
+          <line x1="14" y1="10" x2="21" y2="3"></line>
+          <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>
+        Restore
+      `;
+    } else {
+      // Restore original layout
+      resultsContainer.classList.remove('full-width');
+      spotifySection.style.display = 'block';
+      toggleBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <polyline points="9 21 3 21 3 15"></polyline>
+          <line x1="21" y1="3" x2="14" y2="10"></line>
+          <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>
+        Expand Gallery
+      `;
+    }
+    
+    // Force redraw of featured artwork to fit new width
+    setTimeout(() => {
+      const currentIndex = parseInt(document.querySelector('.artwork-thumbnail.active')?.dataset.index || 0);
+      if (typeof updateFeaturedArtwork === 'function') {
+        updateFeaturedArtwork(currentIndex);
+      }
+    }, 300);
+  });
+}
+    
+    // Initialize the page
+    createArtGallery();
+    createSpotifyPlayer();
+    setupExpandableGallery(); 
 });
 </script>
 {% endblock %}
