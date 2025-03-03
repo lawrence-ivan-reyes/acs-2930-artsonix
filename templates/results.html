@@ -16,115 +16,403 @@
             </div>
         </section>
 
-        <section class="results-section">
+        <section class="results-section spotify-player" id="spotifyPlayer">
             <h2 class="section-title">Music Recommendations</h2>
-            <div id="musicContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Music cards will be dynamically inserted here -->
+            
+            <div class="music-player-top">
+                <div class="album-cover-container">
+                    <img id="currentAlbumCover" src="/static/images/default-album.jpg" alt="Album Cover" class="album-cover">
+                </div>
+                
+                <div class="player-info">
+                    <div class="player-meta">
+                        <h3 id="currentTrackName" class="player-title">Select a track</h3>
+                        <p id="currentArtist" class="player-creator">Artist</p>
+                        <p id="currentDescription" class="player-details">Select a track from the list below to see details</p>
+                    </div>
+                    
+                    <a id="spotifyLink" href="#" target="_blank" class="spotify-button">
+                        <svg class="spotify-button-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512">
+                            <path fill="currentColor" d="M248 8C111.1 8 0 119.1 0 256s111.1 248 248 248 248-111.1 248-248S384.9 8 248 8zm100.7 364.9c-4.2 0-6.8-1.3-10.7-3.6-62.4-37.6-135-39.2-206.7-24.5-3.9 1-9 2.6-11.9 2.6-9.7 0-15.8-7.7-15.8-15.8 0-10.3 6.1-15.2 13.6-16.8 81.9-18.1 165.6-16.5 237 30.2 6.1 3.9 9.7 7.4 9.7 16.5s-7.1 15.4-15.2 15.4zm26.9-65.6c-5.2 0-8.7-2.3-12.3-4.2-62.5-37-155.7-51.9-238.6-29.4-4.8 1.3-7.4 2.6-11.9 2.6-10.7 0-19.4-8.7-19.4-19.4s5.2-17.8 15.5-20.7c27.8-7.8 56.2-13.6 97.8-13.6 64.9 0 127.6 16.1 177 45.5 8.1 4.8 11.3 11 11.3 19.7-.1 10.8-8.5 19.5-19.4 19.5zm31-76.2c-5.2 0-8.4-1.3-12.9-3.9-71.2-42.5-198.5-52.7-280.9-29.7-3.6 1-8.1 2.6-12.9 2.6-13.2 0-23.3-10.3-23.3-23.6 0-13.6 8.4-21.3 17.4-23.9 35.2-10.3 74.6-15.2 117.5-15.2 73 0 149.5 15.2 205.4 47.8 7.8 4.5 12.9 10.7 12.9 22.6 0 13.6-11 23.3-23.2 23.3z"/>
+                        </svg>
+                        Listen on Spotify
+                    </a>
+                </div>
+            </div>
+            
+            <div class="player-controls">
+                <button class="control-button" id="prevButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                        <line x1="5" y1="19" x2="5" y2="5"></line>
+                    </svg>
+                </button>
+                
+                <button class="control-button play-button" id="playButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                </button>
+                
+                <button class="control-button" id="nextButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                        <line x1="19" y1="5" x2="19" y2="19"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="track-list-container">
+                <ul id="trackList" class="track-list">
+                    <!-- Track items will be dynamically inserted here -->
+                </ul>
             </div>
         </section>
+        
+        <!-- Toggle button for draggable player (initially hidden) -->
+        <button id="spotifyPlayerToggle" class="spotify-player-toggle hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+            </svg>
+        </button>
     </div>
 
-    <div class="text-center mt-12">
+    <div class="text-center mt-12 mb-8">
         <a href="/" class="btn-primary">Create New Recommendations</a>
     </div>
 </main>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get stored results from localStorage
-        const artworks = JSON.parse(localStorage.getItem('artworks') || '[]');
-        const spotify_results = JSON.parse(localStorage.getItem('spotify_results') || '[]');
+document.addEventListener('DOMContentLoaded', function() {
+    // Get stored results from localStorage
+    const artworks = JSON.parse(localStorage.getItem('artworks') || '[]');
+    const spotify_results = JSON.parse(localStorage.getItem('spotify_results') || '[]');
+    
+    // Function to create artwork cards
+    function createArtworkCards() {
+        const artworkContainer = document.getElementById('artworkContainer');
         
-        // Function to create artwork cards
-        function createArtworkCards() {
-            const artworkContainer = document.getElementById('artworkContainer');
-            
-            if (artworks.length === 0) {
-                artworkContainer.innerHTML = '<p class="text-center text-gray-500">No artwork recommendations available.</p>';
-                return;
-            }
-            
-            artworkContainer.innerHTML = '';
-            
-            artworks.forEach(artwork => {
-                const card = document.createElement('div');
-                card.className = 'artwork-card';
-                
-                let artistInfo = artwork.artistDisplayName ? 
-                    `<p class="card-subtitle">${artwork.artistDisplayName}</p>` : '';
-                
-                let objectDate = artwork.objectDate ? 
-                    `<p class="card-text">Date: ${artwork.objectDate}</p>` : '';
-                
-                card.innerHTML = `
-                    <img src="${artwork.primaryImage || artwork.primaryImageSmall}" 
-                        alt="${artwork.title}" class="artwork-image">
-                    <div class="card-content">
-                        <h4 class="card-title">${artwork.title}</h4>
-                        ${artistInfo}
-                        ${objectDate}
-                        <p class="card-text">${artwork.objectName || ''}</p>
-                        <a href="${artwork.objectURL}" target="_blank" class="card-link">
-                            View at The Met
-                        </a>
-                    </div>
-                `;
-                
-                artworkContainer.appendChild(card);
-            });
+        if (artworks.length === 0) {
+            artworkContainer.innerHTML = '<p class="text-center text-gray-500">No artwork recommendations available.</p>';
+            return;
         }
         
-        // Function to create music cards
-        function createMusicCards() {
-            const musicContainer = document.getElementById('musicContainer');
+        artworkContainer.innerHTML = '';
+        
+        artworks.forEach(artwork => {
+            const card = document.createElement('div');
+            card.className = 'artwork-card';
             
-            if (spotify_results.length === 0) {
-                musicContainer.innerHTML = '<p class="text-center text-gray-500">No music recommendations available.</p>';
-                return;
-            }
+            let artistInfo = artwork.artistDisplayName ? 
+                `<p class="card-subtitle">${artwork.artistDisplayName}</p>` : '';
             
-            musicContainer.innerHTML = '';
+            let objectDate = artwork.objectDate ? 
+                `<p class="card-text">Date: ${artwork.objectDate}</p>` : '';
             
-            spotify_results.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'music-card';
-                
-                let creatorInfo = item.creator ? 
-                    `<p class="card-subtitle">${item.creator}</p>` : 
-                    (item.artist ? `<p class="card-subtitle">${item.artist}</p>` : '');
-                
-                let description = item.description ? 
-                    `<p class="card-text">${item.description}</p>` : '';
-                
-                let additionalInfo = '';
-                if (item.type === 'playlist' && item.track_count) {
-                    additionalInfo = `<p class="card-text">${item.track_count} tracks</p>`;
-                } else if (item.type === 'album' && item.release_date) {
-                    additionalInfo = `<p class="card-text">Released: ${item.release_date}</p>`;
-                } else if (item.type === 'artist' && item.genres) {
-                    additionalInfo = `<p class="card-text">Genres: ${item.genres}</p>`;
-                }
-                
-                card.innerHTML = `
-                    <img src="${item.image}" alt="${item.name}" class="music-image">
-                    <div class="card-content">
-                        <h4 class="card-title">${item.name}</h4>
-                        ${creatorInfo}
-                        ${description}
-                        ${additionalInfo}
-                        <a href="${item.url}" target="_blank" class="card-link">
-                            Listen on Spotify
-                        </a>
-                    </div>
-                `;
-                
-                musicContainer.appendChild(card);
-            });
+            card.innerHTML = `
+                <img src="${artwork.primaryImage || artwork.primaryImageSmall}" 
+                    alt="${artwork.title}" class="artwork-image">
+                <div class="card-content">
+                    <h4 class="card-title">${artwork.title}</h4>
+                    ${artistInfo}
+                    ${objectDate}
+                    <p class="card-text">${artwork.objectName || ''}</p>
+                    <a href="${artwork.objectURL}" target="_blank" class="card-link">
+                        View at The Met
+                    </a>
+                </div>
+            `;
+            
+            artworkContainer.appendChild(card);
+        });
+    }
+    
+    // Function to create the Spotify-inspired player
+    function createSpotifyPlayer() {
+        const trackList = document.getElementById('trackList');
+        
+        if (spotify_results.length === 0) {
+            trackList.innerHTML = '<li class="track-item"><div class="track-details"><p class="track-name">No music recommendations available.</p></div></li>';
+            return;
         }
         
-        // Call the functions to create cards
-        createArtworkCards();
-        createMusicCards();
-    });
+        trackList.innerHTML = '';
+        
+        // Add each track to the list
+        spotify_results.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.className = 'track-item';
+            li.dataset.index = index;
+            
+            if (index === 0) {
+                li.classList.add('active');
+            }
+            
+            li.innerHTML = `
+                <div class="track-number">${index + 1}</div>
+                <div class="track-details">
+                    <p class="track-name">${item.name}</p>
+                    <p class="track-artist">${item.creator || item.artist || ''}</p>
+                </div>
+            `;
+            
+            li.addEventListener('click', function() {
+                // Remove active class from all tracks
+                document.querySelectorAll('.track-item').forEach(track => {
+                    track.classList.remove('active');
+                });
+                
+                // Add active class to clicked track
+                this.classList.add('active');
+                
+                // Update the player display
+                updatePlayerDisplay(index);
+            });
+            
+            trackList.appendChild(li);
+        });
+        
+        // Initialize the player with the first track
+        updatePlayerDisplay(0);
+        
+        // Add event listeners for player controls
+        document.getElementById('prevButton').addEventListener('click', function() {
+            const activeTrack = document.querySelector('.track-item.active');
+            const activeIndex = parseInt(activeTrack.dataset.index);
+            const newIndex = (activeIndex - 1 + spotify_results.length) % spotify_results.length;
+            
+            // Click the previous track
+            document.querySelector(`.track-item[data-index="${newIndex}"]`).click();
+        });
+        
+        document.getElementById('nextButton').addEventListener('click', function() {
+            const activeTrack = document.querySelector('.track-item.active');
+            const activeIndex = parseInt(activeTrack.dataset.index);
+            const newIndex = (activeIndex + 1) % spotify_results.length;
+            
+            // Click the next track
+            document.querySelector(`.track-item[data-index="${newIndex}"]`).click();
+        });
+        
+        // Add draggable functionality (optional feature)
+        setupDraggablePlayer();
+    }
+    
+    // Function to update the player display with the selected track
+    function updatePlayerDisplay(index) {
+        const item = spotify_results[index];
+        
+        // Update player elements
+        document.getElementById('currentAlbumCover').src = item.image || '/static/images/default-album.jpg';
+        document.getElementById('currentTrackName').textContent = item.name || 'Unknown Track';
+        document.getElementById('currentArtist').textContent = item.creator || item.artist || 'Unknown Artist';
+        
+        // Create description text
+        let description = item.description || '';
+        
+        if (item.type === 'playlist' && item.track_count) {
+            description += (description ? ' • ' : '') + `${item.track_count} tracks`;
+        } else if (item.type === 'album' && item.release_date) {
+            description += (description ? ' • ' : '') + `Released: ${item.release_date}`;
+        } else if (item.type === 'artist' && item.genres) {
+            description += (description ? ' • ' : '') + `Genres: ${item.genres}`;
+        }
+        
+        document.getElementById('currentDescription').textContent = description || 'No additional information available';
+        document.getElementById('spotifyLink').href = item.url || '#';
+    }
+    
+    // Function to update the draggable player display
+    function updateDraggablePlayerDisplay(index, draggablePlayer) {
+        const item = spotify_results[index];
+        
+        // Update player elements in the draggable player
+        draggablePlayer.querySelector('#currentAlbumCover').src = item.image || '/static/images/default-album.jpg';
+        draggablePlayer.querySelector('#currentTrackName').textContent = item.name || 'Unknown Track';
+        draggablePlayer.querySelector('#currentArtist').textContent = item.creator || item.artist || 'Unknown Artist';
+        
+        // Create description text
+        let description = item.description || '';
+        
+        if (item.type === 'playlist' && item.track_count) {
+            description += (description ? ' • ' : '') + `${item.track_count} tracks`;
+        } else if (item.type === 'album' && item.release_date) {
+            description += (description ? ' • ' : '') + `Released: ${item.release_date}`;
+        } else if (item.type === 'artist' && item.genres) {
+            description += (description ? ' • ' : '') + `Genres: ${item.genres}`;
+        }
+        
+        draggablePlayer.querySelector('#currentDescription').textContent = description || 'No additional information available';
+        draggablePlayer.querySelector('#spotifyLink').href = item.url || '#';
+    }
+    
+    function setupDraggablePlayer() {
+        const player = document.getElementById('spotifyPlayer');
+        const toggle = document.getElementById('spotifyPlayerToggle');
+        let isDraggable = false;
+        
+        // Add button to make player draggable
+        const draggableBtn = document.createElement('button');
+        draggableBtn.textContent = 'Make Draggable';
+        draggableBtn.className = 'btn-primary text-sm mt-2 mb-2 mx-auto block';
+        draggableBtn.style.fontSize = '0.8rem';
+        draggableBtn.addEventListener('click', function() {
+            makePlayerDraggable();
+        });
+        
+        player.appendChild(draggableBtn);
+        
+        function makePlayerDraggable() {
+            isDraggable = true;
+            
+            // Create draggable version of player
+            const draggablePlayer = player.cloneNode(true);
+            draggablePlayer.classList.add('draggable');
+            
+            // Reset any existing positioning
+            draggablePlayer.style.top = '';
+            draggablePlayer.style.left = '';
+            draggablePlayer.style.bottom = '';
+            draggablePlayer.style.right = '';
+            
+            // Add handle for dragging
+            const handle = document.createElement('div');
+            handle.className = 'player-handle';
+            handle.innerHTML = `
+                <span class="player-handle-text">Spotify Player • Drag to move</span>
+                <button class="player-close">×</button>
+            `;
+            draggablePlayer.insertBefore(handle, draggablePlayer.firstChild);
+            
+            // Remove unnecessary elements
+            const sectionTitle = draggablePlayer.querySelector('.section-title');
+            if (sectionTitle) sectionTitle.remove();
+            
+            const makeBtn = draggablePlayer.querySelector('button.btn-primary');
+            if (makeBtn) makeBtn.remove();
+            
+            // Add to body
+            document.body.appendChild(draggablePlayer);
+            
+            // Position initially in the center of the viewport
+            const rect = draggablePlayer.getBoundingClientRect();
+            draggablePlayer.style.top = `calc(50vh - ${rect.height / 2}px)`;
+            draggablePlayer.style.left = `calc(50vw - ${rect.width / 2}px)`;
+            
+            // Hide original player and show toggle
+            player.style.display = 'none';
+            toggle.classList.remove('hidden');
+            
+            // Setup event listeners for the draggable player
+            setupDraggableEvents(draggablePlayer, handle);
+            
+            // Close button event
+            draggablePlayer.querySelector('.player-close').addEventListener('click', function() {
+                draggablePlayer.remove();
+                player.style.display = 'block';
+                toggle.classList.add('hidden');
+                isDraggable = false;
+            });
+            
+            // Toggle button event
+            toggle.addEventListener('click', function() {
+                draggablePlayer.classList.toggle('hidden');
+            });
+            
+            // Update track functionality in draggable player
+            const trackItems = draggablePlayer.querySelectorAll('.track-item');
+            trackItems.forEach((track, index) => {
+                track.addEventListener('click', function() {
+                    document.querySelectorAll('.track-item').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll(`.track-item[data-index="${index}"]`).forEach(t => t.classList.add('active'));
+                    
+                    updatePlayerDisplay(index);
+                    updateDraggablePlayerDisplay(index, draggablePlayer);
+                });
+            });
+            
+            // Update player controls in draggable player
+            draggablePlayer.querySelector('#prevButton').addEventListener('click', function() {
+                document.getElementById('prevButton').click();
+            });
+            
+            draggablePlayer.querySelector('#nextButton').addEventListener('click', function() {
+                document.getElementById('nextButton').click();
+            });
+            
+            // Initialize draggable player display
+            const activeIndex = parseInt(document.querySelector('.track-item.active')?.dataset.index || 0);
+            updateDraggablePlayerDisplay(activeIndex, draggablePlayer);
+        }
+    }
+    
+    function setupDraggableEvents(draggableElement, handleElement) {
+        let isDragging = false;
+        let offsetX, offsetY;
+        let lastMouseX, lastMouseY;
+        
+        const sensitivity = 1.8; // Adjust this value to control speed
+        
+        draggableElement.style.position = 'fixed';
+        
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const elementWidth = 700; // Approximate width
+        const elementHeight = 500; // Approximate height
+        
+        draggableElement.style.top = `${(viewportHeight - elementHeight) / 2}px`;
+        draggableElement.style.left = `${(viewportWidth - elementWidth) / 2}px`;
+        
+        handleElement.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            
+            const rect = draggableElement.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            
+            draggableElement.classList.add('is-dragging');
+            
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            
+            const deltaX = (e.clientX - lastMouseX) * sensitivity;
+            const deltaY = (e.clientY - lastMouseY) * sensitivity;
+            
+            const currentLeft = parseInt(draggableElement.style.left) || 0;
+            const currentTop = parseInt(draggableElement.style.top) || 0;
+            
+            draggableElement.style.left = `${currentLeft + deltaX}px`;
+            draggableElement.style.top = `${currentTop + deltaY}px`;
+            
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        });
+        
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                draggableElement.classList.remove('is-dragging');
+            }
+        });
+        
+        document.addEventListener('mouseleave', function() {
+            if (isDragging) {
+                isDragging = false;
+                draggableElement.classList.remove('is-dragging');
+            }
+        });
+    }
+    
+    // Initialize the page
+    createArtworkCards();
+    createSpotifyPlayer();
+});
 </script>
 {% endblock %}
