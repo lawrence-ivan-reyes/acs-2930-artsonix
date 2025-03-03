@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </svg>
             Make Player Draggable
         `;
-draggableBtn.className = 'draggable-btn';
+        draggableBtn.className = 'draggable-btn';
         draggableBtn.addEventListener('click', function() {
             makePlayerDraggable();
         });
@@ -576,10 +576,77 @@ draggableBtn.className = 'draggable-btn';
         }
     });
 }
+
+function setupExpandableGallery() {
+  const resultsContainer = document.querySelector('.results-container');
+  const gallerySection = document.querySelector('.art-gallery-section');
+  const spotifySection = document.getElementById('spotifyPlayer');
+  
+  if (!gallerySection || !spotifySection) return;
+  
+  // Create toggle button for gallery
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'toggle-layout-btn';
+  toggleBtn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 3 21 3 21 9"></polyline>
+      <polyline points="9 21 3 21 3 15"></polyline>
+      <line x1="21" y1="3" x2="14" y2="10"></line>
+      <line x1="3" y1="21" x2="10" y2="14"></line>
+    </svg>
+    Expand
+  `;
+  
+  gallerySection.appendChild(toggleBtn);
+  
+  let isExpanded = false;
+  
+  // Toggle button click handler
+  toggleBtn.addEventListener('click', function() {
+    isExpanded = !isExpanded;
+    
+    if (isExpanded) {
+      // Expand gallery to full width
+      resultsContainer.classList.add('full-width');
+      spotifySection.style.display = 'none';
+      toggleBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 14 10 14 10 20"></polyline>
+          <polyline points="20 10 14 10 14 4"></polyline>
+          <line x1="14" y1="10" x2="21" y2="3"></line>
+          <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>
+        Restore
+      `;
+    } else {
+      // Restore original layout
+      resultsContainer.classList.remove('full-width');
+      spotifySection.style.display = 'block';
+      toggleBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <polyline points="9 21 3 21 3 15"></polyline>
+          <line x1="21" y1="3" x2="14" y2="10"></line>
+          <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>
+        Expand Gallery
+      `;
+    }
+    
+    // Force redraw of featured artwork to fit new width
+    setTimeout(() => {
+      const currentIndex = parseInt(document.querySelector('.artwork-thumbnail.active')?.dataset.index || 0);
+      if (typeof updateFeaturedArtwork === 'function') {
+        updateFeaturedArtwork(currentIndex);
+      }
+    }, 300);
+  });
+}
     
     // Initialize the page
     createArtGallery();
     createSpotifyPlayer();
+    setupExpandableGallery(); 
 });
 </script>
 {% endblock %}

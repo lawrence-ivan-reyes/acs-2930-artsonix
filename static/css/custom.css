@@ -2778,3 +2778,45 @@
     font-size: 0.8rem;
     color: #795548;
   }
+
+  .results-container {
+    transition: all 0.5s ease;
+  }
+  
+  .full-width {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .toggle-layout-btn {
+    background-color: var(--primary-light);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 10;
+    box-shadow: var(--shadow-md);
+  }
+  
+  .toggle-layout-btn:hover {
+    background-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .toggle-layout-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .art-gallery-section {
+    position: relative;
+  }
