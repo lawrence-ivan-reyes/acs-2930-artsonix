@@ -1476,9 +1476,74 @@
 
 .about-steps-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 1.5rem;
 }
+
+.about-steps-container .about-step-number {
+    background: none !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    width: 50px !important; 
+    height: 50px !important; 
+    margin: 0 auto 1rem !important; 
+    position: relative;
+    transition: all 0.3s ease;
+    border-radius: var(--radius-lg);
+  }
+
+.about-steps-container .about-step-number::before {
+content: "";
+position: absolute;
+inset: 0;
+border: 1px solid rgba(0, 0, 0, 0.05);
+border-radius: var(--radius-lg);
+background: white;
+z-index: -1;
+}
+
+.about-steps-container .about-step-number::after {
+    content: "";
+    position: absolute;
+    width: 140%;
+    height: 1px;
+    background: linear-gradient(
+      90deg, 
+      transparent, 
+      rgba(58, 99, 201, 0.3), 
+      rgba(255, 125, 84, 0.3), 
+      transparent
+    );
+    top: 50%;
+    left: -20%;
+    z-index: -1;
+    transform: rotate(-45deg);
+    opacity: 0.4;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .about-steps-container .technology-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.08));
+    transition: transform 0.3s ease;
+    z-index: 2;
+  }
+
+  .about-steps-container .about-step:hover .about-step-number {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .about-steps-container .about-step:hover .about-step-number::after {
+    opacity: 0.8;
+    transform: rotate(-45deg) scale(1.1);
+  }
+  
+  .about-steps-container .about-step:hover .technology-logo {
+    transform: scale(1.1);
+  }
 
 .about-step {
     background-color: var(--gray-100);
@@ -1492,20 +1557,6 @@
     transform: translateY(-5px);
     box-shadow: var(--shadow-md);
     background-color: var(--light);
-}
-
-.about-step-number {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
-    font-weight: 700;
-    font-size: 1.5rem;
 }
 
 .about-sources-container {
