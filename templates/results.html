@@ -9,13 +9,15 @@
 
 <main class="container mx-auto px-4 py-8">
     <div class="results-container">
+        <!-- Art gallery section -->
         <section class="results-section">
             <h2 class="section-title">Artwork Recommendations</h2>
             <div id="artworkContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Artwork cards will be dynamically inserted here -->
+                <!-- Artwork gallery will be dynamically inserted here -->
             </div>
         </section>
 
+        <!-- Spotify player section -->
         <section class="results-section spotify-player" id="spotifyPlayer">
             <h2 class="section-title">Music Recommendations</h2>
             
@@ -89,43 +91,165 @@ document.addEventListener('DOMContentLoaded', function() {
     const artworks = JSON.parse(localStorage.getItem('artworks') || '[]');
     const spotify_results = JSON.parse(localStorage.getItem('spotify_results') || '[]');
     
-    // Function to create artwork cards
-    function createArtworkCards() {
+    // Function to create enhanced art gallery
+    function createArtGallery() {
         const artworkContainer = document.getElementById('artworkContainer');
+        const resultsSection = document.querySelector('.results-section:first-child');
         
         if (artworks.length === 0) {
             artworkContainer.innerHTML = '<p class="text-center text-gray-500">No artwork recommendations available.</p>';
             return;
         }
         
+        // Update the container classes
+        resultsSection.classList.add('art-gallery-section');
+        resultsSection.classList.remove('results-section');
+        artworkContainer.className = 'art-gallery-container';
+        
+        // Clear the container
         artworkContainer.innerHTML = '';
         
-        artworks.forEach(artwork => {
-            const card = document.createElement('div');
-            card.className = 'artwork-card';
+        // Add gallery header with museum-inspired design
+        const galleryHeader = document.createElement('div');
+        galleryHeader.className = 'gallery-header';
+        galleryHeader.innerHTML = `
+            <h2 class="gallery-title">The Met Gallery Experience</h2>
+            <p class="gallery-subtitle">Explore curated artwork from The Metropolitan Museum of Art</p>
+        `;
+        artworkContainer.appendChild(galleryHeader);
+        
+        // Create featured artwork display
+        const featuredArtwork = document.createElement('div');
+        featuredArtwork.className = 'featured-artwork';
+        
+        // Create navigation arrows
+        featuredArtwork.innerHTML = `
+            <div class="gallery-nav gallery-nav-prev">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </div>
+            <div class="gallery-nav gallery-nav-next">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </div>
+            <div class="featured-artwork-frame">
+                <img src="${artworks[0].primaryImage || artworks[0].primaryImageSmall}" 
+                    alt="${artworks[0].title}" class="featured-image" id="featuredImage">
+            </div>
+            <div class="museum-plaque">
+                <p class="plaque-title">Now Viewing:</p>
+                <p class="plaque-text">Artwork 1 of ${artworks.length}</p>
+            </div>
+            <div class="featured-info">
+                <h3 class="featured-title" id="featuredTitle">${artworks[0].title}</h3>
+                <p class="featured-artist" id="featuredArtist">${artworks[0].artistDisplayName || 'Unknown Artist'}</p>
+                <p class="featured-details" id="featuredDetails">
+                    ${artworks[0].objectDate ? `Created: ${artworks[0].objectDate}<br>` : ''}
+                    ${artworks[0].objectName || ''}
+                </p>
+                <a href="${artworks[0].objectURL}" target="_blank" id="featuredLink" class="featured-link">
+                    View at The Met
+                </a>
+            </div>
+        `;
+        artworkContainer.appendChild(featuredArtwork);
+        
+        // Create thumbnail gallery
+        const thumbnailGallery = document.createElement('div');
+        thumbnailGallery.className = 'thumbnail-gallery';
+        
+        artworks.forEach((artwork, index) => {
+            const thumbnail = document.createElement('div');
+            thumbnail.className = `artwork-thumbnail ${index === 0 ? 'active' : ''}`;
+            thumbnail.dataset.index = index;
             
-            let artistInfo = artwork.artistDisplayName ? 
-                `<p class="card-subtitle">${artwork.artistDisplayName}</p>` : '';
-            
-            let objectDate = artwork.objectDate ? 
-                `<p class="card-text">Date: ${artwork.objectDate}</p>` : '';
-            
-            card.innerHTML = `
-                <img src="${artwork.primaryImage || artwork.primaryImageSmall}" 
-                    alt="${artwork.title}" class="artwork-image">
-                <div class="card-content">
-                    <h4 class="card-title">${artwork.title}</h4>
-                    ${artistInfo}
-                    ${objectDate}
-                    <p class="card-text">${artwork.objectName || ''}</p>
-                    <a href="${artwork.objectURL}" target="_blank" class="card-link">
-                        View at The Met
-                    </a>
-                </div>
+            thumbnail.innerHTML = `
+                <img src="${artwork.primaryImageSmall || artwork.primaryImage}" 
+                    alt="${artwork.title}" class="thumbnail-img">
+                <div class="thumbnail-number">${index + 1}</div>
             `;
             
-            artworkContainer.appendChild(card);
+            thumbnail.addEventListener('click', function() {
+                updateFeaturedArtwork(index);
+            });
+            
+            thumbnailGallery.appendChild(thumbnail);
         });
+        
+        artworkContainer.appendChild(thumbnailGallery);
+        
+        // Add navigation functionality
+        const prevButton = document.querySelector('.gallery-nav-prev');
+        const nextButton = document.querySelector('.gallery-nav-next');
+        
+        prevButton.addEventListener('click', function() {
+            const activeThumbnail = document.querySelector('.artwork-thumbnail.active');
+            const currentIndex = parseInt(activeThumbnail.dataset.index);
+            const newIndex = (currentIndex - 1 + artworks.length) % artworks.length;
+            updateFeaturedArtwork(newIndex);
+        });
+        
+        nextButton.addEventListener('click', function() {
+            const activeThumbnail = document.querySelector('.artwork-thumbnail.active');
+            const currentIndex = parseInt(activeThumbnail.dataset.index);
+            const newIndex = (currentIndex + 1) % artworks.length;
+            updateFeaturedArtwork(newIndex);
+        });
+        
+        // Add keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') {
+                prevButton.click();
+            } else if (e.key === 'ArrowRight') {
+                nextButton.click();
+            }
+        });
+    }
+    
+    // Function to update the featured artwork display
+    function updateFeaturedArtwork(index) {
+        const artwork = artworks[index];
+        
+        // Update active thumbnail
+        document.querySelectorAll('.artwork-thumbnail').forEach(thumb => {
+            thumb.classList.remove('active');
+        });
+        document.querySelector(`.artwork-thumbnail[data-index="${index}"]`).classList.add('active');
+        
+        // Update museum plaque
+        document.querySelector('.plaque-text').textContent = `Artwork ${index + 1} of ${artworks.length}`;
+        
+        // Update featured artwork with smooth transition
+        const featuredImage = document.getElementById('featuredImage');
+        const featuredTitle = document.getElementById('featuredTitle');
+        const featuredArtist = document.getElementById('featuredArtist');
+        const featuredDetails = document.getElementById('featuredDetails');
+        const featuredLink = document.getElementById('featuredLink');
+        
+        // Add fade-out effect
+        featuredImage.style.opacity = '0';
+        setTimeout(() => {
+            // Update content
+            featuredImage.src = artwork.primaryImage || artwork.primaryImageSmall;
+            featuredTitle.textContent = artwork.title;
+            featuredArtist.textContent = artwork.artistDisplayName || 'Unknown Artist';
+            
+            featuredDetails.innerHTML = `
+                ${artwork.objectDate ? `Created: ${artwork.objectDate}<br>` : ''}
+                ${artwork.objectName || ''}
+            `;
+            
+            featuredLink.href = artwork.objectURL;
+            
+            // Fade back in
+            featuredImage.style.opacity = '1';
+        }, 300);
+        
+        // Scroll thumbnail into view if needed
+        const activeThumbnail = document.querySelector(`.artwork-thumbnail[data-index="${index}"]`);
+        activeThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
     
     // Function to create the Spotify-inspired player
@@ -411,7 +535,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Initialize the page
-    createArtworkCards();
+    createArtGallery();
     createSpotifyPlayer();
 });
 </script>

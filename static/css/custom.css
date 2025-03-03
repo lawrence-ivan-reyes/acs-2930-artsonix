@@ -2413,3 +2413,337 @@
       height: 44px;
     }
   }
+
+  /* Art Gallery Styles */
+.art-gallery-section {
+    background-color: var(--light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  .art-gallery-section:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-5px);
+  }
+  
+  .art-gallery-container {
+    position: relative;
+    padding: 0;
+  }
+  
+  /* Gallery header with museum-inspired design */
+  .gallery-header {
+    padding: 2rem;
+    background: linear-gradient(to right, rgba(240,230,210,0.7), rgba(255,255,255,0.95), rgba(240,230,210,0.7));
+    border-bottom: 1px solid var(--gray-200);
+    position: relative;
+    text-align: center;
+  }
+  
+  .gallery-header::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(to right, var(--primary), var(--accent));
+    border-radius: 3px;
+  }
+  
+  .gallery-title {
+    font-family: "DM Sans", serif;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+  }
+  
+  .gallery-subtitle {
+    color: var(--gray-600);
+    font-size: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  /* The primary display area with featured artwork */
+  .featured-artwork {
+    position: relative;
+    height: 500px;
+    width: 100%;
+    background-color: var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  
+  .featured-artwork-frame {
+    position: relative;
+    padding: 20px;
+    background-color: #e8d9b5;
+    box-shadow: 
+      inset 0 0 0 1px #d5c79f,
+      0 10px 30px rgba(0, 0, 0, 0.25);
+    max-width: 80%;
+    max-height: 80%;
+    transition: all 0.5s ease;
+  }
+  
+  .featured-artwork-frame:hover {
+    transform: scale(1.02);
+  }
+  
+  .featured-image {
+    max-width: 100%;
+    max-height: 400px;
+    display: block;
+    object-fit: contain;
+  }
+  
+  .featured-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+    padding: 1.5rem;
+    transition: transform 0.3s ease;
+    transform: translateY(100%);
+    border-top: 1px solid var(--gray-200);
+  }
+  
+  .featured-artwork:hover .featured-info {
+    transform: translateY(0);
+  }
+  
+  .featured-title {
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+  }
+  
+  .featured-artist {
+    font-size: 1rem;
+    color: var(--primary-dark);
+    margin-bottom: 0.75rem;
+  }
+  
+  .featured-details {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    margin-bottom: 1rem;
+  }
+  
+  .featured-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: var(--primary);
+    color: white;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  
+  .featured-link:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Thumbnails gallery at the bottom */
+  .thumbnail-gallery {
+    display: flex;
+    overflow-x: auto;
+    padding: 1.5rem;
+    background-color: var(--gray-100);
+    gap: 1rem;
+    scroll-behavior: smooth;
+    position: relative;
+  }
+  
+  .thumbnail-gallery::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .thumbnail-gallery::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+  }
+  
+  .thumbnail-gallery::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+  
+  .thumbnail-gallery::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+  
+  .artwork-thumbnail {
+    flex: 0 0 auto;
+    width: 120px;
+    height: 100px;
+    padding: 5px;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+  }
+  
+  .artwork-thumbnail.active {
+    border-color: var(--primary);
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  }
+  
+  .artwork-thumbnail:hover:not(.active) {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .thumbnail-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .thumbnail-number {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 24px;
+    height: 24px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Gallery navigation arrows */
+  .gallery-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    z-index: 5;
+    transition: all 0.3s ease;
+  }
+  
+  .gallery-nav:hover {
+    background: var(--primary-light);
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .gallery-nav-prev {
+    left: 20px;
+  }
+  
+  .gallery-nav-next {
+    right: 20px;
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 1024px) {
+    .featured-artwork {
+      height: 400px;
+    }
+    
+    .featured-artwork-frame {
+      max-width: 90%;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .featured-artwork {
+      height: 350px;
+    }
+    
+    .gallery-title {
+      font-size: 1.5rem;
+    }
+    
+    .artwork-thumbnail {
+      width: 100px;
+      height: 85px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .featured-artwork {
+      height: 300px;
+    }
+    
+    .featured-info {
+      padding: 1rem;
+    }
+    
+    .featured-title {
+      font-size: 1.1rem;
+    }
+    
+    .featured-details {
+      font-size: 0.8rem;
+    }
+    
+    .gallery-nav {
+      width: 35px;
+      height: 35px;
+    }
+  }
+  
+  /* Museum plaque style for information display */
+  .museum-plaque {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    background: #e8d9b5;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    max-width: 200px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    font-family: "DM Sans", serif;
+    transform: rotate(2deg);
+    z-index: 4;
+    transition: all 0.3s ease;
+  }
+  
+  .museum-plaque:hover {
+    transform: rotate(0deg) scale(1.05);
+  }
+  
+  .plaque-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #5d4037;
+    margin-bottom: 0.2rem;
+  }
+  
+  .plaque-text {
+    font-size: 0.8rem;
+    color: #795548;
+  }
