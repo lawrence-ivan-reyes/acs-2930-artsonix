@@ -60,7 +60,7 @@
                     <h3 class="form-legend">Find Your Sound</h3>
                     
                     <div class="mb-6">
-                        <p class="form-label">What type of music are you looking for?</p>
+                        <p class="form-label">Select the type of music you are looking for</p>
                         <div class="radio-container">
                             {% for media in ["Album", "Artist", "Playlist", "Track", "I'm open to anything"] %}
                                 <label class="radio-label">
@@ -122,9 +122,7 @@
                             <div class="sparkle" style="width:9px; height:9px;"></div>
                             
                             <div class="surprise-text-container">
-                                <span class="surprise-icon">✨</span>
                                 <span>Surprise Me!</span>
-                                <span class="surprise-icon">🪄</span>
                             </div>
                         </button>
                     </div>
@@ -146,8 +144,41 @@
 <!-- Loading Screen -->
 <div id="loading-screen" class="loading-screen hidden">
     <div class="loading-container">
-        <div class="loading-spinner"></div>
-        <span class="loading-text">Creating your personalized experience...</span>
+        <!-- Simplified Art and Music Elements -->
+        <div class="loading-content">
+            <!-- Art Frame Element -->
+            <div class="loading-art-frame">
+                <div class="loading-art-canvas">
+                    <div class="loading-art-element"></div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="loading-progress-bar">
+                <div class="loading-progress" id="loading-progress"></div>
+            </div>
+            
+            <!-- Text -->
+            <h3 class="loading-title">Creating Your Experience</h3>
+            <div class="loading-message" id="loading-message">
+                Curating personalized art and music just for you...
+            </div>
+            
+            <!-- Sound Wave -->
+            <div class="sound-wave loading-wave">
+                <div class="sound-wave-bar"></div>
+                <div class="sound-wave-bar"></div>
+                <div class="sound-wave-bar"></div>
+                <div class="sound-wave-bar"></div>
+                <div class="sound-wave-bar"></div>
+            </div>
+        </div>
+        
+        <!-- Floating Notes -->
+        <div class="loading-note note-1">♪</div>
+        <div class="loading-note note-2">♫</div>
+        <div class="loading-note note-3">♩</div>
+        <div class="loading-note note-4">♬</div>
     </div>
 </div>
 
@@ -252,5 +283,185 @@
             e.target.classList.remove('is-visible');
         }
     });
+
+    // Simplified Loading Screen Animation
+document.addEventListener('DOMContentLoaded', function() {
+    // Loading messages to cycle through
+    const loadingMessages = [
+        "Curating personalized art and music...",
+        "Searching The Met's collection...",
+        "Exploring Spotify...",
+        "Analyzing artistic connections...",
+        "Creating harmony between visual art and music..."
+    ];
+    
+    // Function to simulate loading progress
+    function animateLoading() {
+        const messageElement = document.getElementById('loading-message');
+        const progressElement = document.getElementById('loading-progress');
+        
+        let progress = 0;
+        let messageIndex = 0;
+        
+        // Initial message
+        messageElement.textContent = loadingMessages[0];
+        
+        // Update loading state periodically
+        const interval = setInterval(() => {
+            // Update progress
+            progress += Math.random() * 3 + 1; // Random increment between 1-4%
+            
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(interval);
+            }
+            
+            // Update progress bar
+            progressElement.style.width = `${Math.min(progress, 100)}%`;
+            
+            // Cycle through messages (every ~3 seconds)
+            if (Math.random() > 0.95) {
+                messageIndex = (messageIndex + 1) % loadingMessages.length;
+                messageElement.style.opacity = 0;
+                
+                setTimeout(() => {
+                    messageElement.textContent = loadingMessages[messageIndex];
+                    messageElement.style.opacity = 1;
+                }, 300);
+            }
+        }, 200);
+        
+        return interval;
+    }
+    
+    // Original form submit handler - stored as a reference
+    const originalFormSubmit = async function(e) {
+        e.preventDefault();
+        
+        // Show loading screen
+        document.getElementById('loading-screen').classList.remove('hidden');
+        
+        try {
+            // Get form data
+            const formData = new FormData(this);
+            
+            // Send POST request
+            const response = await fetch('/combined-results', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            
+            // Get the results and update the page
+            const results = await response.json();
+            
+            // Store both Met and Spotify results in localStorage
+            localStorage.setItem('artworks', JSON.stringify(results.met_results));
+            localStorage.setItem('spotify_results', JSON.stringify(results.spotify_results));
+            
+            // Redirect to results page
+            window.location.href = '/results';
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while processing your request.');
+            document.getElementById('loading-screen').classList.add('hidden');
+        }
+    };
+    
+    // Function to initialize loading handling
+    function setupLoadingHandlers() {
+        const loadingScreen = document.getElementById('loading-screen');
+        const combinedForm = document.getElementById('combined-form');
+        const surpriseBtn = document.getElementById('surpriseBtn');
+        
+        if (!combinedForm || !surpriseBtn || !loadingScreen) return;
+        
+        // Enhanced form submission
+        combinedForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading screen
+            loadingScreen.classList.remove('hidden');
+            
+            // Start animation
+            const animationInterval = animateLoading();
+            
+            // Get form data
+            const formData = new FormData(this);
+            
+            // Send POST request with a small delay to show animation
+            setTimeout(async () => {
+                try {
+                    const response = await fetch('/combined-results', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    
+                    // Get results and store in localStorage
+                    const results = await response.json();
+                    localStorage.setItem('artworks', JSON.stringify(results.met_results));
+                    localStorage.setItem('spotify_results', JSON.stringify(results.spotify_results));
+                    
+                    // Redirect to results page
+                    window.location.href = '/results';
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while processing your request.');
+                    loadingScreen.classList.add('hidden');
+                    clearInterval(animationInterval);
+                }
+            }, 1500);
+        });
+        
+        // Surprise button - keep the original functionality but add loading
+        surpriseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Show loading screen
+            loadingScreen.classList.remove('hidden');
+            
+            // Start animation
+            const animationInterval = animateLoading();
+            
+            // Make request with a small delay to show animation
+            setTimeout(async () => {
+                try {
+                    // Make request to the surprise-me endpoint
+                    const response = await fetch('/surprise-me');
+                    
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    
+                    // Parse response and store results
+                    const results = await response.json();
+                    localStorage.setItem('artworks', JSON.stringify(results.met_results || []));
+                    localStorage.setItem('spotify_results', JSON.stringify(results.spotify_results || []));
+                    
+                    // Redirect to results page
+                    window.location.href = '/results';
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while generating surprise recommendations.');
+                    loadingScreen.classList.add('hidden');
+                    clearInterval(animationInterval);
+                }
+            }, 1500);
+        });
+    }
+    
+    // Initialize the loading handlers
+    setupLoadingHandlers();
+});
 </script>
 {% endblock %}
