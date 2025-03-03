@@ -109,11 +109,22 @@
                 
                 <!-- Submit Buttons Section -->
                 <div class="form-section">
-                    <div class="buttons-container">
-                        <button type="submit" class="btn-primary">
+                    <!-- Primary action button at the top -->
+                    <div class="buttons-container" style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+                        <button type="submit" class="btn-primary" style="flex: 0 1 auto; min-width: 250px;">
                             <span>Create My Curated Experience</span>
                         </button>
-                        <button type="button" id="surpriseBtn" class="btn-surprise">
+                    </div>
+                    
+                    <!-- Divider with explanatory text -->
+                    <div style="text-align: center; margin: 1rem 0;">
+                        <p style="font-size: 0.9rem; color: #666;">— OR —</p>
+                        <p style="font-size: 0.9rem; margin-top: 5px;">Skip the form and get random recommendations</p>
+                    </div>
+                    
+                    <!-- Surprise button container -->
+                    <div class="buttons-container" style="display: flex; justify-content: center; margin-top: 0.5rem;">
+                        <button type="button" id="surpriseBtn" class="btn-surprise" style="flex: 0 1 auto; min-width: 200px;">
                             <!-- Sparkle elements -->
                             <div class="sparkle" style="width:8px; height:8px;"></div>
                             <div class="sparkle" style="width:6px; height:6px;"></div>
@@ -292,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
         "Searching The Met's collection...",
         "Exploring Spotify...",
         "Analyzing artistic connections...",
-        "Creating harmony between visual art and music..."
+        "Creating harmonies..."
     ];
     
     // Function to simulate loading progress
