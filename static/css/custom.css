@@ -3089,3 +3089,52 @@ z-index: -1;
   .art-gallery-section {
     position: relative;
   }
+
+  /* Footer Styles */
+footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    padding: 2rem 0;
+}
+
+footer .nav {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1rem;
+}
+
+footer .nav-item {
+    margin: 0 1rem;
+}
+
+footer .nav-link {
+    color: #6c757d;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+}
+
+footer .nav-link:hover {
+    color: #007bff;
+}
+
+footer .text-center {
+    color: #6c757d;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    footer .nav {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    footer .nav-item {
+        margin: 0.5rem 0;
+    }
+}
