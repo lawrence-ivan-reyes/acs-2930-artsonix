@@ -3127,6 +3127,18 @@ footer .text-center {
     font-size: 0.875rem;
 }
 
+.footer-wrapper {
+    width: 100%;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+  }
+  
+  .footer-wrapper .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     footer .nav {
